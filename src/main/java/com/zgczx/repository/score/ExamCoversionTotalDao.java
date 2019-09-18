@@ -54,4 +54,20 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     //@Query("select examCoversionTotal from ExamCoversionTotal examCoversionTotal where examCoversionTotal.classId = ?1 and examCoversionTotal.examType = ?2 order by ?3 desc ")
     //@Query(value = "SELECT * FROM exam_coversion_total WHERE class_id=?1 AND exam_type=?2 ORDER BY  yingyu_score=?3  DESC", nativeQuery = true)  必须得指定第三个参数是数据库中哪个列的
     List<ExamCoversionTotal> findAllByClassIdAndExamType(String classid, String examType,String subject);
+
+    // 获取三科的班排
+    @Query(value = "SELECT student_number,yuwen_score+shuxue_score+yingyu_score AS s FROM exam_coversion_total WHERE class_id=?1 AND exam_type=?2 ORDER BY s DESC", nativeQuery = true)
+    List<String[]> findByClassIdAndExamType(String classid, String examType);
+
+    //获取三科的年排
+    @Query(value = "SELECT student_number,yuwen_score+shuxue_score+yingyu_score AS s FROM exam_coversion_total WHERE  exam_type=?1 ORDER BY s DESC", nativeQuery = true)
+    List<String[]> findByClassIdAndExamTypeGrade(String examType);
+
+    // 获取综合的班排
+    @Query(value = "SELECT student_number,wuli_coversion+huaxue_coversion+shengwu_coversion+lishi_coversion+dili_coversion+zhengzhi_coversion  AS s FROM exam_coversion_total WHERE class_id=?1 AND exam_type=?2 ORDER BY s DESC", nativeQuery = true)
+    List<String[]> findByClassIdAndExamTypeComplex(String classid, String examType);
+
+    // 获取综合的年排
+    @Query(value = "SELECT student_number,wuli_coversion+huaxue_coversion+shengwu_coversion+lishi_coversion+dili_coversion+zhengzhi_coversion  AS s FROM exam_coversion_total WHERE  exam_type=?1 ORDER BY s DESC", nativeQuery = true)
+    List<String[]> findByClassIdAndExamTypeComplexGrade(String examType);
 }

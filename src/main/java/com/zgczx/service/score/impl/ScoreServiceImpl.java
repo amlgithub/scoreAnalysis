@@ -4,6 +4,7 @@ import com.zgczx.dataobject.score.ExamCoversionTotal;
 import com.zgczx.dataobject.score.ExamInfo;
 import com.zgczx.dataobject.user.SysLogin;
 import com.zgczx.dto.ExamCoversionTotalDTO;
+import com.zgczx.dto.ExamCoversionTotalSectionDTO;
 import com.zgczx.dto.ExamCoversionTotalSingleDTO;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.enums.UserEnum;
@@ -21,10 +22,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author aml
@@ -514,5 +512,113 @@ public class ScoreServiceImpl implements ScoreService {
         examCoversionTotalSingleDTOList.add(examCoversionTotalSingleDTO);
         return examCoversionTotalSingleDTOList;
 
+    }
+
+
+    @Override
+    public List<ExamCoversionTotalSectionDTO> getExamCoversionTotalSectionInfo(String stuNumber, String examType) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examType);
+        if (null == examCoversionTotal) {
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 语数英三科总分
+        float threeSubject = 0;
+        //剩余6选3的总分
+        float comprehensive = 0;
+        threeSubject = (float) (examCoversionTotal.getYuwenScore() + examCoversionTotal.getShuxueScore() + examCoversionTotal.getYingyuScore());
+        comprehensive = (float) (examCoversionTotal.getWuliCoversion() + examCoversionTotal.getHuaxueCoversion() + examCoversionTotal.getShengwuCoversion() + examCoversionTotal.getLishiCoversion() + examCoversionTotal.getDiliCoversion() + examCoversionTotal.getZhengzhiCoversion());
+
+        //三科的班级排名
+        List<String[]> classRank = examCoversionTotalDao.findByClassIdAndExamType(examCoversionTotal.getClassId(), examType);
+        Map<Object, Object> map = new HashMap<>();
+        for(int i = 0; i < classRank.size(); i++) {
+            for (Object classRankObject[] : classRank) {
+                map.put(classRankObject[0], classRankObject[1]);
+            }
+        }
+            //将map中的值放到list中，进行排序
+            List<String> mapValueList = new ArrayList<>();
+            for (Object vaule : map.values()){
+                mapValueList.add(String.valueOf(vaule));
+            }
+            //对mapValueList进行降序排序
+            Collections.sort(mapValueList, Collections.reverseOrder());
+
+
+//三科 班排的第一种方法，第一种方法无需在进行排名，只需要排好序即可
+            // mapValueRank存放的是 分值和排名
+            Map<String, Integer> mapValueRank = new HashMap<>();
+            for (int j = 1; j < mapValueList.size(); j++){
+                mapValueRank.put(mapValueList.get(0), 1);
+                if (mapValueList.get(j - 1 ).equals(mapValueList.get(j))){
+                    mapValueRank.put(mapValueList.get(j), j - 1);
+                }else {
+                    mapValueRank.put(mapValueList.get(j), j + 1);
+                }
+            }
+
+//三科年级排名
+        List<String[]> threeSubjectGradeRank = examCoversionTotalDao.findByClassIdAndExamTypeGrade(examType);
+        Map<Object, Object> threeSubjectGradeMap = new HashMap<>();
+        for (int k = 0; k < threeSubjectGradeRank.size(); k++){
+            for (Object gradeRankObject[] : threeSubjectGradeRank){
+                threeSubjectGradeMap.put(gradeRankObject[0], gradeRankObject[1]);
+            }
+        }
+        List<String> threeSubjectGradeList = new ArrayList<>();
+        for (Object threeSubjectValue : threeSubjectGradeMap.values()){
+            threeSubjectGradeList.add(String.valueOf(threeSubjectValue));
+        }
+        Collections.sort(threeSubjectGradeList, Collections.reverseOrder());
+
+        //综合的班排名次
+        List<String[]> complexClassRank = examCoversionTotalDao.findByClassIdAndExamTypeComplex(examCoversionTotal.getClassId(), examType);
+        Map<Object, Object> complexClassMap= new HashMap<>();
+        for(int i = 0; i < complexClassRank.size(); i++) {
+            for (Object classRankObject[] : complexClassRank) {
+                complexClassMap.put(classRankObject[0], classRankObject[1]);
+            }
+        }
+        List<String> mapValueListComplex = new ArrayList<>();
+        for (Object vaule : complexClassMap.values()){
+            mapValueListComplex.add(String.valueOf(vaule));
+        }
+        Collections.sort(mapValueListComplex, Collections.reverseOrder());
+
+        //综合的年排名次
+        List<String[]> complexGradeRank = examCoversionTotalDao.findByClassIdAndExamTypeComplexGrade(examType);
+        Map<Object, Object> complexGradeMap= new HashMap<>();
+        for(int i = 0; i < complexGradeRank.size(); i++) {
+            for (Object classRankObject[] : complexGradeRank) {
+                complexGradeMap.put(classRankObject[0], classRankObject[1]);
+            }
+        }
+        List<String> mapValueListComplexGrade = new ArrayList<>();
+        for (Object vaule : complexGradeMap.values()){
+            mapValueListComplexGrade.add(String.valueOf(vaule));
+        }
+        Collections.sort(mapValueListComplexGrade, Collections.reverseOrder());
+
+
+        List<ExamCoversionTotalSectionDTO> examCoversionTotalSectionDTOList = new ArrayList<>();
+        ExamCoversionTotalSectionDTO examCoversionTotalSectionDTO = new ExamCoversionTotalSectionDTO();
+        examCoversionTotalSectionDTO.setThreeSubject(threeSubject);
+        examCoversionTotalSectionDTO.setComprehensive(comprehensive);
+        // 求班排的第二中方法，即用排好序的list，取下标法，indexOf:如果元素相同取第一次出现的下标，
+        examCoversionTotalSectionDTO.setClassRank(mapValueList.indexOf(String.valueOf(map.get(stuNumber))) + 1);
+
+        //第一种方法，此方法
+//        String key = String.valueOf(map.get(stuNumber));//强转有问题，这样的也有问题，如果小数多会出问题
+//        examCoversionTotalSectionDTO.setClassRank(mapValueRank.get(key));
+
+        examCoversionTotalSectionDTO.setGradeRank(threeSubjectGradeList.indexOf(String.valueOf(threeSubjectGradeMap.get(stuNumber))) + 1);
+
+        examCoversionTotalSectionDTO.setComplexClassRank(mapValueListComplex.indexOf(String.valueOf(complexClassMap.get(stuNumber))) + 1);
+        examCoversionTotalSectionDTO.setComplexGradeRank(mapValueListComplexGrade.indexOf(String.valueOf(complexGradeMap.get(stuNumber))) + 1);
+        examCoversionTotalSectionDTOList.add(examCoversionTotalSectionDTO);
+
+        return examCoversionTotalSectionDTOList;
     }
 }

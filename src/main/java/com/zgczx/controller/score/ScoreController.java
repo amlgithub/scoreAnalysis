@@ -4,6 +4,7 @@ import com.zgczx.VO.ResultVO;
 import com.zgczx.dataobject.score.ExamCoversionTotal;
 import com.zgczx.dataobject.score.ExamInfo;
 import com.zgczx.dto.ExamCoversionTotalDTO;
+import com.zgczx.dto.ExamCoversionTotalSectionDTO;
 import com.zgczx.dto.ExamCoversionTotalSingleDTO;
 import com.zgczx.service.score.ScoreService;
 import com.zgczx.utils.ResultVOUtil;
@@ -68,7 +69,7 @@ public class ScoreController {
     }
 
     /**
-     * 旭日图第二层，获取各单科的班排、年排、进退名次
+     * 旭日图第三层，获取各单科的班排、年排、进退名次
      * @param stuNumber 学生学号
      * @param examType 具体某次考试名称
      * @return VO类中的data数据返回
@@ -82,5 +83,18 @@ public class ScoreController {
         return ResultVOUtil.success(examCoversionTotalSingleInfo);
     }
 
+    /**
+     *  旭日图的第二层， 获取三科和综合（6选3）的分值，
+     *  三科班排、年排；综合班排、年排
+     * @param stuNumber 学生学号
+     * @param examType 某次考试
+     * @return 返回DTO
+     */
+    @GetMapping(value = "/getExamCoversionTotalSectionInfo")
+    public ResultVO<?> getExamCoversionTotalSectionInfo(@RequestParam(value = "stuNumber") String stuNumber,
+                                                        @RequestParam(value = "examType") String examType){
+        List<ExamCoversionTotalSectionDTO> examCoversionTotalSectionInfo = scoreService.getExamCoversionTotalSectionInfo(stuNumber, examType);
 
+        return ResultVOUtil.success(examCoversionTotalSectionInfo);
+    }
 }
