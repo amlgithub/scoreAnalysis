@@ -6,6 +6,7 @@ import com.zgczx.dataobject.score.ExamInfo;
 import com.zgczx.dto.ExamCoversionTotalDTO;
 import com.zgczx.dto.ExamCoversionTotalSectionDTO;
 import com.zgczx.dto.ExamCoversionTotalSingleDTO;
+import com.zgczx.dto.SixRateDTO;
 import com.zgczx.service.score.ScoreService;
 import com.zgczx.utils.ResultVOUtil;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -97,4 +99,19 @@ public class ScoreController {
 
         return ResultVOUtil.success(examCoversionTotalSectionInfo);
     }
+
+
+    /**
+     * 获取六率信息，高分率、优秀率、良好率、及格率、低分率、超均率
+     * @param stuNumber 学生学号
+     * @param examType 某次考试
+     * @return 返回具体的DTO
+     */
+    @GetMapping(value = "/getSixRateInfo")
+    public ResultVO<?> getSixRateInfo(@RequestParam(value = "stuNumber") String stuNumber,
+                                      @RequestParam(value = "examType") String examType){
+        List<SixRateDTO> sixRateInfo = scoreService.getSixRateInfo(stuNumber, examType);
+        return ResultVOUtil.success(sixRateInfo);
+    }
+
 }
