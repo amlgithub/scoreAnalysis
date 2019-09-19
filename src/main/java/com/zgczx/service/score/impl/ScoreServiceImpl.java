@@ -604,6 +604,7 @@ public class ScoreServiceImpl implements ScoreService {
 
         List<ExamCoversionTotalSectionDTO> examCoversionTotalSectionDTOList = new ArrayList<>();
         ExamCoversionTotalSectionDTO examCoversionTotalSectionDTO = new ExamCoversionTotalSectionDTO();
+        examCoversionTotalSectionDTO.setExamCoversionTotal(examCoversionTotal);
         examCoversionTotalSectionDTO.setThreeSubject(threeSubject);
         examCoversionTotalSectionDTO.setComprehensive(comprehensive);
         // 求班排的第二中方法，即用排好序的list，取下标法，indexOf:如果元素相同取第一次出现的下标，

@@ -15,9 +15,9 @@ public class ExamCoversionTotalSectionDTO {
     private Float threeSubject;
     //剩下的6选3的总分分值
     private Float comprehensive;
-    //班级排名
+    //三科班级排名
     private int classRank;
-    //年级排名
+    //三科年级排名
     private int gradeRank;
     //综合班级排名
     private int complexClassRank;
