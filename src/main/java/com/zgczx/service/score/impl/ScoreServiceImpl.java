@@ -1,16 +1,21 @@
 package com.zgczx.service.score.impl;
 
 import com.zgczx.dataobject.score.ExamCoversionTotal;
+import com.zgczx.dataobject.score.ExamFullScoreSet;
 import com.zgczx.dataobject.score.ExamInfo;
+import com.zgczx.dataobject.score.SubjectFullScore;
 import com.zgczx.dataobject.user.SysLogin;
 import com.zgczx.dto.ExamCoversionTotalDTO;
 import com.zgczx.dto.ExamCoversionTotalSectionDTO;
 import com.zgczx.dto.ExamCoversionTotalSingleDTO;
+import com.zgczx.dto.SixRateDTO;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.enums.UserEnum;
 import com.zgczx.exception.ScoreException;
 import com.zgczx.repository.score.ExamCoversionTotalDao;
+import com.zgczx.repository.score.ExamFullScoreSetDao;
 import com.zgczx.repository.score.ExamInfoDao;
+import com.zgczx.repository.score.SubjectFullScoreDao;
 import com.zgczx.repository.user.StudentInfoDao;
 import com.zgczx.repository.user.SysLoginDao;
 import com.zgczx.service.score.ScoreService;
@@ -22,6 +27,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -44,6 +50,12 @@ public class ScoreServiceImpl implements ScoreService {
 
     @Autowired
     private ExamInfoDao examInfoDao;
+
+    @Autowired
+    private ExamFullScoreSetDao examFullScoreSetDao;
+
+    @Autowired
+    private SubjectFullScoreDao subjectFullScoreDao;
 
     @Autowired
     EntityManagerFactory ntityManagerFactory;
@@ -621,5 +633,93 @@ public class ScoreServiceImpl implements ScoreService {
         examCoversionTotalSectionDTOList.add(examCoversionTotalSectionDTO);
 
         return examCoversionTotalSectionDTOList;
+    }
+
+    @Override
+    public List<SixRateDTO> getSixRateInfo(String stuNumber, String examType) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examType);
+        if (null == examCoversionTotal) {
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 此班级的所有的总分数据
+        List<Double> coversionTotalList= examCoversionTotalDao.getCoversionTotalByClassIdAndExamType(examCoversionTotal.getClassId(), examType);
+        int examTnfoId = examInfoDao.findByExamName(examType);
+//        ExamFullScoreSet examFullScoreSet=  examFullScoreSetDao.findByExaminfoId((int) examTnfoId);
+//        SubjectFullScore sbujectFullScore = subjectFullScoreDao.findOne((int) examFullScoreSet.getId());
+//        int totalScore = (int) (sbujectFullScore.getYingyu() + sbujectFullScore.getShuxue()+sbujectFullScore.getYingyu()+sbujectFullScore.getWuli()+sbujectFullScore.getHuaxue()+sbujectFullScore.getShengwu()+sbujectFullScore.getDili()+sbujectFullScore.getLishi()+sbujectFullScore.getZhengzhi() - 300);
+        BigInteger tatolscore = examCoversionTotalDao.findSchametotal(examTnfoId);
+        int score = Integer.parseInt(tatolscore.toString().trim()) - 300;
+        double a = 0, avg = 0, personsum = 0, classtotalscore = 0;
+        double highnumradio;
+        double excellentratio;
+        double goodratio;
+        double mediumratio;
+        double passratio;
+        double failratio;
+        double beyondradio;
+        int highnum = 0,            //高分人数
+                excellentnum = 0,       //优秀人数
+                goodnum = 0,   //良好人数
+                mediumnum = 0,    //中等人数
+                passnum = 0,    //及格人数
+                failnum = 0,   //低分人数
+                beyondnum = 0;   //超平均人数
+        personsum = coversionTotalList.size();
+        for (int i = 0; i < coversionTotalList.size(); i++) {
+
+            classtotalscore = classtotalscore + coversionTotalList.get(i);
+            if (coversionTotalList.get(i) >= score * 0.9) {
+                highnum++;
+            } else if (coversionTotalList.get(i) >= score * 0.85 && coversionTotalList.get(i) < score * 0.90) {
+                excellentnum++;
+            } else if (coversionTotalList.get(i) >= score * 0.75 && coversionTotalList.get(i) < score * 0.85) {
+                goodnum++;
+            } else if (coversionTotalList.get(i) >= score * 0.60 && coversionTotalList.get(i) < score * 0.75) {
+                passnum++;
+            } else {
+                failnum++;
+            }
+        }
+        // 班级平均分
+        avg = classtotalscore / personsum;
+        for (int j = 0; j < coversionTotalList.size(); j++) {
+            if (coversionTotalList.get(j) > avg) {
+                beyondnum++;
+            }
+        }
+
+        String location = "";
+        if (examCoversionTotal.getCoversionTotal() >= score * 0.9) {
+            location = "高分区域";
+        } else if (examCoversionTotal.getCoversionTotal() >= score * 0.85 && examCoversionTotal.getCoversionTotal() < score * 0.90) {
+            location = "优秀区域";
+        } else if (examCoversionTotal.getCoversionTotal() >= score * 0.75 && examCoversionTotal.getCoversionTotal() < score * 0.85) {
+            location = "良好区域";
+        } else if (examCoversionTotal.getCoversionTotal() >= score * 0.60 && examCoversionTotal.getCoversionTotal() < score * 0.75) {
+            location = "及格区域";
+        } else {
+            location = "低分区域";
+        }
+        highnumradio = highnum / personsum;
+        excellentratio = excellentnum / personsum;
+        goodratio = goodnum / personsum;
+        passratio = passnum / personsum;
+        failratio = failnum / personsum;
+        beyondradio = beyondnum / personsum;
+
+        List<SixRateDTO> sixRateDTOList = new ArrayList<>();
+        SixRateDTO sixRateDTO = new SixRateDTO();
+        sixRateDTO.setHighNumRate(highnumradio);
+        sixRateDTO.setExcellentRate(excellentratio);
+        sixRateDTO.setGoodRate(goodratio);
+        sixRateDTO.setPassRate(passratio);
+        sixRateDTO.setFailRate(failratio);
+        sixRateDTO.setBeyondRate(beyondradio);
+        sixRateDTO.setLocationRate(location);
+        sixRateDTOList.add(sixRateDTO);
+
+        return sixRateDTOList;
     }
 }

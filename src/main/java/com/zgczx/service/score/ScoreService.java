@@ -5,6 +5,7 @@ import com.zgczx.dataobject.score.ExamInfo;
 import com.zgczx.dto.ExamCoversionTotalDTO;
 import com.zgczx.dto.ExamCoversionTotalSectionDTO;
 import com.zgczx.dto.ExamCoversionTotalSingleDTO;
+import com.zgczx.dto.SixRateDTO;
 
 import java.util.List;
 
@@ -33,4 +34,6 @@ public interface ScoreService {
     List<ExamCoversionTotalSingleDTO> getExamCoversionTotalSingleInfo(String stuNumber, String examType, String subject);
 
     List<ExamCoversionTotalSectionDTO> getExamCoversionTotalSectionInfo(String stuNumber, String examType);
+
+    List<SixRateDTO> getSixRateInfo(String stuNumber, String examType);
 }

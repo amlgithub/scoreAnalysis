@@ -4,8 +4,10 @@ import com.zgczx.dataobject.score.ExamCoversionTotal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Valid;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -70,4 +72,11 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     // 获取综合的年排
     @Query(value = "SELECT student_number,wuli_coversion+huaxue_coversion+shengwu_coversion+lishi_coversion+dili_coversion+zhengzhi_coversion  AS s FROM exam_coversion_total WHERE  exam_type=?1 ORDER BY s DESC", nativeQuery = true)
     List<String[]> findByClassIdAndExamTypeComplexGrade(String examType);
+
+    @Query(value = "select e.coversionTotal from ExamCoversionTotal as e where e.classId = ?1 and e.examType = ?2")
+    List<Double> getCoversionTotalByClassIdAndExamType(String classid, String examType);
+
+    @Query(value = "select sum(sfs.yuwen+sfs.shuxue+sfs.yingyu+sfs.wuli+sfs.huaxue+sfs.shengwu+sfs.zhengzhi+sfs.lishi+sfs.dili)as total from subject_full_score sfs,exam_full_score_set sfss where sfs.id=sfss.subject_schame_id and sfss.examinfo_id=?1  ",nativeQuery = true)
+    @Transactional
+    BigInteger findSchametotal(int examid);
 }
