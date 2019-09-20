@@ -28,6 +28,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -709,14 +710,17 @@ public class ScoreServiceImpl implements ScoreService {
         failratio = failnum / personsum;
         beyondradio = beyondnum / personsum;
 
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#.00");
+
         List<SixRateDTO> sixRateDTOList = new ArrayList<>();
         SixRateDTO sixRateDTO = new SixRateDTO();
-        sixRateDTO.setHighNumRate(highnumradio);
-        sixRateDTO.setExcellentRate(excellentratio);
-        sixRateDTO.setGoodRate(goodratio);
-        sixRateDTO.setPassRate(passratio);
-        sixRateDTO.setFailRate(failratio);
-        sixRateDTO.setBeyondRate(beyondradio);
+        sixRateDTO.setHighNumRate(Double.parseDouble(df.format(highnumradio)));
+        sixRateDTO.setExcellentRate(Double.parseDouble(df.format(excellentratio)));
+        sixRateDTO.setGoodRate(Double.parseDouble(df.format(goodratio)));
+        sixRateDTO.setPassRate(Double.parseDouble(df.format(passratio)));
+        sixRateDTO.setFailRate(Double.parseDouble(df.format(failratio)));
+        sixRateDTO.setBeyondRate(Double.parseDouble(df.format(beyondradio)));
         sixRateDTO.setLocationRate(location);
         sixRateDTOList.add(sixRateDTO);
 

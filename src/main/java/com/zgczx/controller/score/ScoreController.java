@@ -102,7 +102,7 @@ public class ScoreController {
 
 
     /**
-     * 获取六率信息，高分率、优秀率、良好率、及格率、低分率、超均率
+     * 获取六率信息，高分率、优秀率、良好率、及格率、低分率、超均率，当前学生所处率值
      * @param stuNumber 学生学号
      * @param examType 某次考试
      * @return 返回具体的DTO
