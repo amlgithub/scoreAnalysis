@@ -1,9 +1,6 @@
 package com.zgczx.service.score.impl;
 
-import com.zgczx.dataobject.score.ExamCoversionTotal;
-import com.zgczx.dataobject.score.ExamFullScoreSet;
-import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.dataobject.score.SubjectFullScore;
+import com.zgczx.dataobject.score.*;
 import com.zgczx.dataobject.user.SysLogin;
 import com.zgczx.dto.ExamCoversionTotalDTO;
 import com.zgczx.dto.ExamCoversionTotalSectionDTO;
@@ -12,10 +9,7 @@ import com.zgczx.dto.SixRateDTO;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.enums.UserEnum;
 import com.zgczx.exception.ScoreException;
-import com.zgczx.repository.score.ExamCoversionTotalDao;
-import com.zgczx.repository.score.ExamFullScoreSetDao;
-import com.zgczx.repository.score.ExamInfoDao;
-import com.zgczx.repository.score.SubjectFullScoreDao;
+import com.zgczx.repository.score.*;
 import com.zgczx.repository.user.StudentInfoDao;
 import com.zgczx.repository.user.SysLoginDao;
 import com.zgczx.service.score.ScoreService;
@@ -57,6 +51,9 @@ public class ScoreServiceImpl implements ScoreService {
 
     @Autowired
     private SubjectFullScoreDao subjectFullScoreDao;
+
+    @Autowired
+    private ImportConversionScoreDao importConversionScoreDao;
 
     @Autowired
     EntityManagerFactory ntityManagerFactory;
@@ -322,8 +319,6 @@ public class ScoreServiceImpl implements ScoreService {
             }
         }
 
-
-
         // 获取所有考试列表
         List<ExamInfo> examInfoList = examInfoDao.findAll();
         if (examInfoList == null || examInfoList.size() == 0) {
@@ -515,6 +510,13 @@ public class ScoreServiceImpl implements ScoreService {
         // 年级波动名称，进退名次
         int waveGrade = mapGrade.get(stuNumber) - oldMapGrade.get(stuNumber);
 
+        int examTnfoId = examInfoDao.findByExamName(examType);
+        SubjectFullScore subjectFullScore = subjectFullScoreDao.findById(examTnfoId);
+        // 本次考试的全科总分
+        int sum = Math.toIntExact(subjectFullScore.getYuwen() + subjectFullScore.getShuxue() + subjectFullScore.getYingyu() + subjectFullScore.getWuli() + subjectFullScore.getHuaxue()
+                + subjectFullScore.getShengwu() + subjectFullScore.getZhengzhi() + subjectFullScore.getDili() + subjectFullScore.getLishi()) - 300;
+
+
         List<ExamCoversionTotalSingleDTO> examCoversionTotalSingleDTOList = new ArrayList<>();
         ExamCoversionTotalSingleDTO examCoversionTotalSingleDTO = new ExamCoversionTotalSingleDTO();
         examCoversionTotalSingleDTO.setExamCoversionTotal(examCoversionTotal);
@@ -522,6 +524,19 @@ public class ScoreServiceImpl implements ScoreService {
         examCoversionTotalSingleDTO.setGradeRank(mapGrade.get(stuNumber));//年排名
         examCoversionTotalSingleDTO.setWaveGrade(waveGrade);//年级进退名次
         examCoversionTotalSingleDTO.setWaveClass(waveClass);//班级进退名次
+
+        examCoversionTotalSingleDTO.setClassNumber(examCoversionTotalSubject.size());//班级人数
+        examCoversionTotalSingleDTO.setGradeNumber(gradeExamCoversionTotal.size());// 年级人数
+        examCoversionTotalSingleDTO.setSumScore(sum);//总分标准
+        examCoversionTotalSingleDTO.setLanguageScore(Math.toIntExact(subjectFullScore.getYuwen()));//语文满分
+        examCoversionTotalSingleDTO.setMathScore(Math.toIntExact(subjectFullScore.getShuxue()));//数学满分
+        examCoversionTotalSingleDTO.setEnglishScore(Math.toIntExact(subjectFullScore.getYingyu()));//英语满分
+        examCoversionTotalSingleDTO.setPhysicalScore(Math.toIntExact(subjectFullScore.getWuli()));// 物理满分
+        examCoversionTotalSingleDTO.setChemistryScore(Math.toIntExact(subjectFullScore.getHuaxue()));//化学满分
+        examCoversionTotalSingleDTO.setBiologicalScore(Math.toIntExact(subjectFullScore.getShengwu()));//生物满分
+        examCoversionTotalSingleDTO.setPoliticalScore(Math.toIntExact(subjectFullScore.getZhengzhi()));// 政治满分
+        examCoversionTotalSingleDTO.setHistoryScore(Math.toIntExact(subjectFullScore.getLishi())); //历史满分
+        examCoversionTotalSingleDTO.setGeographyScore(Math.toIntExact(subjectFullScore.getDili()));//地理满分
         examCoversionTotalSingleDTOList.add(examCoversionTotalSingleDTO);
         return examCoversionTotalSingleDTOList;
 
@@ -615,22 +630,28 @@ public class ScoreServiceImpl implements ScoreService {
         Collections.sort(mapValueListComplexGrade, Collections.reverseOrder());
 
         List<String> list = new ArrayList<>();
-        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
+        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
+        if (importConversionScore == null){
+            info = "查无此数据";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        if (!importConversionScore.getWuliConverscore().toString().equals("")){
             list.add("物理");
         }
-        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
+        if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
             list.add("化学");
         }
-        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
+        if (!importConversionScore.getShengwuConverscore().toString().equals("")){
             list.add("生物");
         }
-        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0")){
+        if (!importConversionScore.getLishiConverscore().toString().equals("") ){
             list.add("历史");
         }
-        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
+        if (!importConversionScore.getDiliConverscore().toString().equals("")){
             list.add("地理");
         }
-        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
+        if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
             list.add("政治");
         }
 

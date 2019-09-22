@@ -71,7 +71,8 @@ public class ScoreController {
     }
 
     /**
-     * 旭日图第三层，获取各单科的班排、年排、进退名次
+     * 旭日图第三层，获取各单科的班排、年排、进退名次，班级年级人数
+     * 总分标准，各单科满分标准
      * @param stuNumber 学生学号
      * @param examType 具体某次考试名称
      * @return VO类中的data数据返回
