@@ -24,7 +24,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/score")
-@CrossOrigin(origins = "*", maxAge = 3600)
+//@CrossOrigin(origins = "*", maxAge = 3600)
 public class ScoreController {
 
     private static final Logger logger = LoggerFactory.getLogger(ScoreController.class);

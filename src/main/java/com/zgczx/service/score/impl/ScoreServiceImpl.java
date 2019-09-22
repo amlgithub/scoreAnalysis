@@ -614,6 +614,25 @@ public class ScoreServiceImpl implements ScoreService {
         }
         Collections.sort(mapValueListComplexGrade, Collections.reverseOrder());
 
+        List<String> list = new ArrayList<>();
+        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
+            list.add("物理");
+        }
+        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
+            list.add("化学");
+        }
+        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
+            list.add("生物");
+        }
+        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0")){
+            list.add("历史");
+        }
+        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
+            list.add("地理");
+        }
+        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
+            list.add("政治");
+        }
 
         List<ExamCoversionTotalSectionDTO> examCoversionTotalSectionDTOList = new ArrayList<>();
         ExamCoversionTotalSectionDTO examCoversionTotalSectionDTO = new ExamCoversionTotalSectionDTO();
@@ -624,13 +643,15 @@ public class ScoreServiceImpl implements ScoreService {
         examCoversionTotalSectionDTO.setClassRank(mapValueList.indexOf(String.valueOf(map.get(stuNumber))) + 1);
 
         //第一种方法，此方法
-//        String key = String.valueOf(map.get(stuNumber));//强转有问题，这样的也有问题，如果小数多会出问题
+//        String key = String.valueOf(map.get(stuNumber));//强转有问题，这样的也有问题，如果小数多(科学计数法)会出问题
 //        examCoversionTotalSectionDTO.setClassRank(mapValueRank.get(key));
 
         examCoversionTotalSectionDTO.setGradeRank(threeSubjectGradeList.indexOf(String.valueOf(threeSubjectGradeMap.get(stuNumber))) + 1);
 
         examCoversionTotalSectionDTO.setComplexClassRank(mapValueListComplex.indexOf(String.valueOf(complexClassMap.get(stuNumber))) + 1);
         examCoversionTotalSectionDTO.setComplexGradeRank(mapValueListComplexGrade.indexOf(String.valueOf(complexGradeMap.get(stuNumber))) + 1);
+
+        examCoversionTotalSectionDTO.setList(list);
         examCoversionTotalSectionDTOList.add(examCoversionTotalSectionDTO);
 
         return examCoversionTotalSectionDTOList;

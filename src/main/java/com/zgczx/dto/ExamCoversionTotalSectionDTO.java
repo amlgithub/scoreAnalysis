@@ -3,6 +3,8 @@ package com.zgczx.dto;
 import com.zgczx.dataobject.score.ExamCoversionTotal;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * @author aml
  * @date 2019/9/17 21:11
@@ -28,4 +30,6 @@ public class ExamCoversionTotalSectionDTO {
     private int waveGrade;
     // 班级排名进退名次
     private int waveClass;
+    //存放某学生的6选3的具体科目
+    private List<String> list;
 }
