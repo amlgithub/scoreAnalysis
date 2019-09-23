@@ -2,10 +2,7 @@ package com.zgczx.service.score.impl;
 
 import com.zgczx.dataobject.score.*;
 import com.zgczx.dataobject.user.SysLogin;
-import com.zgczx.dto.ExamCoversionTotalDTO;
-import com.zgczx.dto.ExamCoversionTotalSectionDTO;
-import com.zgczx.dto.ExamCoversionTotalSingleDTO;
-import com.zgczx.dto.SixRateDTO;
+import com.zgczx.dto.*;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.enums.UserEnum;
 import com.zgczx.exception.ScoreException;
@@ -767,5 +764,101 @@ public class ScoreServiceImpl implements ScoreService {
         sixRateDTOList.add(sixRateDTO);
 
         return sixRateDTOList;
+    }
+
+    @Override
+    public List<SubjectAnalysisDTO> getSubjectAnalysisInfo(String stuNumber, String examType) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examType);
+        if (null == examCoversionTotal) {
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
+        if (importConversionScore == null){
+            info = "查无此数据";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 各单科与总分的比值
+        Map<String, String> contributionRate = new HashMap<>();
+        double language, // 语文
+                math, // 数学
+                english, // 英语
+                physical, // 物理
+                chemistry, //化学
+                biological, // 生物
+                political, //政治
+                history, // 历史
+                geography; //地理
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#0.00");
+        language = Double.parseDouble(importConversionScore.getYuwenScore()) / Double.parseDouble(importConversionScore.getTotalScore());
+        math = Double.parseDouble(importConversionScore.getShuxueScore()) / Double.parseDouble(importConversionScore.getTotalScore());
+        english = Double.parseDouble(importConversionScore.getYingyuScore()) / Double.parseDouble(importConversionScore.getTotalScore());
+
+        //再次使用原生SQL语句查询，来获取班级年级的排名
+        EntityManager entityManager = ntityManagerFactory.createEntityManager();
+
+        // 单科和总分的年级差值
+        Map<String , Integer> equilibriumDifferenceMap = new HashMap<>();
+
+        contributionRate.put("语文", df.format(language) + "%");
+        List<String> yuwenGradeExamCoversionTotal =  examCoversionTotalDao.findByYuwenScore(examType);
+        equilibriumDifferenceMap.put("语文差值", (int) (yuwenGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        contributionRate.put("数学", df.format(math) + "%");
+        List<String> shuxueGradeExamCoversionTotal =  examCoversionTotalDao.findByShuxueScore(examType);
+        equilibriumDifferenceMap.put("数学差值", (int) (shuxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        contributionRate.put("英语", df.format(english) + "%");
+        List<String> yingyuGradeExamCoversionTotal =  examCoversionTotalDao.findByYingyuScore(examType);
+        equilibriumDifferenceMap.put("英语差值", (int) (yingyuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+
+        if (!importConversionScore.getWuliConverscore().toString().equals("")){
+            contributionRate.put("物理", df.format(Double.parseDouble(importConversionScore.getWuliConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+            List<String> wuliGradeExamCoversionTotal =  examCoversionTotalDao.findByWuliCoversion(examType);
+            equilibriumDifferenceMap.put("物理差值", (int) (wuliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        }
+        if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
+            contributionRate.put("化学", df.format(Double.parseDouble(importConversionScore.getHuaxueConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+            List<String> huaxueGradeExamCoversionTotal =  examCoversionTotalDao.findByHuaxueCoversion(examType);
+            equilibriumDifferenceMap.put("化学差值", (int) (huaxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        }
+        if (!importConversionScore.getShengwuConverscore().toString().equals("")){
+            contributionRate.put("生物", df.format(Double.parseDouble(importConversionScore.getShengwuConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+            List<String> shengwuGradeExamCoversionTotal =  examCoversionTotalDao.findByShengwuCoversion(examType);
+            equilibriumDifferenceMap.put("生物差值", (int) (shengwuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        }
+        if (!importConversionScore.getLishiConverscore().toString().equals("") ){
+            contributionRate.put("历史",df.format(Double.parseDouble(importConversionScore.getLishiConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+            List<String> lishiGradeExamCoversionTotal =  examCoversionTotalDao.findByLishiCoversion(examType);
+            equilibriumDifferenceMap.put("历史差值", (int) (lishiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        }
+        if (!importConversionScore.getDiliConverscore().toString().equals("")){
+            contributionRate.put("地理", df.format(Double.parseDouble(importConversionScore.getDiliConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+            List<String> diliGradeExamCoversionTotal =  examCoversionTotalDao.findByDiliCoversion(examType);
+            equilibriumDifferenceMap.put("地理差值", (int) (diliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        }
+        if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
+            contributionRate.put("政治", df.format(Double.parseDouble(importConversionScore.getZhengzhiConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+            List<String> zhengzhiGradeExamCoversionTotal =  examCoversionTotalDao.findByZhengzhiCoversion(examType);
+            equilibriumDifferenceMap.put("政治差值", (int) (zhengzhiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+
+        }
+
+        List<SubjectAnalysisDTO> list = new ArrayList<>();
+        SubjectAnalysisDTO subjectAnalysisDTO = new SubjectAnalysisDTO();
+        subjectAnalysisDTO.setExamCoversionTotal(examCoversionTotal);
+        subjectAnalysisDTO.setContributionRate(contributionRate);
+        subjectAnalysisDTO.setEquilibriumDifference(equilibriumDifferenceMap);
+        list.add(subjectAnalysisDTO);
+        return list;
     }
 }

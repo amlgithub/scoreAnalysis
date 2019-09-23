@@ -3,10 +3,7 @@ package com.zgczx.controller.score;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.dataobject.score.ExamCoversionTotal;
 import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.dto.ExamCoversionTotalDTO;
-import com.zgczx.dto.ExamCoversionTotalSectionDTO;
-import com.zgczx.dto.ExamCoversionTotalSingleDTO;
-import com.zgczx.dto.SixRateDTO;
+import com.zgczx.dto.*;
 import com.zgczx.service.score.ScoreService;
 import com.zgczx.utils.ResultVOUtil;
 import org.slf4j.Logger;
@@ -113,6 +110,21 @@ public class ScoreController {
                                       @RequestParam(value = "examType") String examType){
         List<SixRateDTO> sixRateInfo = scoreService.getSixRateInfo(stuNumber, examType);
         return ResultVOUtil.success(sixRateInfo);
+    }
+
+
+    /**
+     *  学科分析,各学科贡献率和各学科均衡差值，都是和年级值对比
+     * @param stuNumber 学生学号
+     * @param examType 具体的考试名称
+     * @return 返回DTO对象
+     */
+    @GetMapping(value = "/getSubjectAnalysisInfo")
+    public ResultVO<?> getSubjectAnalysisInfo(@RequestParam(value = "stuNumber") String stuNumber,
+                                              @RequestParam(value = "examType") String examType){
+        List<SubjectAnalysisDTO> subjectAnalysisInfo = scoreService.getSubjectAnalysisInfo(stuNumber, examType);
+
+        return ResultVOUtil.success(subjectAnalysisInfo);
     }
 
 }

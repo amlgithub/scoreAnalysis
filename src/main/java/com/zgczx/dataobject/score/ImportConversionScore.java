@@ -1,5 +1,7 @@
 package com.zgczx.dataobject.score;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -8,6 +10,7 @@ import java.util.Objects;
  * @date 2019/9/22 16:28
  */
 @Entity
+@Data
 @Table(name = "import_conversion_score", schema = "score_ananlysis_dev", catalog = "")
 public class ImportConversionScore {
     private int id;

@@ -79,4 +79,29 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     @Query(value = "select sum(sfs.yuwen+sfs.shuxue+sfs.yingyu+sfs.wuli+sfs.huaxue+sfs.shengwu+sfs.zhengzhi+sfs.lishi+sfs.dili)as total from subject_full_score sfs,exam_full_score_set sfss where sfs.id=sfss.subject_schame_id and sfss.examinfo_id=?1  ",nativeQuery = true)
     @Transactional
     BigInteger findSchametotal(int examid);
+
+    /**
+     *  语数英、物化生、政史地，九门科目的降序排列
+     * @param examType 具体考试名称
+     * @return 返回单个数据库字段的所有值
+     */
+    @Query(value = "select yuwen_score from exam_coversion_total where exam_type=?1 order by yuwen_score desc", nativeQuery = true)
+    List<String> findByYuwenScore(String examType);
+    @Query(value = "select shuxue_score from exam_coversion_total where exam_type=?1 order by shuxue_score desc", nativeQuery = true)
+    List<String> findByShuxueScore(String examType);
+    @Query(value = "select yingyu_score from exam_coversion_total where exam_type=?1 order by yingyu_score desc", nativeQuery = true)
+    List<String> findByYingyuScore(String examType);
+    @Query(value = "select wuli_coversion from exam_coversion_total where exam_type=?1 order by wuli_coversion desc", nativeQuery = true)
+    List<String> findByWuliCoversion(String examType);
+    @Query(value = "select huaxue_coversion from exam_coversion_total where exam_type=?1 order by huaxue_coversion desc", nativeQuery = true)
+    List<String> findByHuaxueCoversion(String examType);
+    @Query(value = "select shengwu_coversion from exam_coversion_total where exam_type=?1 order by shengwu_coversion desc", nativeQuery = true)
+    List<String> findByShengwuCoversion(String examType);
+    @Query(value = "select lishi_coversion from exam_coversion_total where exam_type=?1 order by lishi_coversion desc", nativeQuery = true)
+    List<String> findByLishiCoversion(String examType);
+    @Query(value = "select dili_coversion from exam_coversion_total where exam_type=?1 order by dili_coversion desc", nativeQuery = true)
+    List<String> findByDiliCoversion(String examType);
+    @Query(value = "select zhengzhi_coversion from exam_coversion_total where exam_type=?1 order by zhengzhi_coversion desc", nativeQuery = true)
+    List<String> findByZhengzhiCoversion(String examType);
+
 }

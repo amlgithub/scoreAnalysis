@@ -2,10 +2,7 @@ package com.zgczx.service.score;
 
 import com.zgczx.dataobject.score.ExamCoversionTotal;
 import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.dto.ExamCoversionTotalDTO;
-import com.zgczx.dto.ExamCoversionTotalSectionDTO;
-import com.zgczx.dto.ExamCoversionTotalSingleDTO;
-import com.zgczx.dto.SixRateDTO;
+import com.zgczx.dto.*;
 
 import java.util.List;
 
@@ -36,4 +33,6 @@ public interface ScoreService {
     List<ExamCoversionTotalSectionDTO> getExamCoversionTotalSectionInfo(String stuNumber, String examType);
 
     List<SixRateDTO> getSixRateInfo(String stuNumber, String examType);
+
+    List<SubjectAnalysisDTO> getSubjectAnalysisInfo(String stuNumber, String examType);
 }
