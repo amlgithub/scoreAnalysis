@@ -35,4 +35,8 @@ public interface ScoreService {
     List<SixRateDTO> getSixRateInfo(String stuNumber, String examType);
 
     List<SubjectAnalysisDTO> getSubjectAnalysisInfo(String stuNumber, String examType);
+
+    List<HistoricalAnalysisTotalDTO> getHistoricalAnalysisTotalInfo(String stuNumber, String examType);
+
+    List<HistoricalAnalysisSingleDTO> getHistoricalAnalysisSingleInfo(String stuNumber, String examType, String subject);
 }

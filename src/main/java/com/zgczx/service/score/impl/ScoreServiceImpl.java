@@ -813,7 +813,7 @@ public class ScoreServiceImpl implements ScoreService {
 
         contributionRate.put("英语", df.format(english) + "%");
         List<String> yingyuGradeExamCoversionTotal =  examCoversionTotalDao.findByYingyuScore(examType);
-        equilibriumDifferenceMap.put("英语差值", (int) (yingyuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+        equilibriumDifferenceMap.put("英语差值", (int) (yingyuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
 
 
         if (!importConversionScore.getWuliConverscore().toString().equals("")){
@@ -859,6 +859,249 @@ public class ScoreServiceImpl implements ScoreService {
         subjectAnalysisDTO.setContributionRate(contributionRate);
         subjectAnalysisDTO.setEquilibriumDifference(equilibriumDifferenceMap);
         list.add(subjectAnalysisDTO);
+        return list;
+    }
+
+
+    @Override
+    public List<HistoricalAnalysisTotalDTO> getHistoricalAnalysisTotalInfo(String stuNumber, String examType) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examType);
+        if (null == examCoversionTotal) {
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 年级总人数
+        int gradeNumber = examCoversionTotalDao.countByExamType(examType);
+        // 班级总人数
+        int classNumber = examCoversionTotalDao.countByClassIdAndExamType(examCoversionTotal.getClassId(), examType);
+        float gradeAveragePercentage = Float.parseFloat(examCoversionTotal.getSchoolIndex().toString()) / gradeNumber;
+        float classAveragePercentage = Float.parseFloat(examCoversionTotal.getClassIndex().toString())  / classNumber;
+
+        float classSum = examCoversionTotalDao.sumCoversionTotalByClassIdAndExamType(examCoversionTotal.getClassId(), examType);
+        float classAverage = classSum / classNumber; // 班級平均分
+        float gradeSum = examCoversionTotalDao.sumCoversionTotalByExamType(examType);
+        float gradeAverage = gradeSum / gradeNumber;
+
+        int examTnfoId = examInfoDao.findByExamName(examType);
+        SubjectFullScore subjectFullScore = subjectFullScoreDao.findById(examTnfoId);
+        // 本次考试的全科总分
+        int sum = Math.toIntExact(subjectFullScore.getYuwen() + subjectFullScore.getShuxue() + subjectFullScore.getYingyu() + subjectFullScore.getWuli() + subjectFullScore.getHuaxue()
+                + subjectFullScore.getShengwu() + subjectFullScore.getZhengzhi() + subjectFullScore.getDili() + subjectFullScore.getLishi()) - 300;
+
+
+
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#0.00");
+        // 封装dto，传输给controller并显示给前台渲染
+        List<HistoricalAnalysisTotalDTO> list = new ArrayList<>();
+        HistoricalAnalysisTotalDTO historicalAnalysisTotalDTO = new HistoricalAnalysisTotalDTO();
+
+        historicalAnalysisTotalDTO.setExamCoversionTotal(examCoversionTotal);
+        historicalAnalysisTotalDTO.setGradePercentage(df.format(gradeAveragePercentage));// 年级排名百分率
+        historicalAnalysisTotalDTO.setClassPercentage(df.format(classAveragePercentage)); //班级排名百分率
+        historicalAnalysisTotalDTO.setClassAverage(df.format(classAverage));// 班级平均分
+        historicalAnalysisTotalDTO.setGradeAverage(df.format(gradeAverage));// 年级平均分
+        historicalAnalysisTotalDTO.setClassAveragePercentage(df.format(classAverage / sum));// 班级平均分百分率
+        historicalAnalysisTotalDTO.setGradeAveragePercentage(df.format(gradeAverage / sum)); // 年级平均分百分率
+        historicalAnalysisTotalDTO.setTotalScorePercentage(df.format(examCoversionTotal.getCoversionTotal() / sum));// 总分百分率
+
+        list.add(historicalAnalysisTotalDTO);
+        return list;
+    }
+
+    @Override
+    public List<HistoricalAnalysisSingleDTO> getHistoricalAnalysisSingleInfo(String stuNumber, String examType, String subject) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examType);
+        if (null == examCoversionTotal) {
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        //使用原生SQL
+        EntityManager em = ntityManagerFactory.createEntityManager();
+        // 本次班级排名
+        String querysql = "SELECT * FROM exam_coversion_total WHERE class_id='"+examCoversionTotal.getClassId()+ "' AND exam_type='"+examType+"' ORDER BY "+ subject + " DESC"; //这个是直接拼接
+        logger.info("查询本次班级排名-->" + querysql);
+        Query query = em.createNativeQuery(querysql, ExamCoversionTotal.class);
+        @SuppressWarnings("unchecked")
+        List<ExamCoversionTotal> examCoversionTotalSubject = query.getResultList();
+        //单科班级总分
+        String singleClassQuerysql = "SELECT SUM("+subject+") FROM exam_coversion_total WHERE class_id='"+examCoversionTotal.getClassId()+"' AND exam_type='"+examType+"'";
+        logger.info("查询本次单科班级总分-->" + singleClassQuerysql);
+        Query singleClassQuery = em.createNativeQuery(singleClassQuerysql);
+        List<Double> singleClassList = singleClassQuery.getResultList();// 单科班级总分
+
+        //单科年级总分
+        String singleGradeQuerysql = "SELECT SUM("+subject+") FROM exam_coversion_total WHERE exam_type='"+examType+"'";
+        logger.info("查询本次单科班级总分-->" + singleGradeQuerysql);
+        Query singleGradeQuery = em.createNativeQuery(singleGradeQuerysql);
+        List<Double> singleGradeList = singleGradeQuery.getResultList();// 单科班级总分
+        // 单科年级总分
+        em.close();
+
+        Map<String, Integer> mapClass = new HashMap<>();
+        for(int i = 1; i < examCoversionTotalSubject.size(); i++){
+            if (subject.equals("yuwen_score")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getYuwenScore().equals(examCoversionTotalSubject.get(i).getYuwenScore())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("shuxue_score")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getShuxueScore().equals(examCoversionTotalSubject.get(i).getShuxueScore())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("yingyu_score")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getYingyuScore().equals(examCoversionTotalSubject.get(i).getYingyuScore())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("wuli_coversion")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getWuliCoversion().equals(examCoversionTotalSubject.get(i).getWuliCoversion())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("huaxue_coversion")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getHuaxueCoversion().equals(examCoversionTotalSubject.get(i).getHuaxueCoversion())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("shengwu_coversion")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getShengwuCoversion().equals(examCoversionTotalSubject.get(i).getShengwuCoversion())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("lishi_coversion")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getLishiCoversion().equals(examCoversionTotalSubject.get(i).getLishiCoversion())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("dili_coversion")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getDiliCoversion().equals(examCoversionTotalSubject.get(i).getDiliCoversion())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }else if (subject.equals("zhengzhi_coversion")){
+                mapClass.put(examCoversionTotalSubject.get(0).getStudentNumber(),1);
+                if (examCoversionTotalSubject.get(i-1).getZhengzhiCoversion().equals(examCoversionTotalSubject.get(i).getZhengzhiCoversion())){
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i - 1);
+                }else {
+                    mapClass.put(examCoversionTotalSubject.get(i).getStudentNumber(), i + 1);
+                }
+            }
+        }
+
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#0.00");
+        // 年级总人数
+        int gradeNumber = examCoversionTotalDao.countByExamType(examType);
+        // 班级总人数
+        int classNumber = examCoversionTotalDao.countByClassIdAndExamType(examCoversionTotal.getClassId(), examType);
+        double classAverage =Double.parseDouble(singleClassList.get(0).toString()) / classNumber; // 班級平均分
+        double gradeAverage =Double.parseDouble(singleGradeList.get(0).toString()) / gradeNumber; // 年级平均分
+
+        int examTnfoId = examInfoDao.findByExamName(examType);
+        SubjectFullScore subjectFullScore = subjectFullScoreDao.findById(examTnfoId);
+//        // 本次考试的全科总分
+//        int sum = Math.toIntExact(subjectFullScore.getYuwen() + subjectFullScore.getShuxue() + subjectFullScore.getYingyu() + subjectFullScore.getWuli() + subjectFullScore.getHuaxue()
+//                + subjectFullScore.getShengwu() + subjectFullScore.getZhengzhi() + subjectFullScore.getDili() + subjectFullScore.getLishi()) - 300;
+        int gradeRank = 0;
+        double singleScorePercentage = 0; // 单科平均分百分率
+        double classAveragePercentage = 0; //班级平均分百分率
+        double gradeAveragePercentage = 0; // 年级平均分百分率
+        if (subject.equals("yuwen_score")){
+            List<String> yuwenGradeExamCoversionTotal =  examCoversionTotalDao.findByYuwenScore(examType);
+            // 年级排名
+            gradeRank = yuwenGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getYuwenScore() / subjectFullScore.getYuwen();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getYuwen();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getYuwen();
+        }else if (subject.equals("shuxue_score")){
+            List<String> shuxueGradeExamCoversionTotal =  examCoversionTotalDao.findByShuxueScore(examType);
+            // 年级排名
+            gradeRank = shuxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getShuxueScore() / subjectFullScore.getShuxue();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getShuxue();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getShuxue();
+        }else if (subject.equals("yingyu_score")){
+            List<String> yingyuGradeExamCoversionTotal =  examCoversionTotalDao.findByYingyuScore(examType);
+            // 年级排名
+            gradeRank = yingyuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getYingyuScore() / subjectFullScore.getYingyu();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getYingyu();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getYingyu();
+        }else if (subject.equals("wuli_coversion")){
+            List<String> wuliGradeExamCoversionTotal =  examCoversionTotalDao.findByWuliCoversion(examType);
+            gradeRank = wuliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getWuliCoversion() / subjectFullScore.getWuli();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getWuli();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getWuli();
+        }else if (subject.equals("huaxue_coversion")){
+            List<String> huaxueGradeExamCoversionTotal =  examCoversionTotalDao.findByHuaxueCoversion(examType);
+            gradeRank = huaxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getHuaxueCoversion() / subjectFullScore.getHuaxue();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getHuaxue();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getHuaxue();
+        }else if (subject.equals("shengwu_coversion")){
+            List<String> shengwuGradeExamCoversionTotal =  examCoversionTotalDao.findByShengwuCoversion(examType);
+            gradeRank = shengwuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getShengwuCoversion() / subjectFullScore.getShengwu();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getShengwu();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getShengwu();
+        }else if (subject.equals("lishi_coversion")){
+            List<String> lishiGradeExamCoversionTotal =  examCoversionTotalDao.findByLishiCoversion(examType);
+            gradeRank = lishiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getLishiCoversion() / subjectFullScore.getLishi();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getLishi();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getLishi();
+        }else if (subject.equals("dili_coversion")){
+            List<String> diliGradeExamCoversionTotal =  examCoversionTotalDao.findByDiliCoversion(examType);
+            gradeRank = diliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getDiliCoversion() / subjectFullScore.getDili();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getDili();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getDili();
+        }else if (subject.equals("zhengzhi_coversion")){
+            List<String> zhengzhiGradeExamCoversionTotal =  examCoversionTotalDao.findByZhengzhiCoversion(examType);
+            gradeRank = zhengzhiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1;
+            singleScorePercentage = examCoversionTotal.getZhengzhiCoversion() / subjectFullScore.getZhengzhi();
+            classAveragePercentage = (float) classAverage/ subjectFullScore.getZhengzhi();
+            gradeAveragePercentage = (float) gradeAverage / subjectFullScore.getZhengzhi();
+        }
+
+
+
+        // 封装dto，传输给controller并显示给前台渲染
+        List<HistoricalAnalysisSingleDTO> list = new ArrayList<>();
+        HistoricalAnalysisSingleDTO historicalAnalysisSingleDTO = new HistoricalAnalysisSingleDTO();
+        historicalAnalysisSingleDTO.setExamCoversionTotal(examCoversionTotal);
+        historicalAnalysisSingleDTO.setClassRank(mapClass.get(stuNumber));//班排名
+        historicalAnalysisSingleDTO.setGradeRank(gradeRank);// 年级排名
+        historicalAnalysisSingleDTO.setClassPercentage(df.format(Float.parseFloat(mapClass.get(stuNumber).toString()) / classNumber)); // 班级排名百分率
+        historicalAnalysisSingleDTO.setGradePercentage(df.format((float)gradeRank / gradeNumber)); // 年级排名百分率
+        historicalAnalysisSingleDTO.setClassAverage(df.format(classAverage));// 班级平均分
+        historicalAnalysisSingleDTO.setGradeAverage(df.format(gradeAverage));// 年级平均分
+        historicalAnalysisSingleDTO.setClassAveragePercentage(df.format(classAveragePercentage)); //班级平均分百分率
+        historicalAnalysisSingleDTO.setGradeAveragePercentage(df.format(gradeAveragePercentage)); // 年级平均分百分率
+        historicalAnalysisSingleDTO.setSingleScorePercentage(df.format(singleScorePercentage));   // 单科分数的百分率
+
+        list.add(historicalAnalysisSingleDTO);
         return list;
     }
 }

@@ -90,6 +90,7 @@ public class ScoreController {
      * @param examType 某次考试
      * @return 返回DTO
      */
+//    @CrossOrigin(origins = "*", maxAge = 3600)
     @GetMapping(value = "/getExamCoversionTotalSectionInfo")
     public ResultVO<?> getExamCoversionTotalSectionInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                         @RequestParam(value = "examType") String examType){
@@ -127,4 +128,35 @@ public class ScoreController {
         return ResultVOUtil.success(subjectAnalysisInfo);
     }
 
+    /**
+     *  历史分析中的-01 ：总分分析，包含总分、班排、年排、班均分
+     *  年均分， 以上五个值的标准化（百分率）
+     * @param stuNumber 学生学号
+     * @param examType 具体的考试名称
+     * @return 返回DTO对象
+     */
+    @GetMapping(value = "/getHistoricalAnalysisTotalInfo")
+    public ResultVO<?> getHistoricalAnalysisTotalInfo(@RequestParam(value = "stuNumber") String stuNumber,
+                                                      @RequestParam(value = "examType") String examType){
+        List<HistoricalAnalysisTotalDTO> historicalAnalysisTotalInfo = scoreService.getHistoricalAnalysisTotalInfo(stuNumber,examType);
+
+        return ResultVOUtil.success(historicalAnalysisTotalInfo);
+    }
+
+    /**
+     * 历史分析中的-02 ：单科分数分析，包含单科分值、班排、年排、班均分
+     *   年均分， 以上五个值的标准化（百分率）
+     * @param stuNumber 学号
+     * @param examType 考试名称
+     * @param subject 具体科目
+     * @return 返回dto对象
+     */
+    @GetMapping(value = "/getHistoricalAnalysisSingleInfo")
+    public ResultVO<?> getHistoricalAnalysisSingleInfo(@RequestParam(value = "stuNumber") String stuNumber,
+                                                       @RequestParam(value = "examType") String examType,
+                                                       @RequestParam(value = "subject") String subject){
+        List<HistoricalAnalysisSingleDTO> historicalAnalysisSingleInfo = scoreService.getHistoricalAnalysisSingleInfo(stuNumber, examType, subject);
+
+        return ResultVOUtil.success(historicalAnalysisSingleInfo);
+    }
 }

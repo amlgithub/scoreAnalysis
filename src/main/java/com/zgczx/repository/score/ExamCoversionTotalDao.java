@@ -104,4 +104,17 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     @Query(value = "select zhengzhi_coversion from exam_coversion_total where exam_type=?1 order by zhengzhi_coversion desc", nativeQuery = true)
     List<String> findByZhengzhiCoversion(String examType);
 
+    // 获取此次考试的年级人数
+    int countByExamType(String examType);
+    // 获取此次考试的班级人数
+    int countByClassIdAndExamType(String classid, String examType);
+
+    // 班级总分累加和
+    @Query(value = "SELECT SUM(coversion_total) FROM exam_coversion_total WHERE class_id=?1 AND exam_type=?2 ", nativeQuery = true)
+    float sumCoversionTotalByClassIdAndExamType(String classid, String examType);
+
+    //年级总分累积和
+    @Query(value = "SELECT SUM(coversion_total) FROM exam_coversion_total WHERE exam_type=?1 ", nativeQuery = true)
+    float sumCoversionTotalByExamType(String examType);
+
 }
