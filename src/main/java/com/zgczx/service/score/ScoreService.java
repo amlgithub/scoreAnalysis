@@ -39,4 +39,6 @@ public interface ScoreService {
     List<HistoricalAnalysisTotalDTO> getHistoricalAnalysisTotalInfo(String stuNumber, String examType);
 
     List<HistoricalAnalysisSingleDTO> getHistoricalAnalysisSingleInfo(String stuNumber, String examType, String subject);
+
+    List<AsahiChartAllRateDTO> getAsahiChartAllRate(String stuNumber, String examType);
 }

@@ -1104,4 +1104,94 @@ public class ScoreServiceImpl implements ScoreService {
         list.add(historicalAnalysisSingleDTO);
         return list;
     }
+
+
+    @Override
+    public List<AsahiChartAllRateDTO> getAsahiChartAllRate(String stuNumber, String examType) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examType);
+        if (null == examCoversionTotal) {
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        int examTnfoId = examInfoDao.findByExamName(examType);
+        SubjectFullScore subjectFullScore = subjectFullScoreDao.findById(examTnfoId);
+        // 本次考试的全科总分
+        int sum = Math.toIntExact(subjectFullScore.getYuwen() + subjectFullScore.getShuxue() + subjectFullScore.getYingyu() + subjectFullScore.getWuli() + subjectFullScore.getHuaxue()
+                + subjectFullScore.getShengwu() + subjectFullScore.getZhengzhi() + subjectFullScore.getDili() + subjectFullScore.getLishi()) - 300;
+        // 三科比率值
+        double threeSubject = (examCoversionTotal.getYuwenScore()+examCoversionTotal.getShuxueScore()+examCoversionTotal.getYingyuScore()) /(subjectFullScore.getYingyu()+subjectFullScore.getShuxue()+subjectFullScore.getYingyu());
+
+        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
+        if (importConversionScore == null){
+            info = "查无此数据";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+
+        // 综合分数、真实所选的科目分数之和
+        double comprehensiveScore = 0.00;
+        // 综合的标准满分， 真实所选的科目分数之和
+        int comprehensiveStandardScore = 0;
+
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#0.00");
+
+        // 所有真实科目的率值，k: 科目名称；v：所对应的率值
+        Map<String, String> allSubjectRateMap = new HashMap<>();
+        double languageScoreRate = Double.parseDouble(importConversionScore.getYuwenScore()) / subjectFullScore.getYuwen();
+        allSubjectRateMap.put("language", df.format(languageScoreRate));//语文
+        double mathScoreRate = Double.parseDouble(importConversionScore.getShuxueScore()) / subjectFullScore.getShuxue();
+        allSubjectRateMap.put("math",df.format(mathScoreRate));
+        double englishScoreRate = Double.parseDouble(importConversionScore.getYingyuScore()) / subjectFullScore.getYingyu();
+        allSubjectRateMap.put("english",df.format(englishScoreRate));
+
+        if (!importConversionScore.getWuliConverscore().toString().equals("")){
+            comprehensiveScore += Double.parseDouble(importConversionScore.getWuliConverscore());
+            comprehensiveStandardScore += subjectFullScore.getWuli();
+            double physicalScoreRate =  Double.parseDouble(importConversionScore.getWuliConverscore()) / subjectFullScore.getWuli();
+            allSubjectRateMap.put("physical",df.format(physicalScoreRate));
+
+        }
+        if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
+            comprehensiveScore =+ Double.parseDouble(importConversionScore.getHuaxueConverscore());
+            comprehensiveStandardScore += subjectFullScore.getHuaxue();
+            double chemistryScoreRate =  Double.parseDouble(importConversionScore.getHuaxueConverscore()) / subjectFullScore.getHuaxue();
+            allSubjectRateMap.put("chemistry",df.format(chemistryScoreRate));
+        }
+        if (!importConversionScore.getShengwuConverscore().toString().equals("")){
+            comprehensiveScore =+ Double.parseDouble(importConversionScore.getShengwuConverscore());
+            comprehensiveStandardScore += subjectFullScore.getShengwu();
+            double biologicalScoreRate =  Double.parseDouble(importConversionScore.getShengwuConverscore()) / subjectFullScore.getShengwu();
+            allSubjectRateMap.put("biological",df.format(biologicalScoreRate));
+        }
+        if (!importConversionScore.getLishiConverscore().toString().equals("") ){
+            comprehensiveScore =+ Double.parseDouble(importConversionScore.getLishiConverscore());
+            comprehensiveStandardScore += subjectFullScore.getLishi();
+            double historyScoreRate =  Double.parseDouble(importConversionScore.getLishiConverscore()) / subjectFullScore.getLishi();
+            allSubjectRateMap.put("history",df.format(historyScoreRate));
+        }
+        if (!importConversionScore.getDiliConverscore().toString().equals("")){
+            comprehensiveScore =+ Double.parseDouble(importConversionScore.getDiliConverscore());
+            comprehensiveStandardScore += subjectFullScore.getDili();
+            double geographyScoreRate =  Double.parseDouble(importConversionScore.getDiliConverscore()) / subjectFullScore.getDili();
+            allSubjectRateMap.put("geography",df.format(geographyScoreRate));
+        }
+        if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
+            comprehensiveScore =+ Double.parseDouble(importConversionScore.getZhengzhiConverscore());
+            comprehensiveStandardScore += subjectFullScore.getZhengzhi();
+            double biologicalScoreRate =  Double.parseDouble(importConversionScore.getZhengzhiConverscore()) / subjectFullScore.getZhengzhi();
+            allSubjectRateMap.put("biological",df.format(biologicalScoreRate));
+        }
+
+        List<AsahiChartAllRateDTO> list = new ArrayList<>();
+        AsahiChartAllRateDTO asahiChartAllRateDTO = new AsahiChartAllRateDTO();
+        asahiChartAllRateDTO.setTotalScoreRate(df.format(examCoversionTotal.getCoversionTotal() / sum));
+        asahiChartAllRateDTO.setThreeSubjectsRate(df.format(threeSubject));
+        asahiChartAllRateDTO.setComprehensiveRate(df.format(comprehensiveScore / comprehensiveStandardScore));
+        asahiChartAllRateDTO.setAllSubjectRateMap(allSubjectRateMap);
+
+        list.add(asahiChartAllRateDTO);
+        return list;
+    }
 }

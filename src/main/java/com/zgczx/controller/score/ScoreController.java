@@ -159,4 +159,20 @@ public class ScoreController {
 
         return ResultVOUtil.success(historicalAnalysisSingleInfo);
     }
+
+
+    /**
+     *  旭日图中总分、三科、综合、各单科的率值
+     *  率值 = 所得分 / 各标准总分
+     * @param stuNumber 学号
+     * @param examType 考试名称
+     * @return 返回DTO对象
+     */
+    @GetMapping(value = "/getAsahiChartAllRate")
+    public ResultVO<?> getAsahiChartAllRate(@RequestParam(value = "stuNumber") String stuNumber,
+                                            @RequestParam(value = "examType") String examType){
+        List<AsahiChartAllRateDTO> asahiChartAllRate = scoreService.getAsahiChartAllRate(stuNumber, examType);
+
+        return ResultVOUtil.success(asahiChartAllRate);
+    }
 }
