@@ -175,4 +175,20 @@ public class ScoreController {
 
         return ResultVOUtil.success(asahiChartAllRate);
     }
+
+
+    /**
+     *  成绩单接口：获取总分的班排、年排，各具体单科的分数、班排、年排
+     * @param stuNumber 学号
+     * @param examType 考试名称
+     * @return DTO对象
+     */
+    @GetMapping(value = "/getScoreReportInfo")
+    public ResultVO<?> getScoreReportInfo(@RequestParam(value = "stuNumber") String stuNumber,
+                                          @RequestParam(value = "examType") String examType){
+        List<ScoreReportDTO> scoreReportDTOList = scoreService.getScoreReport(stuNumber, examType);
+
+        return ResultVOUtil.success(scoreReportDTOList);
+    }
+
 }

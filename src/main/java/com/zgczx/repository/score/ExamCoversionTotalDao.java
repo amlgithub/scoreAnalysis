@@ -81,7 +81,7 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     BigInteger findSchametotal(int examid);
 
     /**
-     *  语数英、物化生、政史地，九门科目的降序排列
+     *  语数英、物化生、政史地，九门科目的降序排列,年级排名
      * @param examType 具体考试名称
      * @return 返回单个数据库字段的所有值
      */
@@ -103,6 +103,32 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     List<String> findByDiliCoversion(String examType);
     @Query(value = "select zhengzhi_coversion from exam_coversion_total where exam_type=?1 order by zhengzhi_coversion desc", nativeQuery = true)
     List<String> findByZhengzhiCoversion(String examType);
+
+
+
+    /**
+     *  语数英、物化生、政史地，九门科目的降序排列,班级排名
+     * @param examType 具体考试名称
+     * @return 返回单个数据库字段的所有值
+     */
+    @Query(value = "select yuwen_score from exam_coversion_total where class_id = ?1 and exam_type=?2 order by yuwen_score desc", nativeQuery = true)
+    List<String> findByClassIdAndYuwenScore(String classid, String examType);
+    @Query(value = "select shuxue_score from exam_coversion_total where class_id = ?1 and exam_type=?2 order by shuxue_score desc", nativeQuery = true)
+    List<String> findByClassIdAndShuxueScore(String classid, String examType);
+    @Query(value = "select yingyu_score from exam_coversion_total where class_id = ?1 and exam_type=?2 order by yingyu_score desc", nativeQuery = true)
+    List<String> findByClassIdAndYingyuScore(String classid, String examType);
+    @Query(value = "select wuli_coversion from exam_coversion_total where class_id = ?1 and exam_type=?2 order by wuli_coversion desc", nativeQuery = true)
+    List<String> findByClassIdAndWuliCoversion(String classid, String examType);
+    @Query(value = "select huaxue_coversion from exam_coversion_total where class_id = ?1 and exam_type=?2 order by huaxue_coversion desc", nativeQuery = true)
+    List<String> findByClassIdAndHuaxueCoversion(String classid, String examType);
+    @Query(value = "select shengwu_coversion from exam_coversion_total where class_id = ?1 and exam_type=?2 order by shengwu_coversion desc", nativeQuery = true)
+    List<String> findByClassIdAndShengwuCoversion(String classid, String examType);
+    @Query(value = "select lishi_coversion from exam_coversion_total where class_id = ?1 and exam_type=?2 order by lishi_coversion desc", nativeQuery = true)
+    List<String> findByClassIdAndLishiCoversion(String classid, String examType);
+    @Query(value = "select dili_coversion from exam_coversion_total where class_id = ?1 and exam_type=?2 order by dili_coversion desc", nativeQuery = true)
+    List<String> findByClassIdAndDiliCoversion(String classid, String examType);
+    @Query(value = "select zhengzhi_coversion from exam_coversion_total where class_id = ?1 and exam_type=?2 order by zhengzhi_coversion desc", nativeQuery = true)
+    List<String> findByClassIdAndZhengzhiCoversion(String classid, String examType);
 
     // 获取此次考试的年级人数
     int countByExamType(String examType);
