@@ -22,5 +22,7 @@ public class ScoreReportDTO {
     private Map<String, Integer> subjectGradeRankMap;
     // 具体科目的班级排名，K:科目名称，V：对应的班级排名
     private Map<String, Integer> subjectClassRankMap;
+    // 总分满分标准、各科满分标准
+    private Map<String, Integer> subjectStandardMap;
 
 }

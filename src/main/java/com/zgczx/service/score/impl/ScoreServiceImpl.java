@@ -1209,8 +1209,13 @@ public class ScoreServiceImpl implements ScoreService {
             logger.error(info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
-//        //使用原生SQL
-//        EntityManager em = ntityManagerFactory.createEntityManager();
+        int examTnfoId = examInfoDao.findByExamName(examType);
+        SubjectFullScore subjectFullScore = subjectFullScoreDao.findById(examTnfoId);
+        // 本次考试的全科总分
+        int sum = Math.toIntExact(subjectFullScore.getYuwen() + subjectFullScore.getShuxue() + subjectFullScore.getYingyu() + subjectFullScore.getWuli() + subjectFullScore.getHuaxue()
+                + subjectFullScore.getShengwu() + subjectFullScore.getZhengzhi() + subjectFullScore.getDili() + subjectFullScore.getLishi()) - 300;
+       // 总分满分标准、各科满分标准
+        Map<String, Integer> subjectStandardMap = new HashMap<>();
         // 具体科目的分数map，k: 科目名称，V：对应的分数
         Map<String, String> subjectScoreMap = new HashMap<>();
         // 具体科目的年级排名，K:科目名称，V：对应的年级排名
@@ -1218,24 +1223,28 @@ public class ScoreServiceImpl implements ScoreService {
         // 具体科目的班级排名，K:科目名称，V：对应的班级排名
         Map<String, Integer> subjectClassRankMap = new HashMap<>();
 
+        subjectStandardMap.put("totalScoreStandard", sum);
+
         List<String> yuwenScoreGrade = examCoversionTotalDao.findByYuwenScore(examType);
         subjectScoreMap.put("language", String.valueOf(examCoversionTotal.getYuwenScore()));
         subjectGradeRankMap.put("languageGradeRank", yuwenScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1);
         List<String> yuwenScoreClass = examCoversionTotalDao.findByClassIdAndYuwenScore(examCoversionTotal.getClassId(), examType);
         subjectClassRankMap.put("languageClassRank", yuwenScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1);
+        subjectStandardMap.put("languageStandard", Integer.parseInt(subjectFullScore.getYuwen().toString()));
         // 数学
         List<String> shuxueScoreGrade = examCoversionTotalDao.findByShuxueScore(examType);
         subjectScoreMap.put("math", String.valueOf(examCoversionTotal.getShuxueScore()));
         subjectGradeRankMap.put("mathGradeRank", shuxueScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1);
         List<String> shuxueScoreClass = examCoversionTotalDao.findByClassIdAndShuxueScore(examCoversionTotal.getClassId(), examType);
         subjectClassRankMap.put("mathClassRank", shuxueScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1);
+        subjectStandardMap.put("mathStandard", Integer.parseInt(subjectFullScore.getShuxue().toString()));
         // 英语
         List<String> yingyuScoreGrade = examCoversionTotalDao.findByYingyuScore(examType);
         subjectScoreMap.put("english", String.valueOf(examCoversionTotal.getYingyuScore()));
         subjectGradeRankMap.put("englishGradeRank", yingyuScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1);
         List<String> yingyuScoreClass = examCoversionTotalDao.findByClassIdAndYingyuScore(examCoversionTotal.getClassId(), examType);
         subjectClassRankMap.put("englishClassRank", yingyuScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1);
-
+        subjectStandardMap.put("englishStandard", Integer.parseInt(subjectFullScore.getYingyu().toString()));
         // 学生具体选择的科目
         if (!importConversionScore.getWuliConverscore().toString().equals("")){
             List<String> wuliScoreGrade = examCoversionTotalDao.findByWuliCoversion(examType);
@@ -1243,7 +1252,7 @@ public class ScoreServiceImpl implements ScoreService {
             subjectGradeRankMap.put("physicalGradeRank", wuliScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1);
             List<String> wuliScoreClass = examCoversionTotalDao.findByClassIdAndWuliCoversion(examCoversionTotal.getClassId(), examType);
             subjectClassRankMap.put("physicalClassRank", wuliScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1);
-
+            subjectStandardMap.put("physicalStandard", Integer.parseInt(subjectFullScore.getWuli().toString()));
         }
         if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
             List<String> huaxueScoreGrade = examCoversionTotalDao.findByHuaxueCoversion(examType);
@@ -1251,7 +1260,7 @@ public class ScoreServiceImpl implements ScoreService {
             subjectGradeRankMap.put("chemistryGradeRank", huaxueScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1);
             List<String> huaxueScoreClass = examCoversionTotalDao.findByClassIdAndHuaxueCoversion(examCoversionTotal.getClassId(), examType);
             subjectClassRankMap.put("chemistryClassRank", huaxueScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1);
-
+            subjectStandardMap.put("chemistryStandard", Integer.parseInt(subjectFullScore.getHuaxue().toString()));
         }
         if (!importConversionScore.getShengwuConverscore().toString().equals("")){
             List<String> shengwuScoreGrade = examCoversionTotalDao.findByShengwuCoversion(examType);
@@ -1259,7 +1268,7 @@ public class ScoreServiceImpl implements ScoreService {
             subjectGradeRankMap.put("biologicalGradeRank", shengwuScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1);
             List<String> shengwuScoreClass = examCoversionTotalDao.findByClassIdAndShengwuCoversion(examCoversionTotal.getClassId(), examType);
             subjectClassRankMap.put("biologicalClassRank", shengwuScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1);
-
+            subjectStandardMap.put("biologicalStandard", Integer.parseInt(subjectFullScore.getShengwu().toString()));
         }
         if (!importConversionScore.getLishiConverscore().toString().equals("") ){
             List<String> lishiScoreGrade = examCoversionTotalDao.findByLishiCoversion(examType);
@@ -1267,7 +1276,7 @@ public class ScoreServiceImpl implements ScoreService {
             subjectGradeRankMap.put("historyGradeRank", lishiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1);
             List<String> lishiScoreClass = examCoversionTotalDao.findByClassIdAndLishiCoversion(examCoversionTotal.getClassId(), examType);
             subjectClassRankMap.put("historyClassRank", lishiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1);
-
+            subjectStandardMap.put("historyStandard", Integer.parseInt(subjectFullScore.getLishi().toString()));
         }
         if (!importConversionScore.getDiliConverscore().toString().equals("")){
             List<String> diliScoreGrade = examCoversionTotalDao.findByDiliCoversion(examType);
@@ -1275,15 +1284,15 @@ public class ScoreServiceImpl implements ScoreService {
             subjectGradeRankMap.put("geographyGradeRank", diliScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1);
             List<String> lishiScoreClass = examCoversionTotalDao.findByClassIdAndDiliCoversion(examCoversionTotal.getClassId(), examType);
             subjectClassRankMap.put("geographyClassRank", lishiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1);
-
+            subjectStandardMap.put("geographyStandard", Integer.parseInt(subjectFullScore.getDili().toString()));
         }
         if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
             List<String> zhengzhiScoreGrade = examCoversionTotalDao.findByZhengzhiCoversion(examType);
-            subjectScoreMap.put("biological", String.valueOf(examCoversionTotal.getZhengzhiCoversion()));
-            subjectGradeRankMap.put("biologicalGradeRank", zhengzhiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1);
+            subjectScoreMap.put("political", String.valueOf(examCoversionTotal.getZhengzhiCoversion()));
+            subjectGradeRankMap.put("politicalGradeRank", zhengzhiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1);
             List<String> zhengzhiScoreClass = examCoversionTotalDao.findByClassIdAndZhengzhiCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("biologicalClassRank", zhengzhiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1);
-
+            subjectClassRankMap.put("politicalClassRank", zhengzhiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1);
+            subjectStandardMap.put("politicalStandard", Integer.parseInt(subjectFullScore.getZhengzhi().toString()));
         }
         //保留两位小数
         DecimalFormat df = new DecimalFormat("#0.00");
@@ -1295,8 +1304,7 @@ public class ScoreServiceImpl implements ScoreService {
         scoreReportDTO.setSubjectScoreMap(subjectScoreMap);
         scoreReportDTO.setSubjectClassRankMap(subjectClassRankMap);
         scoreReportDTO.setSubjectGradeRankMap(subjectGradeRankMap);
-
-
+        scoreReportDTO.setSubjectStandardMap(subjectStandardMap);
 
         list.add(scoreReportDTO);
         return list;
