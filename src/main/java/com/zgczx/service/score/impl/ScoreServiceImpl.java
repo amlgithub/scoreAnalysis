@@ -22,6 +22,8 @@ import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.util.*;
 
+import static com.zgczx.utils.DateUtil.getNowTime;
+
 /**
  * @author aml
  * @date 2019/9/10 17:15
@@ -174,6 +176,12 @@ public class ScoreServiceImpl implements ScoreService {
         Query gradeQuery = em.createNativeQuery(gradeQuerysql, ExamCoversionTotal.class);
         @SuppressWarnings("unchecked")
         List<ExamCoversionTotal> gradeExamCoversionTotal = gradeQuery.getResultList();
+        // 动态获取某科目的成绩
+        String subjectSql = "select "+subject+" FROM exam_coversion_total WHERE student_number='"+stuNumber+"'and  exam_type='"+examType+"'";
+        System.out.println(subjectSql);
+        Query nativeQuery = em.createNativeQuery(subjectSql);
+        @SuppressWarnings("unchecked")
+        List<Double> subjectScore = nativeQuery.getResultList();
 
         em.close();
 
@@ -534,7 +542,12 @@ public class ScoreServiceImpl implements ScoreService {
         examCoversionTotalSingleDTO.setPoliticalScore(Math.toIntExact(subjectFullScore.getZhengzhi()));// 政治满分
         examCoversionTotalSingleDTO.setHistoryScore(Math.toIntExact(subjectFullScore.getLishi())); //历史满分
         examCoversionTotalSingleDTO.setGeographyScore(Math.toIntExact(subjectFullScore.getDili()));//地理满分
+        examCoversionTotalSingleDTO.setScore(String.valueOf(subjectScore.get(0)));
+
         examCoversionTotalSingleDTOList.add(examCoversionTotalSingleDTO);
+
+        //打印出哪个接口，参数值是什么，当前时间，以便记录下当前访问哪个接口等信息，如有有openid则也记录下
+        logger.info("getExamCoversionTotalSingleInfo--->"+"stuNumber :"+stuNumber+"  "+"examType:"+examType+"  subject: "+subject+"  time:"+getNowTime());
         return examCoversionTotalSingleDTOList;
 
     }
@@ -683,6 +696,7 @@ public class ScoreServiceImpl implements ScoreService {
             logger.error(info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
+       long star = System.currentTimeMillis();
         // 此班级的所有的总分数据
         List<Double> coversionTotalList= examCoversionTotalDao.getCoversionTotalByClassIdAndExamType(examCoversionTotal.getClassId(), examType);
         int examTnfoId = examInfoDao.findByExamName(examType);
@@ -690,6 +704,8 @@ public class ScoreServiceImpl implements ScoreService {
 //        SubjectFullScore sbujectFullScore = subjectFullScoreDao.findOne((int) examFullScoreSet.getId());
 //        int totalScore = (int) (sbujectFullScore.getYingyu() + sbujectFullScore.getShuxue()+sbujectFullScore.getYingyu()+sbujectFullScore.getWuli()+sbujectFullScore.getHuaxue()+sbujectFullScore.getShengwu()+sbujectFullScore.getDili()+sbujectFullScore.getLishi()+sbujectFullScore.getZhengzhi() - 300);
         BigInteger tatolscore = examCoversionTotalDao.findSchametotal(examTnfoId);
+        long end = System.currentTimeMillis();
+        System.out.println("sql耗费时间--->  "+ String.valueOf(end - star) + "ms");
         int score = Integer.parseInt(tatolscore.toString().trim()) - 300;
         double a = 0, avg = 0, personsum = 0, classtotalscore = 0;
         double highnumradio;
@@ -729,7 +745,8 @@ public class ScoreServiceImpl implements ScoreService {
                 beyondnum++;
             }
         }
-
+        long forTime = System.currentTimeMillis();
+        System.out.println("for循环耗费时间--->" + String.valueOf(forTime - end) + "ms");
         String location = "";
         if (examCoversionTotal.getCoversionTotal() >= score * 0.9) {
             location = "高分区域";
@@ -762,7 +779,12 @@ public class ScoreServiceImpl implements ScoreService {
         sixRateDTO.setBeyondRate(Double.parseDouble(df.format(beyondradio)));
         sixRateDTO.setLocationRate(location);
         sixRateDTOList.add(sixRateDTO);
+long entTime = System.currentTimeMillis();
+        System.out.println("结束时间-->" + String.valueOf(entTime - star) + "ms");
 
+       // logger.info("getSixRateInfo--->"+"openid:"+openid+"  "+"artId:"+artId+"  "+"time:"+getNowTime());
+        //打印出哪个接口，参数值是什么，当前时间，以便记录下当前访问哪个接口等信息，如有有openid则也记录下
+        logger.info("getSixRateInfo--->"+"stuNumber :"+stuNumber+"  "+"examType:"+examType+"  "+"time:"+getNowTime());
         return sixRateDTOList;
     }
 
@@ -1307,6 +1329,8 @@ public class ScoreServiceImpl implements ScoreService {
         scoreReportDTO.setSubjectStandardMap(subjectStandardMap);
 
         list.add(scoreReportDTO);
+        //打印出哪个接口，参数值是什么，当前时间，以便记录下当前访问哪个接口等信息，如有有openid则也记录下
+        logger.info("getScoreReport--->"+"stuNumber :"+stuNumber+"  "+"examType:"+examType+"  "+"time:"+getNowTime());
         return list;
     }
 }

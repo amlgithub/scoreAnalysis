@@ -44,5 +44,6 @@ public class ExamCoversionTotalSingleDTO {
     private int historyScore;
     // 地理满分标准
     private int geographyScore;
-
+    // subject此科目的对应分数
+    private String score;
 }
