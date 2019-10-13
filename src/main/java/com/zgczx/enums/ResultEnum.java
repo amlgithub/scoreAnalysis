@@ -34,7 +34,7 @@ public enum ResultEnum  {
     /**
      * 微信公众账号方面错误
      */
-    WECHAT_MP_ERROR(504, "微信公众账号方面错误"),
+   // WECHAT_MP_ERROR(504, "微信公众账号方面错误"),
     /**
      * 课程冲突
      */
@@ -43,6 +43,8 @@ public enum ResultEnum  {
      * 当前用户未注册
      */
     USER_NOT_REGISTER(506,"当前用户未注册"),
+
+
 
 
 
@@ -80,7 +82,15 @@ public enum ResultEnum  {
     INTERFACE_EXCEED_LOAD(60006, "接口负载过高"),
 
     /* 权限错误：70001-79999 */
-    PERMISSION_NO_ACCESS(70001, "无访问权限");
+    PERMISSION_NO_ACCESS(70001, "无访问权限"),
+
+
+    /* 微信公众号有关的错误: 80001-89999*/
+    WECHAT_MP_ERROR(80001, "微信公众账号方面错误"),
+
+
+
+    ;
 
 
 
