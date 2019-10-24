@@ -104,7 +104,9 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     @Query(value = "select zhengzhi_coversion from exam_coversion_total where exam_type=?1 order by zhengzhi_coversion desc", nativeQuery = true)
     List<String> findByZhengzhiCoversion(String examType);
 
-
+    // 获取总分的数组降序
+    @Query(value = "SELECT coversion_total FROM exam_coversion_total WHERE exam_type=?1 ORDER BY coversion_total DESC", nativeQuery = true)
+    List<String> findByTotalScore(String examType);
 
     /**
      *  语数英、物化生、政史地，九门科目的降序排列,班级排名
@@ -143,4 +145,7 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     @Query(value = "SELECT SUM(coversion_total) FROM exam_coversion_total WHERE exam_type=?1 ", nativeQuery = true)
     float sumCoversionTotalByExamType(String examType);
 
+    //总分的年级平均分
+    @Query(value = "SELECT AVG(coversion_total) FROM exam_coversion_total WHERE exam_type=?1", nativeQuery = true)
+    String totalAverageByExamType(String examType);
 }

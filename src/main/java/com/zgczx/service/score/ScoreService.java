@@ -43,4 +43,5 @@ public interface ScoreService {
     List<AsahiChartAllRateDTO> getAsahiChartAllRate(String stuNumber, String examType);
 
     List<ScoreReportDTO> getScoreReport(String stuNumber, String examType);
+
 }

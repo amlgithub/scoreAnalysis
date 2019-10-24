@@ -26,10 +26,20 @@ public class ExamCoversionTotalSectionDTO {
     //综合年级排名
     private int complexGradeRank;
 
-    // 年级排名进退名次
-    private int waveGrade;
-    // 班级排名进退名次
-    private int waveClass;
+//    // 年级排名进退名次
+//    private int waveGrade;
+//    // 班级排名进退名次
+//    private int waveClass;
     //存放某学生的6选3的具体科目
     private List<String> list;
+
+    //三科班级进退名次
+    private int threeWaveClass;
+    //三科年级进退名次
+    private int threeWaveGrade;
+    //综合班级进退名次
+    private int complexWaveClass;
+    //综合年级进退名次
+    private int complexWaveGrade;
+
 }

@@ -1,5 +1,6 @@
 package com.zgczx.dataobject.score;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -17,6 +18,8 @@ public class ExamInfo {
     private long id;
     private String examName;
     private String examGrade;
+    //解决返回给前端的是一个时间戳，改成为年月日时分秒格式
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp examDate;
     private String paperId;
 

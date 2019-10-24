@@ -19,4 +19,6 @@ public interface ExamInfoDao extends JpaRepository<ExamInfo, Integer> {
      */
     @Query(value = "select e.id from ExamInfo e where e.examName = ?1")
     int findByExamName(String examType);
+   // @Query(value = "select * from exam_info where exam_name=?1",nativeQuery = true)
+    ExamInfo getByExamName(String examType);
 }

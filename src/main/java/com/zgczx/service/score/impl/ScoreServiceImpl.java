@@ -4,7 +4,6 @@ import com.zgczx.dataobject.score.*;
 import com.zgczx.dataobject.user.SysLogin;
 import com.zgczx.dto.*;
 import com.zgczx.enums.ResultEnum;
-import com.zgczx.enums.UserEnum;
 import com.zgczx.exception.ScoreException;
 import com.zgczx.repository.score.*;
 import com.zgczx.repository.user.StudentInfoDao;
@@ -55,6 +54,9 @@ public class ScoreServiceImpl implements ScoreService {
     private ImportConversionScoreDao importConversionScoreDao;
 
     @Autowired
+    private SubjectDTODao subjectDTODao;
+
+    @Autowired
     EntityManagerFactory ntityManagerFactory;
 
     private String info;
@@ -84,7 +86,7 @@ public class ScoreServiceImpl implements ScoreService {
         List<ExamInfo> examInfoList = examInfoDao.findAll();
         if (examInfoList == null || examInfoList.size() == 0) {
             info = "查无结果";
-            logger.error(info);
+            logger.error("查询所有考试结果: {}",info);
             throw new ScoreException(ResultEnum.DATABASE_OP_EXCEPTION, info);
         }
         return examInfoList;
@@ -584,9 +586,8 @@ public class ScoreServiceImpl implements ScoreService {
             //对mapValueList进行降序排序
             Collections.sort(mapValueList, Collections.reverseOrder());
 
-
 //三科 班排的第一种方法，第一种方法无需在进行排名，只需要排好序即可
-            // mapValueRank存放的是 分值和排名
+            // mapValueRank存放的是 分值和排名，这个是第二种方法，不用此方法，而且有点问题，mapValueRank有32，而mapValueList有33个排名
             Map<String, Integer> mapValueRank = new HashMap<>();
             for (int j = 1; j < mapValueList.size(); j++){
                 mapValueRank.put(mapValueList.get(0), 1);
@@ -639,31 +640,148 @@ public class ScoreServiceImpl implements ScoreService {
         }
         Collections.sort(mapValueListComplexGrade, Collections.reverseOrder());
 
+        //本次班级、年级排名情况
+        //三科本次年级排名
+        int gradeRank  = threeSubjectGradeList.indexOf(String.valueOf(threeSubjectGradeMap.get(stuNumber))) + 1;
+        // 当前的班级排名
+        int classrank = mapValueList.indexOf(String.valueOf(map.get(stuNumber))) + 1;
+        // 综合本次班级排名
+        int complexClassrank = mapValueListComplex.indexOf(String.valueOf(complexClassMap.get(stuNumber))) + 1;
+        // 综合本次年级排名
+        int complexGraderank = mapValueListComplexGrade.indexOf(String.valueOf(complexGradeMap.get(stuNumber))) + 1;
+
         List<String> list = new ArrayList<>();
-        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
-        if (importConversionScore == null){
-            info = "查无此数据";
-            logger.error(info);
-            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
-        }
-        if (!importConversionScore.getWuliConverscore().toString().equals("")){
+
+        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
             list.add("物理");
         }
-        if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
+        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
             list.add("化学");
         }
-        if (!importConversionScore.getShengwuConverscore().toString().equals("")){
+        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
             list.add("生物");
         }
-        if (!importConversionScore.getLishiConverscore().toString().equals("") ){
+        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0") ){
             list.add("历史");
         }
-        if (!importConversionScore.getDiliConverscore().toString().equals("")){
+        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
             list.add("地理");
         }
-        if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
+        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
             list.add("政治");
         }
+
+        //显示上次考试的所有信息
+        // 获取所有考试列表
+        List<ExamInfo> examInfoList = examInfoDao.findAll();
+        if (examInfoList == null || examInfoList.size() == 0) {
+            info = "查无结果";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATABASE_OP_EXCEPTION, info);
+        }
+        String oldExamType = null;
+        for (int i = 0; i < examInfoList.size(); i++) {
+            if (examType.equals(examInfoList.get(0).getExamName())){
+                info = "本次为首次考试，暂无排名波动情况";
+                logger.info(info);
+                //三科的班级进退步
+                int threewaveClass =0;
+                //三科年级进退名次
+                int threewaveGrade = 0;
+                //综合班级进退名次
+                int complexwaveClass = 0;
+                //综合的年级进退名次
+                int complexwaveGrade = 0;
+                List<ExamCoversionTotalSectionDTO> examCoversionTotalSectionDTOList = new ArrayList<>();
+                ExamCoversionTotalSectionDTO examCoversionTotalSectionDTO = new ExamCoversionTotalSectionDTO();
+                examCoversionTotalSectionDTO.setExamCoversionTotal(examCoversionTotal);
+                examCoversionTotalSectionDTO.setThreeSubject(threeSubject);
+                examCoversionTotalSectionDTO.setComprehensive(comprehensive);
+                // 求班排的第二中方法，即用排好序的list，取下标法，indexOf:如果元素相同取第一次出现的下标，
+                examCoversionTotalSectionDTO.setClassRank(classrank);
+                examCoversionTotalSectionDTO.setGradeRank(gradeRank);
+                examCoversionTotalSectionDTO.setComplexClassRank(complexClassrank);
+                examCoversionTotalSectionDTO.setComplexGradeRank(complexGraderank);
+                //三科和综合的班级、年级进退名次
+                examCoversionTotalSectionDTO.setThreeWaveClass(threewaveClass);
+                examCoversionTotalSectionDTO.setThreeWaveGrade(threewaveGrade);
+                examCoversionTotalSectionDTO.setComplexWaveClass(complexwaveClass);
+                examCoversionTotalSectionDTO.setComplexWaveGrade(complexwaveGrade);
+                examCoversionTotalSectionDTO.setList(list);
+                examCoversionTotalSectionDTOList.add(examCoversionTotalSectionDTO);
+                return examCoversionTotalSectionDTOList;
+
+            } else  if (examType.equals(examInfoList.get(i).getExamName())) {
+                //获取上次试卷的名称
+                oldExamType = examInfoList.get(i - 1).getExamName();
+            }
+        }
+        //三科的上次班级排名
+        List<String[]> oldClassRank = examCoversionTotalDao.findByClassIdAndExamType(examCoversionTotal.getClassId(), oldExamType);
+        Map<Object, Object> oldMap = new HashMap<>();
+        for(int i = 0; i < oldClassRank.size(); i++) {
+            for (Object classRankObject[] : oldClassRank) {
+                oldMap.put(classRankObject[0], classRankObject[1]);
+            }
+        }
+        //将map中的值放到list中，进行排序
+        List<String> oldMapValueList = new ArrayList<>();
+        for (Object vaule : oldMap.values()){
+            oldMapValueList.add(String.valueOf(vaule));
+        }
+        //对mapValueList进行降序排序
+        Collections.sort(oldMapValueList, Collections.reverseOrder());
+
+        //三科的班级进退步
+        int threewaveClass = classrank - (oldMapValueList.indexOf(String.valueOf(oldMap.get(stuNumber))) + 1);
+        //三科上次年级排名
+        List<String[]> oldThreeSubjectGradeRank = examCoversionTotalDao.findByClassIdAndExamTypeGrade(oldExamType);
+        Map<Object, Object> oldThreeSubjectGradeMap = new HashMap<>();
+        for (int k = 0; k < oldThreeSubjectGradeRank.size(); k++){
+            for (Object gradeRankObject[] : oldThreeSubjectGradeRank){
+                oldThreeSubjectGradeMap.put(gradeRankObject[0], gradeRankObject[1]);
+            }
+        }
+        List<String> oldThreeSubjectGradeList = new ArrayList<>();
+        for (Object threeSubjectValue : oldThreeSubjectGradeMap.values()){
+            oldThreeSubjectGradeList.add(String.valueOf(threeSubjectValue));
+        }
+        Collections.sort(oldThreeSubjectGradeList, Collections.reverseOrder());
+
+        //三科年级进退名次
+        int threewaveGrade = gradeRank - (oldThreeSubjectGradeList.indexOf(String.valueOf(oldThreeSubjectGradeMap.get(stuNumber))) + 1);
+
+        //综合的上次班排名次
+        List<String[]> oldComplexClassRank = examCoversionTotalDao.findByClassIdAndExamTypeComplex(examCoversionTotal.getClassId(), oldExamType);
+        Map<Object, Object> oldComplexClassMap= new HashMap<>();
+        for(int i = 0; i < oldComplexClassRank.size(); i++) {
+            for (Object classRankObject[] : oldComplexClassRank) {
+                oldComplexClassMap.put(classRankObject[0], classRankObject[1]);
+            }
+        }
+        List<String> oldMapValueListComplex = new ArrayList<>();
+        for (Object vaule : oldComplexClassMap.values()){
+            oldMapValueListComplex.add(String.valueOf(vaule));
+        }
+        Collections.sort(oldMapValueListComplex, Collections.reverseOrder());
+       //综合班级进退名次
+        int complexwaveClass = complexClassrank - (oldMapValueListComplex.indexOf(String.valueOf(oldComplexClassMap.get(stuNumber))) + 1);
+        //综合的上次年排名次
+        List<String[]> oldcomplexGradeRank = examCoversionTotalDao.findByClassIdAndExamTypeComplexGrade(oldExamType);
+        Map<Object, Object> oldcomplexGradeMap= new HashMap<>();
+        for(int i = 0; i < oldcomplexGradeRank.size(); i++) {
+            for (Object classRankObject[] : oldcomplexGradeRank) {
+                oldcomplexGradeMap.put(classRankObject[0], classRankObject[1]);
+            }
+        }
+        List<String> oldmapValueListComplexGrade = new ArrayList<>();
+        for (Object vaule : oldcomplexGradeMap.values()){
+            oldmapValueListComplexGrade.add(String.valueOf(vaule));
+        }
+        Collections.sort(oldmapValueListComplexGrade, Collections.reverseOrder());
+
+        //综合的年级进退名次
+        int complexwaveGrade = complexGraderank - (oldmapValueListComplexGrade.indexOf(String.valueOf(oldcomplexGradeMap.get(stuNumber))) + 1);
 
         List<ExamCoversionTotalSectionDTO> examCoversionTotalSectionDTOList = new ArrayList<>();
         ExamCoversionTotalSectionDTO examCoversionTotalSectionDTO = new ExamCoversionTotalSectionDTO();
@@ -671,16 +789,22 @@ public class ScoreServiceImpl implements ScoreService {
         examCoversionTotalSectionDTO.setThreeSubject(threeSubject);
         examCoversionTotalSectionDTO.setComprehensive(comprehensive);
         // 求班排的第二中方法，即用排好序的list，取下标法，indexOf:如果元素相同取第一次出现的下标，
-        examCoversionTotalSectionDTO.setClassRank(mapValueList.indexOf(String.valueOf(map.get(stuNumber))) + 1);
+        examCoversionTotalSectionDTO.setClassRank(classrank);
 
         //第一种方法，此方法
 //        String key = String.valueOf(map.get(stuNumber));//强转有问题，这样的也有问题，如果小数多(科学计数法)会出问题
 //        examCoversionTotalSectionDTO.setClassRank(mapValueRank.get(key));
 
-        examCoversionTotalSectionDTO.setGradeRank(threeSubjectGradeList.indexOf(String.valueOf(threeSubjectGradeMap.get(stuNumber))) + 1);
+        examCoversionTotalSectionDTO.setGradeRank(gradeRank);
 
-        examCoversionTotalSectionDTO.setComplexClassRank(mapValueListComplex.indexOf(String.valueOf(complexClassMap.get(stuNumber))) + 1);
-        examCoversionTotalSectionDTO.setComplexGradeRank(mapValueListComplexGrade.indexOf(String.valueOf(complexGradeMap.get(stuNumber))) + 1);
+        examCoversionTotalSectionDTO.setComplexClassRank(complexClassrank);
+        examCoversionTotalSectionDTO.setComplexGradeRank(complexGraderank);
+
+        //三科和综合的班级、年级进退名次
+        examCoversionTotalSectionDTO.setThreeWaveClass(threewaveClass);
+        examCoversionTotalSectionDTO.setThreeWaveGrade(threewaveGrade);
+        examCoversionTotalSectionDTO.setComplexWaveClass(complexwaveClass);
+        examCoversionTotalSectionDTO.setComplexWaveGrade(complexwaveGrade);
 
         examCoversionTotalSectionDTO.setList(list);
         examCoversionTotalSectionDTOList.add(examCoversionTotalSectionDTO);
@@ -784,7 +908,7 @@ long entTime = System.currentTimeMillis();
 
        // logger.info("getSixRateInfo--->"+"openid:"+openid+"  "+"artId:"+artId+"  "+"time:"+getNowTime());
         //打印出哪个接口，参数值是什么，当前时间，以便记录下当前访问哪个接口等信息，如有有openid则也记录下
-        logger.info("getSixRateInfo--->"+"stuNumber :"+stuNumber+"  "+"examType:"+examType+"  "+"time:"+getNowTime());
+        logger.info("getSixRateInfo--->stuNumber :{}, examType: {}, time: {}",stuNumber,examType,getNowTime());
         return sixRateDTOList;
     }
 
@@ -796,12 +920,16 @@ long entTime = System.currentTimeMillis();
             logger.error(info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
-        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
-        if (importConversionScore == null){
-            info = "查无此数据";
-            logger.error(info);
-            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
-        }
+        List<String> totalScoreList = examCoversionTotalDao.findByTotalScore(examType);
+        int totalScoreRank = totalScoreList.indexOf(Float.parseFloat(examCoversionTotal.getCoversionTotal().toString())) + 1 ;
+        logger.info("总分的年级排名：{}", totalScoreRank);
+
+//        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
+//        if (importConversionScore == null){
+//            info = "查无此数据";
+//            logger.error(info);
+//            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+//        }
         // 各单科与总分的比值
         Map<String, String> contributionRate = new HashMap<>();
         double language, // 语文
@@ -815,65 +943,74 @@ long entTime = System.currentTimeMillis();
                 geography; //地理
         //保留两位小数
         DecimalFormat df = new DecimalFormat("#0.00");
-        language = Double.parseDouble(importConversionScore.getYuwenScore()) / Double.parseDouble(importConversionScore.getTotalScore());
-        math = Double.parseDouble(importConversionScore.getShuxueScore()) / Double.parseDouble(importConversionScore.getTotalScore());
-        english = Double.parseDouble(importConversionScore.getYingyuScore()) / Double.parseDouble(importConversionScore.getTotalScore());
-
-        //再次使用原生SQL语句查询，来获取班级年级的排名
-        EntityManager entityManager = ntityManagerFactory.createEntityManager();
+        language = examCoversionTotal.getYuwenScore()/ examCoversionTotal.getCoversionTotal();
+        math =examCoversionTotal.getShuxueScore() /examCoversionTotal.getCoversionTotal();
+        english = examCoversionTotal.getYingyuScore() /examCoversionTotal.getCoversionTotal();
 
         // 单科和总分的年级差值
         Map<String , Integer> equilibriumDifferenceMap = new HashMap<>();
 
         contributionRate.put("语文", df.format(language) + "%");
         List<String> yuwenGradeExamCoversionTotal =  examCoversionTotalDao.findByYuwenScore(examType);
-        equilibriumDifferenceMap.put("语文差值", (int) (yuwenGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+        int yuwenGradeRank = yuwenGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1;
+        equilibriumDifferenceMap.put("语文差值", (int) (examCoversionTotal.getSchoolIndex() - yuwenGradeRank));
 
         contributionRate.put("数学", df.format(math) + "%");
         List<String> shuxueGradeExamCoversionTotal =  examCoversionTotalDao.findByShuxueScore(examType);
-        equilibriumDifferenceMap.put("数学差值", (int) (shuxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+        int shuxueGradeRank = shuxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1;
+        equilibriumDifferenceMap.put("数学差值", (int) (examCoversionTotal.getSchoolIndex() - shuxueGradeRank ));
 
         contributionRate.put("英语", df.format(english) + "%");
         List<String> yingyuGradeExamCoversionTotal =  examCoversionTotalDao.findByYingyuScore(examType);
-        equilibriumDifferenceMap.put("英语差值", (int) (yingyuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
+        int yingyuGradeRank = yingyuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1;
+        equilibriumDifferenceMap.put("英语差值", (int) (examCoversionTotal.getSchoolIndex() - yingyuGradeRank ));
 
 
-        if (!importConversionScore.getWuliConverscore().toString().equals("")){
-            contributionRate.put("物理", df.format(Double.parseDouble(importConversionScore.getWuliConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
+            contributionRate.put("物理", df.format(examCoversionTotal.getWuliCoversion() / examCoversionTotal.getCoversionTotal()) + "%");
             List<String> wuliGradeExamCoversionTotal =  examCoversionTotalDao.findByWuliCoversion(examType);
-            equilibriumDifferenceMap.put("物理差值", (int) (wuliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
-
+            int wuliGradeRank = wuliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1;
+            equilibriumDifferenceMap.put("物理差值", (int) (examCoversionTotal.getSchoolIndex() - wuliGradeRank ));
+            logger.info("物理年级排名：{}",wuliGradeRank);
         }
-        if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
-            contributionRate.put("化学", df.format(Double.parseDouble(importConversionScore.getHuaxueConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
+            contributionRate.put("化学", df.format(examCoversionTotal.getHuaxueCoversion() /examCoversionTotal.getCoversionTotal()) + "%");
             List<String> huaxueGradeExamCoversionTotal =  examCoversionTotalDao.findByHuaxueCoversion(examType);
-            equilibriumDifferenceMap.put("化学差值", (int) (huaxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
-
+            int huaxueGradeRank = huaxueGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1;
+            equilibriumDifferenceMap.put("化学差值", (int) (examCoversionTotal.getSchoolIndex()) - huaxueGradeRank );
+            logger.info("化学年级排名：{}",huaxueGradeRank);
         }
-        if (!importConversionScore.getShengwuConverscore().toString().equals("")){
-            contributionRate.put("生物", df.format(Double.parseDouble(importConversionScore.getShengwuConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
+            contributionRate.put("生物", df.format(examCoversionTotal.getShengwuCoversion() / examCoversionTotal.getCoversionTotal()) + "%");
             List<String> shengwuGradeExamCoversionTotal =  examCoversionTotalDao.findByShengwuCoversion(examType);
-            equilibriumDifferenceMap.put("生物差值", (int) (shengwuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
-
+            int shengwuGradeRank = shengwuGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1;
+            equilibriumDifferenceMap.put("生物差值", (int) (examCoversionTotal.getSchoolIndex() - shengwuGradeRank ));
+            logger.info("生物年级排名：{}",shengwuGradeRank);
         }
-        if (!importConversionScore.getLishiConverscore().toString().equals("") ){
-            contributionRate.put("历史",df.format(Double.parseDouble(importConversionScore.getLishiConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0") ){
+            contributionRate.put("历史",df.format(examCoversionTotal.getLishiCoversion() / examCoversionTotal.getCoversionTotal()) + "%");
             List<String> lishiGradeExamCoversionTotal =  examCoversionTotalDao.findByLishiCoversion(examType);
-            equilibriumDifferenceMap.put("历史差值", (int) (lishiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
-
+            int lishiGradeRank = lishiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1;
+            equilibriumDifferenceMap.put("历史差值", (int) (examCoversionTotal.getSchoolIndex()) - lishiGradeRank );
+            logger.info("历史年级排名：{}",lishiGradeRank);
         }
-        if (!importConversionScore.getDiliConverscore().toString().equals("")){
-            contributionRate.put("地理", df.format(Double.parseDouble(importConversionScore.getDiliConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
+            contributionRate.put("地理", df.format(examCoversionTotal.getDiliCoversion() / examCoversionTotal.getCoversionTotal()) + "%");
             List<String> diliGradeExamCoversionTotal =  examCoversionTotalDao.findByDiliCoversion(examType);
-            equilibriumDifferenceMap.put("地理差值", (int) (diliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
-
+            int diliGradeRank = diliGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1;
+            equilibriumDifferenceMap.put("地理差值", (int) (examCoversionTotal.getSchoolIndex()) - diliGradeRank );
+            logger.info("地理年级排名：{}",diliGradeRank);
         }
-        if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
-            contributionRate.put("政治", df.format(Double.parseDouble(importConversionScore.getZhengzhiConverscore()) / Double.parseDouble(importConversionScore.getTotalScore())) + "%");
+        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
+            contributionRate.put("政治", df.format(examCoversionTotal.getZhengzhiCoversion() / examCoversionTotal.getCoversionTotal()) + "%");
             List<String> zhengzhiGradeExamCoversionTotal =  examCoversionTotalDao.findByZhengzhiCoversion(examType);
-            equilibriumDifferenceMap.put("政治差值", (int) (zhengzhiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1 - examCoversionTotal.getCoversionTotal()));
-
+            int zhengzhiGradeRank = zhengzhiGradeExamCoversionTotal.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1;
+            equilibriumDifferenceMap.put("政治差值", (int) (examCoversionTotal.getSchoolIndex() - zhengzhiGradeRank ));
+            logger.info("政治年级排名：{}",zhengzhiGradeRank);
         }
+        logger.info("语文年级排名：{}",yuwenGradeRank);
+        logger.info("数学年级排名：{}",shuxueGradeRank);
+        logger.info("英语年级排名：{}",yingyuGradeRank);
 
         List<SubjectAnalysisDTO> list = new ArrayList<>();
         SubjectAnalysisDTO subjectAnalysisDTO = new SubjectAnalysisDTO();
@@ -1225,112 +1362,168 @@ long entTime = System.currentTimeMillis();
             logger.error(info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
-        ImportConversionScore importConversionScore = importConversionScoreDao.findByStudentMachineCardAndExamType(examCoversionTotal.getStudentMachineCard(), examCoversionTotal.getExamType());
-        if (importConversionScore == null){
-            info = "查无此数据";
-            logger.error(info);
-            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
-        }
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#0.00");
         int examTnfoId = examInfoDao.findByExamName(examType);
         SubjectFullScore subjectFullScore = subjectFullScoreDao.findById(examTnfoId);
         // 本次考试的全科总分
         int sum = Math.toIntExact(subjectFullScore.getYuwen() + subjectFullScore.getShuxue() + subjectFullScore.getYingyu() + subjectFullScore.getWuli() + subjectFullScore.getHuaxue()
                 + subjectFullScore.getShengwu() + subjectFullScore.getZhengzhi() + subjectFullScore.getDili() + subjectFullScore.getLishi()) - 300;
-       // 总分满分标准、各科满分标准
-        Map<String, Integer> subjectStandardMap = new HashMap<>();
-        // 具体科目的分数map，k: 科目名称，V：对应的分数
-        Map<String, String> subjectScoreMap = new HashMap<>();
-        // 具体科目的年级排名，K:科目名称，V：对应的年级排名
-        Map<String, Integer> subjectGradeRankMap = new HashMap<>();
-        // 具体科目的班级排名，K:科目名称，V：对应的班级排名
-        Map<String, Integer> subjectClassRankMap = new HashMap<>();
-
-        subjectStandardMap.put("totalScoreStandard", sum);
+        //获取年级平均分
+        String totalAverage = examCoversionTotalDao.totalAverageByExamType(examType);
+        //查询单科的所有年级平均分
+        List<SubjectDTO> subjectDTOList = subjectDTODao.avgSubject(examType);
+        SubjectDTO subjectDTO = subjectDTOList.get(0);
+        logger.info(String.valueOf(subjectDTO));
+        // Map<String, Map<String, String>> map = new HashMap<>();
+//        Map<String, Map<String, String>> map = new TreeMap<>();
+        //LinkedHashMap将map中的顺序按照添加顺序排列
+        Map<String, Map<String, String>> map = new LinkedHashMap<>();
+        //定义九门课的map
+        Map<String, String> yuwenMap = new HashMap<>();
+        Map<String, String> shuxueMap = new HashMap<>();
+        Map<String, String> yingyuMap = new HashMap<>();
+        Map<String, String> wuliMap = new HashMap<>();
+        Map<String, String> huaxueMap = new HashMap<>();
+        Map<String, String> shengwuMap = new HashMap<>();
+        Map<String, String> diliMap = new HashMap<>();
+        Map<String, String> lishiMap = new HashMap<>();
+        Map<String, String> zhengzhiMap = new HashMap<>();
 
         List<String> yuwenScoreGrade = examCoversionTotalDao.findByYuwenScore(examType);
-        subjectScoreMap.put("language", String.valueOf(examCoversionTotal.getYuwenScore()));
-        subjectGradeRankMap.put("languageGradeRank", yuwenScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1);
+        yuwenMap.put("title", "语文");
+        yuwenMap.put("score", String.valueOf(examCoversionTotal.getYuwenScore()));
+        yuwenMap.put("gradeRank", String.valueOf(yuwenScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1));
         List<String> yuwenScoreClass = examCoversionTotalDao.findByClassIdAndYuwenScore(examCoversionTotal.getClassId(), examType);
-        subjectClassRankMap.put("languageClassRank", yuwenScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1);
-        subjectStandardMap.put("languageStandard", Integer.parseInt(subjectFullScore.getYuwen().toString()));
+        yuwenMap.put("classRank", String.valueOf(yuwenScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getYuwenScore().toString())) + 1));
+        yuwenMap.put("fullscoreStandard", subjectFullScore.getYuwen().toString());
+        yuwenMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getYuwen())));
         // 数学
         List<String> shuxueScoreGrade = examCoversionTotalDao.findByShuxueScore(examType);
-        subjectScoreMap.put("math", String.valueOf(examCoversionTotal.getShuxueScore()));
-        subjectGradeRankMap.put("mathGradeRank", shuxueScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1);
+        shuxueMap.put("title", "数学");
+        shuxueMap.put("score", String.valueOf(examCoversionTotal.getShuxueScore()));
+        shuxueMap.put("gradeRank", String.valueOf(shuxueScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1));
         List<String> shuxueScoreClass = examCoversionTotalDao.findByClassIdAndShuxueScore(examCoversionTotal.getClassId(), examType);
-        subjectClassRankMap.put("mathClassRank", shuxueScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1);
-        subjectStandardMap.put("mathStandard", Integer.parseInt(subjectFullScore.getShuxue().toString()));
+        shuxueMap.put("classRank", String.valueOf(shuxueScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getShuxueScore().toString())) + 1));
+        shuxueMap.put("fullscoreStandard", subjectFullScore.getShuxue().toString());
+        shuxueMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getShengwu())));
         // 英语
         List<String> yingyuScoreGrade = examCoversionTotalDao.findByYingyuScore(examType);
-        subjectScoreMap.put("english", String.valueOf(examCoversionTotal.getYingyuScore()));
-        subjectGradeRankMap.put("englishGradeRank", yingyuScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1);
+        yingyuMap.put("title", "英语");
+        yingyuMap.put("score", String.valueOf(examCoversionTotal.getYingyuScore()));
+        yingyuMap.put("gradeRank", String.valueOf(yingyuScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1));
         List<String> yingyuScoreClass = examCoversionTotalDao.findByClassIdAndYingyuScore(examCoversionTotal.getClassId(), examType);
-        subjectClassRankMap.put("englishClassRank", yingyuScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1);
-        subjectStandardMap.put("englishStandard", Integer.parseInt(subjectFullScore.getYingyu().toString()));
+        yingyuMap.put("classRank", String.valueOf(yingyuScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getYingyuScore().toString())) + 1));
+        yingyuMap.put("fullscoreStandard", subjectFullScore.getYingyu().toString());
+        yingyuMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getYingyu())));
         // 学生具体选择的科目
-        if (!importConversionScore.getWuliConverscore().toString().equals("")){
+        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
+            wuliMap.put("title", "物理");
             List<String> wuliScoreGrade = examCoversionTotalDao.findByWuliCoversion(examType);
-            subjectScoreMap.put("physical", String.valueOf(examCoversionTotal.getWuliCoversion()));
-            subjectGradeRankMap.put("physicalGradeRank", wuliScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1);
+            wuliMap.put("score", String.valueOf(examCoversionTotal.getWuliCoversion()));
+            wuliMap.put("gradeRank", String.valueOf(wuliScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1));
             List<String> wuliScoreClass = examCoversionTotalDao.findByClassIdAndWuliCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("physicalClassRank", wuliScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1);
-            subjectStandardMap.put("physicalStandard", Integer.parseInt(subjectFullScore.getWuli().toString()));
+            wuliMap.put("classRank", String.valueOf(wuliScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getWuliCoversion().toString())) + 1));
+            wuliMap.put("fullscoreStandard", subjectFullScore.getWuli().toString());
+            wuliMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getWuli())));
         }
-        if (!importConversionScore.getHuaxueConverscore().toString().equals("")){
+        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
+            huaxueMap.put("title", "化学");
             List<String> huaxueScoreGrade = examCoversionTotalDao.findByHuaxueCoversion(examType);
-            subjectScoreMap.put("chemistry", String.valueOf(examCoversionTotal.getHuaxueCoversion()));
-            subjectGradeRankMap.put("chemistryGradeRank", huaxueScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1);
+            huaxueMap.put("score", String.valueOf(examCoversionTotal.getHuaxueCoversion()));
+            huaxueMap.put("gradeRank", String.valueOf(huaxueScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1));
             List<String> huaxueScoreClass = examCoversionTotalDao.findByClassIdAndHuaxueCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("chemistryClassRank", huaxueScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1);
-            subjectStandardMap.put("chemistryStandard", Integer.parseInt(subjectFullScore.getHuaxue().toString()));
+            huaxueMap.put("classRank", String.valueOf(huaxueScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getHuaxueCoversion().toString())) + 1));
+            huaxueMap.put("fullscoreStandard", subjectFullScore.getHuaxue().toString());
+            huaxueMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getHuaxue())));
         }
-        if (!importConversionScore.getShengwuConverscore().toString().equals("")){
+        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
+            shengwuMap.put("title", "生物");
             List<String> shengwuScoreGrade = examCoversionTotalDao.findByShengwuCoversion(examType);
-            subjectScoreMap.put("biological", String.valueOf(examCoversionTotal.getShengwuCoversion()));
-            subjectGradeRankMap.put("biologicalGradeRank", shengwuScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1);
+            shengwuMap.put("score", String.valueOf(examCoversionTotal.getShengwuCoversion()));
+            shengwuMap.put("gradeRank", String.valueOf(shengwuScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1));
             List<String> shengwuScoreClass = examCoversionTotalDao.findByClassIdAndShengwuCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("biologicalClassRank", shengwuScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1);
-            subjectStandardMap.put("biologicalStandard", Integer.parseInt(subjectFullScore.getShengwu().toString()));
+            shengwuMap.put("classRank", String.valueOf(shengwuScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getShengwuCoversion().toString())) + 1));
+            shengwuMap.put("fullscoreStandard", subjectFullScore.getShengwu().toString());
+            shengwuMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getShengwu())));
         }
-        if (!importConversionScore.getLishiConverscore().toString().equals("") ){
+        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0") ){
+            lishiMap.put("title", "历史");
             List<String> lishiScoreGrade = examCoversionTotalDao.findByLishiCoversion(examType);
-            subjectScoreMap.put("history", String.valueOf(examCoversionTotal.getLishiCoversion()));
-            subjectGradeRankMap.put("historyGradeRank", lishiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1);
+            lishiMap.put("score", String.valueOf(examCoversionTotal.getLishiCoversion()));
+            lishiMap.put("gradeRank", String.valueOf(lishiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1));
             List<String> lishiScoreClass = examCoversionTotalDao.findByClassIdAndLishiCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("historyClassRank", lishiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1);
-            subjectStandardMap.put("historyStandard", Integer.parseInt(subjectFullScore.getLishi().toString()));
+            lishiMap.put("classRank", String.valueOf(lishiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getLishiCoversion().toString())) + 1));
+            lishiMap.put("fullscoreStandard", subjectFullScore.getLishi().toString());
+            lishiMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getLishi())));
         }
-        if (!importConversionScore.getDiliConverscore().toString().equals("")){
+        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
+            diliMap.put("title", "地理");
             List<String> diliScoreGrade = examCoversionTotalDao.findByDiliCoversion(examType);
-            subjectScoreMap.put("geography", String.valueOf(examCoversionTotal.getDiliCoversion()));
-            subjectGradeRankMap.put("geographyGradeRank", diliScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1);
+            diliMap.put("score", String.valueOf(examCoversionTotal.getDiliCoversion()));
+            diliMap.put("gradeRank", String.valueOf(diliScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1));
             List<String> lishiScoreClass = examCoversionTotalDao.findByClassIdAndDiliCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("geographyClassRank", lishiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1);
-            subjectStandardMap.put("geographyStandard", Integer.parseInt(subjectFullScore.getDili().toString()));
+            diliMap.put("classRank", String.valueOf(lishiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getDiliCoversion().toString())) + 1));
+            diliMap.put("fullscoreStandard", subjectFullScore.getDili().toString());
+            diliMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getDili())));
         }
-        if (!importConversionScore.getZhengzhiConverscore().toString().equals("")){
+        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
             List<String> zhengzhiScoreGrade = examCoversionTotalDao.findByZhengzhiCoversion(examType);
-            subjectScoreMap.put("political", String.valueOf(examCoversionTotal.getZhengzhiCoversion()));
-            subjectGradeRankMap.put("politicalGradeRank", zhengzhiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1);
+            zhengzhiMap.put("title", "政治");
+            zhengzhiMap.put("score", String.valueOf(examCoversionTotal.getZhengzhiCoversion()));
+            zhengzhiMap.put("gradeRank", String.valueOf(zhengzhiScoreGrade.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1));
             List<String> zhengzhiScoreClass = examCoversionTotalDao.findByClassIdAndZhengzhiCoversion(examCoversionTotal.getClassId(), examType);
-            subjectClassRankMap.put("politicalClassRank", zhengzhiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1);
-            subjectStandardMap.put("politicalStandard", Integer.parseInt(subjectFullScore.getZhengzhi().toString()));
+            zhengzhiMap.put("classRank", String.valueOf(zhengzhiScoreClass.indexOf(Float.parseFloat(examCoversionTotal.getZhengzhiCoversion().toString())) + 1));
+            zhengzhiMap.put("fullscoreStandard", subjectFullScore.getZhengzhi().toString());
+            zhengzhiMap.put("subjectAvg", df.format(Double.parseDouble(subjectDTO.getZhengzhi())));
         }
-        //保留两位小数
-        DecimalFormat df = new DecimalFormat("#0.00");
+
+        //班级总人数
+        int totalClassNumber = yuwenScoreClass.size();
+        //年级总人数
+        int totalGradeNumber = yuwenScoreGrade.size();
+
+
         List<ScoreReportDTO> list = new ArrayList<>();
         ScoreReportDTO scoreReportDTO = new ScoreReportDTO();
         scoreReportDTO.setTotalScore(df.format(examCoversionTotal.getCoversionTotal()));
         scoreReportDTO.setTotalScoreGradeRank(examCoversionTotal.getSchoolIndex());
         scoreReportDTO.setTotalScoreClassRank(examCoversionTotal.getClassIndex());
-        scoreReportDTO.setSubjectScoreMap(subjectScoreMap);
-        scoreReportDTO.setSubjectClassRankMap(subjectClassRankMap);
-        scoreReportDTO.setSubjectGradeRankMap(subjectGradeRankMap);
-        scoreReportDTO.setSubjectStandardMap(subjectStandardMap);
+        //总分满分标准
+        scoreReportDTO.setTotalScoreStandard(df.format(sum));
+        scoreReportDTO.setTotalClassNumber(totalClassNumber);
+        scoreReportDTO.setTotalGradeNumber(totalGradeNumber);
+        map.put("yuwenMap", yuwenMap);
+        if (wuliMap.size() != 0){
+            map.put("wuliMap",wuliMap);
+        }
+        if (zhengzhiMap.size() != 0){
+            map.put("zhengzhiMap",zhengzhiMap);
+        }
+        map.put("shuxueMap",shuxueMap);
+        if (huaxueMap.size() != 0){
+            map.put("huaxueMap",huaxueMap);
+        }
+        if (lishiMap.size() != 0){
+            map.put("lishiMap",lishiMap);
+        }
+        map.put("yingyuMap",yingyuMap);
+
+        if (shengwuMap.size() != 0){
+           map.put("shengwuMap",shengwuMap);
+        }
+        if (diliMap.size() != 0){
+            map.put("diliMap",diliMap);
+        }
+
+        //总分的年级平均分
+       // scoreReportDTO.setTotalAverage(df.format(totalAverage));
+        scoreReportDTO.setTotalAverage(df.format(Double.parseDouble(totalAverage)));
+        scoreReportDTO.setMap(map);
 
         list.add(scoreReportDTO);
-        //打印出哪个接口，参数值是什么，当前时间，以便记录下当前访问哪个接口等信息，如有有openid则也记录下
-        logger.info("getScoreReport--->"+"stuNumber :"+stuNumber+"  "+"examType:"+examType+"  "+"time:"+getNowTime());
+        //打印出哪个接口，参数值是什么，当前时间，以便记录下当前访问哪个接口等信息，如有有openid则也记录下, 使用占位符，logger支持占位符
+        logger.info("getScoreReport---> stuNumber:{}, examType:{}, time:{}", stuNumber,examType,getNowTime());
         return list;
     }
 }
