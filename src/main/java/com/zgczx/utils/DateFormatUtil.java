@@ -31,6 +31,9 @@ public class DateFormatUtil {
     public String dateFormat(String dateString) throws Exception {
         log.info("原始dataString字符串: {}", dateString);
         int year = dateString.indexOf("年");
+        if (year == 4){
+            return dateString;
+        }
         if (year == 2) {
             dateString = "20" + dateString;
         } else if (year == 3) {
@@ -88,7 +91,5 @@ public class DateFormatUtil {
         dateString = dateString.replaceFirst("0", "");
         return dateString;
     }
-
-
 
 }

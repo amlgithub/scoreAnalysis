@@ -136,6 +136,28 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     int countByExamType(String examType);
     // 获取此次考试的班级人数
     int countByClassIdAndExamType(String classid, String examType);
+    // 获取选取物理的年级总人数，按照考试分数 > 0来计算，可能会有些误差
+    @Query(value = "SELECT COUNT(*) FROM exam_coversion_total WHERE exam_type=?1 AND wuli_coversion > '0'", nativeQuery = true)
+    int countByExamTypeAndWuli(String examType);
+    // 获取选取化学的年级总人数，按照考试分数 > 0来计算，可能会有些误差
+    @Query(value = "SELECT COUNT(*) FROM exam_coversion_total WHERE exam_type=?1 AND huaxue_coversion > '0'", nativeQuery = true)
+    int countByExamTypeAndHuaxue(String examType);
+    // 获取选取生物的年级总人数，按照考试分数 > 0来计算，可能会有些误差
+    @Query(value = "SELECT COUNT(*) FROM exam_coversion_total WHERE exam_type=?1 AND shengwu_coversion > '0'", nativeQuery = true)
+    int countByExamTypeAndShengwu(String examType);
+    // 获取选取政治的年级总人数，按照考试分数 > 0来计算，可能会有些误差
+    @Query(value = "SELECT COUNT(*) FROM exam_coversion_total WHERE exam_type=?1 AND zhengzhi_coversion > '0'", nativeQuery = true)
+    int countByExamTypeAndZhegnzhi(String examType);
+    // 获取选取历史的年级总人数，按照考试分数 > 0来计算，可能会有些误差
+    @Query(value = "SELECT COUNT(*) FROM exam_coversion_total WHERE exam_type=?1 AND lishi_coversion > '0'", nativeQuery = true)
+    int countByExamTypeAndLishi(String examType);
+    // 获取选取地理的年级总人数，按照考试分数 > 0来计算，可能会有些误差
+    @Query(value = "SELECT COUNT(*) FROM exam_coversion_total WHERE exam_type=?1 AND dili_coversion > '0'", nativeQuery = true)
+    int countByExamTypeAndDili(String examType);
+
+
+
+
 
     // 班级总分累加和
     @Query(value = "SELECT SUM(coversion_total) FROM exam_coversion_total WHERE class_id=?1 AND exam_type=?2 ", nativeQuery = true)

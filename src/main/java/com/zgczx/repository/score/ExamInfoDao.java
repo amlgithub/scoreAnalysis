@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author aml
  * @date 2019/9/10 15:53
@@ -21,4 +23,7 @@ public interface ExamInfoDao extends JpaRepository<ExamInfo, Integer> {
     int findByExamName(String examType);
    // @Query(value = "select * from exam_info where exam_name=?1",nativeQuery = true)
     ExamInfo getByExamName(String examType);
+
+    @Query(value = "SELECT exam_name FROM exam_info ", nativeQuery = true)
+    List<String>getAllExamName();
 }
