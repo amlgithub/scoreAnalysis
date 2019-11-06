@@ -1,15 +1,18 @@
 package com.zgczx.controller.score;
 
+import com.alibaba.fastjson.JSONObject;
 import com.zgczx.VO.ResultVO;
-import com.zgczx.dataobject.score.ManuallyEnterGrades;
+import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.service.scoretwo.ScoreTwoService;
 import com.zgczx.utils.ResultVOUtil;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 承接ScoreController剩下的接口
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author aml
  * @date 2019/10/29 12:27
  */
+@Api(value = "第二个scoreTwo分析模块")
 @RestController
 @RequestMapping("/scoreTwo")
 @Slf4j
@@ -46,4 +50,58 @@ public class ScoreTwoController {
         ManuallyEnterGrades manuallyEnterGrades = scoreTwoService.saveEntity(wechatOpenid,studentNumber,subject,score,classRank,gradeRank,examName);
         return ResultVOUtil.success(manuallyEnterGrades);
     }
+
+    @PostMapping("/saveList")
+    public ResultVO<?> saveList(@RequestBody List<ManuallyEnterGrades> list){
+
+        List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(list);
+
+        return ResultVOUtil.success(list1);
+    }
+
+    /**
+     * 获取此用户录入数据的所有年份
+     * @param openid 用户openid
+     * @return StringList 对象
+     */
+    @GetMapping("/getYearList")
+    public ResultVO<?> getYearList(@RequestParam(value = "openid") String openid){
+
+        List<String> stringList = scoreTwoService.getYearList(openid);
+
+        return ResultVOUtil.success(stringList);
+    }
+
+    /**
+     *  根据年份获取对应的数据中的月份
+     * @param openid
+     * @param year
+     * @return
+     */
+    @GetMapping(value = "getMonthByYearList")
+    public ResultVO<?> getMonthByYearList(@RequestParam(value = "openid") String openid,
+                                          @RequestParam(value = "year") String year){
+
+        List<String> stringList = scoreTwoService.getMonthByYearList(openid,year);
+        return ResultVOUtil.success(stringList);
+    }
+
+    /**
+     * 根据年份和月份获取对应的数据中的考试名称，例如2018年08月月考，此接口就是获取 “月考”
+     * @param openid
+     * @param yearMonth
+     * @return
+     */
+    @ApiOperation(value = "根据年份和月份获取对应的数据中的考试名称")
+    @GetMapping(value = "getExamNameByYearMonthList")
+    public ResultVO<?> getExamNameByYearMonthList(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "年月参数名称",required = true)
+            @RequestParam(value = "yearMonth") String yearMonth){
+
+        List<String> stringList = scoreTwoService.getExamNameByYearMonthList(openid,yearMonth);
+        return ResultVOUtil.success(stringList);
+    }
+
 }

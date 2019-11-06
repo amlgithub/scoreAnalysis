@@ -1,11 +1,10 @@
 package com.zgczx.utils;
 
-import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.repository.score.ExamInfoDao;
+import com.zgczx.repository.mysql1.score.model.ExamInfo;
+import com.zgczx.repository.mysql1.score.dao.ExamInfoDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 

@@ -1,4 +1,4 @@
-package com.zgczx.dataobject.score;
+package com.zgczx.repository.mysql1.score.model;
 
 import javax.persistence.*;
 import java.sql.Timestamp;

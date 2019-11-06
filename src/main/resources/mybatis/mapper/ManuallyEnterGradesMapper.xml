@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zgczx.mapper.ManuallyEnterGradesMapper">
+    <!--官方示例-->
+    <!--<select id="selectBlog" resultType="Blog">-->
+        <!--select * from Blog where id = #{id}-->
+    <!--</select>-->
+
+    <!--List<ManuallyEnterGrades> getManuallyEnterGrades();-->
+
+    <!--ManuallyEnterGrades getManuallyEnterGradesById(int id);  ：这个是mapper接口写的接口方法，必须和XML对应的-->
+    <!--id: 就是方法名， resultType： 返回值类型,用全类名-->
+    <select id="getManuallyEnterGradesById" resultType="com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades">
+#         这里面就直接写SQL语句，就是原生的SQL语句即可
+    select * from manually_enter_grades where id = #{id}
+    </select>
+
+    <select id="getManuallyEnterGrades" resultType="com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades">
+        select * from manually_enter_grades;
+    </select>
+
+    <!--List<String> getYears(String openid);-->
+    <select id="getYears" parameterType="string" resultType="string">
+        SELECT LEFT(exam_name, 5) FROM manually_enter_grades WHERE wechat_openid = #{openid}
+    </select>
+
+    <!--List<String> getMonths(String openid,String year);-->
+    <select id="getMonths" resultType="string">
+        SELECT exam_name FROM manually_enter_grades WHERE wechat_openid =#{0} AND exam_name LIKE #{1}
+    </select>
+</mapper>

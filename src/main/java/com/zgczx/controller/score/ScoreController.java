@@ -1,9 +1,12 @@
 package com.zgczx.controller.score;
 
 import com.zgczx.VO.ResultVO;
-import com.zgczx.dataobject.score.ExamCoversionTotal;
-import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.dto.*;
+import com.zgczx.repository.mysql1.score.dto.*;
+import com.zgczx.repository.mysql2.scoretwo.dto.ExamCoversionTotalDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.ExamCoversionTotalSectionDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.ExamCoversionTotalSingleDTO;
+import com.zgczx.repository.mysql2.scoretwo.model.ExamCoversionTotal;
+import com.zgczx.repository.mysql1.score.model.ExamInfo;
 import com.zgczx.service.score.ScoreService;
 import com.zgczx.utils.ResultVOUtil;
 import org.slf4j.Logger;
@@ -11,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -137,8 +139,9 @@ public class ScoreController {
      */
     @GetMapping(value = "/getHistoricalAnalysisTotalInfo")
     public ResultVO<?> getHistoricalAnalysisTotalInfo(@RequestParam(value = "stuNumber") String stuNumber,
-                                                      @RequestParam(value = "examType") String examType){
-        List<HistoricalAnalysisTotalDTO> historicalAnalysisTotalInfo = scoreService.getHistoricalAnalysisTotalInfo(stuNumber,examType);
+                                                      @RequestParam(value = "examType") String examType,
+                                                      @RequestParam(value = "openid") String openid){
+        List<HistoricalAnalysisTotalDTO> historicalAnalysisTotalInfo = scoreService.getHistoricalAnalysisTotalInfo(stuNumber,examType,openid);
 
         return ResultVOUtil.success(historicalAnalysisTotalInfo);
     }
@@ -154,8 +157,9 @@ public class ScoreController {
     @GetMapping(value = "/getHistoricalAnalysisSingleInfo")
     public ResultVO<?> getHistoricalAnalysisSingleInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                        @RequestParam(value = "examType") String examType,
-                                                       @RequestParam(value = "subject") String subject){
-        List<HistoricalAnalysisSingleDTO> historicalAnalysisSingleInfo = scoreService.getHistoricalAnalysisSingleInfo(stuNumber, examType, subject);
+                                                       @RequestParam(value = "subject") String subject,
+                                                       @RequestParam(value = "openid") String openid){
+        List<HistoricalAnalysisSingleDTO> historicalAnalysisSingleInfo = scoreService.getHistoricalAnalysisSingleInfo(stuNumber, examType, subject,openid);
 
         return ResultVOUtil.success(historicalAnalysisSingleInfo);
     }

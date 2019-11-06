@@ -1,8 +1,11 @@
 package com.zgczx.service.score;
 
-import com.zgczx.dataobject.score.ExamCoversionTotal;
-import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.dto.*;
+import com.zgczx.repository.mysql1.score.dto.*;
+import com.zgczx.repository.mysql2.scoretwo.dto.ExamCoversionTotalDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.ExamCoversionTotalSectionDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.ExamCoversionTotalSingleDTO;
+import com.zgczx.repository.mysql2.scoretwo.model.ExamCoversionTotal;
+import com.zgczx.repository.mysql1.score.model.ExamInfo;
 
 import java.util.List;
 
@@ -36,9 +39,9 @@ public interface ScoreService {
 
     List<SubjectAnalysisDTO> getSubjectAnalysisInfo(String stuNumber, String examType);
 
-    List<HistoricalAnalysisTotalDTO> getHistoricalAnalysisTotalInfo(String stuNumber, String examType);
+    List<HistoricalAnalysisTotalDTO> getHistoricalAnalysisTotalInfo(String stuNumber, String examType,String openid);
 
-    List<HistoricalAnalysisSingleDTO> getHistoricalAnalysisSingleInfo(String stuNumber, String examType, String subject);
+    List<HistoricalAnalysisSingleDTO> getHistoricalAnalysisSingleInfo(String stuNumber, String examType, String subject,String openid);
 
     List<AsahiChartAllRateDTO> getAsahiChartAllRate(String stuNumber, String examType);
 

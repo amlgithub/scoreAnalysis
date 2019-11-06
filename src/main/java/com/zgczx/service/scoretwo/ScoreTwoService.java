@@ -1,6 +1,8 @@
 package com.zgczx.service.scoretwo;
 
-import com.zgczx.dataobject.score.ManuallyEnterGrades;
+import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
+
+import java.util.List;
 
 /**
  * @author aml
@@ -15,4 +17,13 @@ public interface ScoreTwoService {
                             String classRank,
                             String gradeRank,
                             String examName);
+
+   List<ManuallyEnterGrades> saveList(List<ManuallyEnterGrades> list);
+
+   List<String> getYearList(String openid);
+
+   List<String> getMonthByYearList(String openid,String year);
+
+    List<String> getExamNameByYearMonthList(String openid,String yearMonth);
+
 }
