@@ -1,6 +1,9 @@
 package com.zgczx.controller.score;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.service.scoretwo.ScoreTwoService;
@@ -9,6 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,10 +55,17 @@ public class ScoreTwoController {
         return ResultVOUtil.success(manuallyEnterGrades);
     }
 
+    /**
+     * 注意： 前端用Vue直接传不了，list中包含类似json串的格式，
+     * 前端只能传string，后端用fastjson.JSON处理一下，封装成list数组形式
+     * @param list
+     * @return
+     */
     @PostMapping("/saveList")
-    public ResultVO<?> saveList(@RequestBody List<ManuallyEnterGrades> list){
-
-        List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(list);
+    public ResultVO<?> saveList(@RequestBody String list){
+        List<ManuallyEnterGrades> enterGradesList = JSON.parseObject(list, new TypeReference<List<ManuallyEnterGrades>>() {
+        });
+        List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(enterGradesList);
 
         return ResultVOUtil.success(list1);
     }
