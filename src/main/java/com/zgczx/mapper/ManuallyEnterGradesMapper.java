@@ -1,6 +1,7 @@
 package com.zgczx.mapper;
 
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -19,5 +20,5 @@ public interface ManuallyEnterGradesMapper {
     List<String> getYears(String openid);
 
     // 获取此用户的所有录入数据的年份
-    List<String> getMonths(String openid,String year);
+    List<String> getMonths(@Param("openid")String openid, @Param("year")String year);
 }

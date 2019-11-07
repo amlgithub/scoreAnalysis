@@ -96,7 +96,9 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
     @Override
     public List<String> getMonthByYearList(String openid, String year) {
         String nameYear = "%"+year+"%" ;
+        // 通过mybatis方式查询数据
         //List<String> months = manuallyEnterGradesMapper.getMonths(openid, nameYear);
+        //通过jpa方式查询数据
         List<String> months = manuallyEnterGradesDao.getExamNameByWechatOpenidAndYear(openid, nameYear);
         List<String> list = new ArrayList<>();
         for (int i = 0 ; i < months.size(); i++){
@@ -119,5 +121,16 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             list.add(substring);
         }
         return list;
+    }
+
+    @Override
+    public List<ManuallyEnterGrades> findAll(String openid, String examName) {
+        List<ManuallyEnterGrades> allByWechatOpenidAndExamName = manuallyEnterGradesDao.findAllByWechatOpenidAndExamName(openid, examName);
+        if (allByWechatOpenidAndExamName == null || allByWechatOpenidAndExamName.size() == 0){
+            info = "您未录入数据";
+            logger.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
+        }
+        return allByWechatOpenidAndExamName;
     }
 }

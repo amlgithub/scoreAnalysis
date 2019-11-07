@@ -24,6 +24,8 @@ public interface ScoreTwoService {
 
    List<String> getMonthByYearList(String openid,String year);
 
-    List<String> getExamNameByYearMonthList(String openid,String yearMonth);
+   List<String> getExamNameByYearMonthList(String openid,String yearMonth);
+
+   List<ManuallyEnterGrades> findAll(String openid,String examName);
 
 }

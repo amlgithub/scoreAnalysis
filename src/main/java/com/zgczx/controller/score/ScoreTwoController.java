@@ -24,7 +24,7 @@ import java.util.List;
  * @author aml
  * @date 2019/10/29 12:27
  */
-@Api(value = "第二个scoreTwo分析模块")
+@Api(description = "第二个scoreTwo分析模块")
 @RestController
 @RequestMapping("/scoreTwo")
 @Slf4j
@@ -75,8 +75,11 @@ public class ScoreTwoController {
      * @param openid 用户openid
      * @return StringList 对象
      */
+    @ApiOperation(value = "获取此用户录入数据的所有年份")
     @GetMapping("/getYearList")
-    public ResultVO<?> getYearList(@RequestParam(value = "openid") String openid){
+    public ResultVO<?> getYearList(
+            @ApiParam(value = "openid", required = true)
+            @RequestParam(value = "openid") String openid){
 
         List<String> stringList = scoreTwoService.getYearList(openid);
 
@@ -89,9 +92,13 @@ public class ScoreTwoController {
      * @param year
      * @return
      */
+    @ApiOperation(value = "根据年份和openid获取对应的数据中的月份信息")
     @GetMapping(value = "getMonthByYearList")
-    public ResultVO<?> getMonthByYearList(@RequestParam(value = "openid") String openid,
-                                          @RequestParam(value = "year") String year){
+    public ResultVO<?> getMonthByYearList(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "year", required = true)
+            @RequestParam(value = "year") String year){
 
         List<String> stringList = scoreTwoService.getMonthByYearList(openid,year);
         return ResultVOUtil.success(stringList);
@@ -113,6 +120,19 @@ public class ScoreTwoController {
 
         List<String> stringList = scoreTwoService.getExamNameByYearMonthList(openid,yearMonth);
         return ResultVOUtil.success(stringList);
+    }
+
+    //获取此用户录入本次考试的所有信息
+    @ApiOperation(value = "根据考试名称和openid获取对应的数据")
+    @GetMapping(value = "/findAll")
+    public ResultVO<?> findAll(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "exam_name全称",required = true)
+            @RequestParam(value = "examName") String examName
+    ){
+        List<ManuallyEnterGrades> list = scoreTwoService.findAll(openid,examName);
+        return ResultVOUtil.success(list);
     }
 
 }

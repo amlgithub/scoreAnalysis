@@ -19,4 +19,6 @@ public interface ManuallyEnterGradesDao extends JpaRepository<ManuallyEnterGrade
 
     @Query(value = "SELECT exam_name FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2", nativeQuery = true)
     List<String> getExamNameByYearMonthAndWechatOpenid(String openid, String yearMonth);
+
+    List<ManuallyEnterGrades> findAllByWechatOpenidAndExamName(String openid,String examName);
 }
