@@ -1,16 +1,16 @@
 package com.zgczx.test;
 
-import com.zgczx.dataobject.score.ExamInfo;
-import com.zgczx.repository.score.ExamInfoDao;
+import com.zgczx.repository.mysql1.score.model.ExamInfo;
+import com.zgczx.repository.mysql1.score.dao.ExamInfoDao;
+import com.zgczx.repository.mysql2.scoretwo.dao.ExamCoversionTotalDao;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * 单元测试Junit步骤
@@ -22,6 +22,9 @@ import static org.junit.Assert.*;
 public class ExamInfoDaoTest {
     @Autowired
     ExamInfoDao examInfoDao;
+
+    @Autowired
+    ExamCoversionTotalDao examCoversionTotalDao;
     @Test
     public void findByExamName() {
         String dateString = "19年4月期中";
@@ -34,7 +37,13 @@ public class ExamInfoDaoTest {
 //        System.out.println("查询出来的id为： "+byExamName);
 
         ExamInfo examName = examInfoDao.getByExamName(dateString);
-        System.out.println(examName);
+        ExampleMatcher matching = ExampleMatcher.matching();
+        examCoversionTotalDao.findAll((Iterable<Integer>) matching);
+        String s = "exam_type";
+        String s1 = "2019年3月考试";
+////        List<String> byYuwenScore = examCoversionTotalDao.findByYuwenScore(s, s1);
+//
+//        System.out.println(byYuwenScore);
 
     }
 

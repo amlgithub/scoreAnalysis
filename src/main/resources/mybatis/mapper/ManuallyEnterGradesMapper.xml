@@ -22,12 +22,14 @@
     </select>
 
     <!--List<String> getYears(String openid);-->
+    <!--根据openid获取此用户录入的所有年份，需要去重-->
     <select id="getYears" parameterType="string" resultType="string">
-        SELECT LEFT(exam_name, 5) FROM manually_enter_grades WHERE wechat_openid = #{openid}
+        SELECT DISTINCT LEFT(exam_name, 5) FROM manually_enter_grades WHERE wechat_openid = #{openid}
     </select>
 
     <!--List<String> getMonths(String openid,String year);-->
+    <!--根据openid和考试名称  获取like所匹配到的examName-->
     <select id="getMonths" resultType="string">
-        SELECT exam_name FROM manually_enter_grades WHERE wechat_openid =#{0} AND exam_name LIKE #{1}
+        SELECT exam_name FROM manually_enter_grades WHERE wechat_openid =#{openid} AND exam_name LIKE #{year}
     </select>
 </mapper>

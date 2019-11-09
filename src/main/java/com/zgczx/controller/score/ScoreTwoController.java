@@ -16,6 +16,8 @@ import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -58,6 +60,9 @@ public class ScoreTwoController {
     /**
      * 注意： 前端用Vue直接传不了，list中包含类似json串的格式，
      * 前端只能传string，后端用fastjson.JSON处理一下，封装成list数组形式
+     * @RequestBody是把整个HttpServletRequest的输入(request.getInputStream())，
+     * 转换成一个对象，常用的转换是采用json方式，
+     * 在spring中是RequestResponseBodyMethodProcessor利用HttpMessageConventer做的。
      * @param list
      * @return
      */
@@ -69,6 +74,16 @@ public class ScoreTwoController {
 
         return ResultVOUtil.success(list1);
     }
+    @PostMapping("/saveList2")
+    public ResultVO<?> saveList2(HttpServletRequest request, HttpServletResponse response){
+        String list = request.getParameter("0");
+        List<ManuallyEnterGrades> enterGradesList = JSON.parseObject(list, new TypeReference<List<ManuallyEnterGrades>>() {
+        });
+        List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(enterGradesList);
+
+        return ResultVOUtil.success(list1);
+    }
+
 
     /**
      * 获取此用户录入数据的所有年份
