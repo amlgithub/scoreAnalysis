@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletRequest;
  */
 //TODO 暂时屏蔽 能够登录后需要放开，也就是有开放平台登录账号
 // 2019年11.9号，先不放开，看需求再说
+    // 微信端没必要使用权限认证，因为用户根本就不知道接口的url
+    //但是PC端得需要，因为用户可以从 浏览器的窗口地址栏中看到具体的url
 //@Aspect
 //@Component
 @Slf4j

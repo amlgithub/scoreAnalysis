@@ -17,6 +17,9 @@ public interface ManuallyEnterGradesDao extends JpaRepository<ManuallyEnterGrade
     @Query(value = "SELECT DISTINCT LEFT(exam_name, 8) FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2 ", nativeQuery = true)
     List<String> getExamNameByWechatOpenidAndYear(String openid, String year);
 
+    @Query(value = "SELECT COUNT(exam_name) FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2", nativeQuery = true)
+    int countByWechatOpenidAndExamName(String openid, String examName);
+
     @Query(value = "SELECT exam_name FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2", nativeQuery = true)
     List<String> getExamNameByYearMonthAndWechatOpenid(String openid, String yearMonth);
 

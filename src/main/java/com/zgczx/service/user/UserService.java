@@ -14,4 +14,6 @@ public interface UserService {
     WechatStudent login(String openid, HttpServletRequest request,HttpServletResponse response);
 
     String logout(HttpServletRequest request, HttpServletResponse response);
+
+    WechatStudent registerWechatStudent(WechatStudent wechatStudent);
 }

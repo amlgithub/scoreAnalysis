@@ -247,4 +247,9 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
 
     @Query(value = "SELECT exam_type FROM exam_coversion_total WHERE school_name = ?1 GROUP BY exam_type", nativeQuery = true)
     List<String> getAllExamTypeBySchoolName(String schoolName);
+
+
+    // 获取此用户的班级
+    @Query(value = "SELECT class_id FROM exam_coversion_total WHERE (username=?1 OR student_number=?2) AND school_name=?3 AND exam_type=?4 AND valid=?5", nativeQuery = true)
+    String getClassIdByStudentNameAndSchoolNameAndExamTypeAndValid(String username,String studentNumber,String schoolName, String examType,String valid);
 }

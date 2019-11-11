@@ -33,6 +33,8 @@ public class HistoricalAnalysisTotalDTO {
 //    private String totalScorePercentage;
 
     // 里面存放多个子map，例如班排map、年排map、平均分map等
-    private Map<String, Map<String, String>> map;
+   // private Map<String, Map<String, String>> map;
+
+    private Map<Integer, Map<String, String>> mapTotal;
 
 }

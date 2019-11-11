@@ -1,5 +1,6 @@
 package com.zgczx.service.scoretwo;
 
+import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.List;
  * @author aml
  * @date 2019/10/29 12:31
  */
+
 public interface ScoreTwoService {
 
    ManuallyEnterGrades saveEntity(String wechatOpneid,
@@ -22,7 +24,7 @@ public interface ScoreTwoService {
 
    List<String> getYearList(String openid);
 
-   List<String> getMonthByYearList(String openid,String year);
+   List<MonthByYearListDTO> getMonthByYearList(String openid, String year);
 
    List<String> getExamNameByYearMonthList(String openid,String yearMonth);
 

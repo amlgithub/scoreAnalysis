@@ -54,6 +54,7 @@ public class ExamCoversionTotal {
     private Integer dataSource;
     private Integer valid;
     private String schoolName;
+    private String username;
 
     @Id
     @Column(name = "id")
@@ -251,10 +252,6 @@ public class ExamCoversionTotal {
         return coversionAvg;
     }
 
-    public void setCoversionAvg(Double coversionAvg) {
-        this.coversionAvg = coversionAvg;
-    }
-
 //    @Basic
 //    @Column(name = "data_source")
 //    public Integer getDataSource() {
@@ -264,6 +261,10 @@ public class ExamCoversionTotal {
 //    public void setDataSource(Integer dataSource) {
 //        this.dataSource = dataSource;
 //    }
+
+    public void setCoversionAvg(Double coversionAvg) {
+        this.coversionAvg = coversionAvg;
+    }
 
     @Basic
     @Column(name = "school_index")
@@ -336,5 +337,15 @@ public class ExamCoversionTotal {
     @Override
     public int hashCode() {
         return Objects.hash(schoolName);
+    }
+
+    @Basic
+    @Column(name = "username")
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

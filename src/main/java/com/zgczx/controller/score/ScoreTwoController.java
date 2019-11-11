@@ -5,7 +5,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.VO.ResultVO;
+import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
+import com.zgczx.service.score.ScoreService;
 import com.zgczx.service.scoretwo.ScoreTwoService;
 import com.zgczx.utils.ResultVOUtil;
 import io.swagger.annotations.Api;
@@ -34,6 +36,7 @@ public class ScoreTwoController {
 
     @Autowired
     ScoreTwoService scoreTwoService;
+
     /**
      *  插入操作
      * @param wechatOpenid openid
@@ -115,7 +118,7 @@ public class ScoreTwoController {
             @ApiParam(value = "year", required = true)
             @RequestParam(value = "year") String year){
 
-        List<String> stringList = scoreTwoService.getMonthByYearList(openid,year);
+        List<MonthByYearListDTO> stringList = scoreTwoService.getMonthByYearList(openid,year);
         return ResultVOUtil.success(stringList);
     }
 

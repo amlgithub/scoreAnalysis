@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 
 import javax.annotation.Resource;
@@ -89,5 +90,22 @@ public class UserServiceImpl implements UserService {
         info = "清除cookie成功!";
 
         return info;
+    }
+
+    @Override
+    public WechatStudent registerWechatStudent(WechatStudent wechatStudent) {
+        if (wechatStudent == null){
+            info = "【wechatStudent】实体为空";
+            log.error(info);
+            throw new ScoreException(ResultEnum.PARAM_IS_INVALID.getCode(),info);
+        }
+        if (StringUtils.isEmpty(wechatStudent.getOpenid())){
+            log.error("【学生注册】openid 为空,openid={}",wechatStudent.getOpenid());
+            throw new ScoreException(ResultEnum.PARAM_EXCEPTION.getCode(),ResultEnum.PARAM_EXCEPTION.getMessage());
+        }
+
+        WechatStudent save = wechatStudentDao.save(wechatStudent);
+
+        return save;
     }
 }

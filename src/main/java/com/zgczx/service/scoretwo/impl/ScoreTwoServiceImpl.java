@@ -2,6 +2,7 @@ package com.zgczx.service.scoretwo.impl;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.zgczx.mapper.ManuallyEnterGradesMapper;
+import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
@@ -94,7 +95,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
     }
 
     @Override
-    public List<String> getMonthByYearList(String openid, String year) {
+    public List<MonthByYearListDTO> getMonthByYearList(String openid, String year) {
         String nameYear = "%"+year+"%" ;
         // 通过mybatis方式查询数据
         //List<String> months = manuallyEnterGradesMapper.getMonths(openid, nameYear);
@@ -106,7 +107,14 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             String substring = months.get(i).substring(5, c + 1);
             list.add(substring);
         }
-        return list;
+        int countTimes = manuallyEnterGradesDao.countByWechatOpenidAndExamName(openid, nameYear);
+        List<MonthByYearListDTO> listDTOS = new ArrayList<>();
+        MonthByYearListDTO monthByYearListDTO = new MonthByYearListDTO();
+        monthByYearListDTO.setList(list);
+        monthByYearListDTO.setCountTimes(countTimes);
+
+        listDTOS.add(monthByYearListDTO);
+        return listDTOS;
     }
 
 
