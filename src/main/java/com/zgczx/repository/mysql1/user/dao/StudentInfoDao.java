@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StudentInfoDao extends JpaRepository<StudentInfo, Integer> {
 
+    StudentInfo getStudentInfoByStudentNumber(String studentNumber);
 }

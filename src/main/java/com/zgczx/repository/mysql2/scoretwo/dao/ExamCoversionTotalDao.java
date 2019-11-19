@@ -171,6 +171,9 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     // 获取总分的数组降序
     @Query(value = "SELECT coversion_total FROM exam_coversion_total WHERE exam_type=?1 ORDER BY coversion_total DESC", nativeQuery = true)
     List<String> findByTotalScore(String examType);
+    //11.19 此用户在某学校-某年级-某考试下的年级总分降序，用来获取年级排名
+    @Query(value = "SELECT coversion_total FROM exam_coversion_total WHERE school_name=?1 AND grade_name=?2 AND exam_type=?3 ORDER BY coversion_total DESC", nativeQuery = true)
+    List<String> findAllBySchoolNameAndGradeNameAndExamType(String schoolName,String gradeName,String examName);
 
     /**
      *  语数英、物化生、政史地，九门科目的降序排列,班级排名

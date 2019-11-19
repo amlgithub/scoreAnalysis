@@ -56,23 +56,33 @@ public class UserController {
         return ResultVOUtil.success(logout);
     }
 
+//    @PostMapping("/registerWechatStudent")
+//    public ResultVO<?> registerWechatStudent(
+//            @Valid WechatStudent wechatStudent, BindingResult bindingResult
+//           // ,@RequestParam(value = "openid") String openid
+//    ){
+//        if (bindingResult.hasErrors()){
+//            info = "【学生注册】参数验证不正确," + wechatStudent.toString();
+//            log.error(info);
+//            // throw new ScoreException（错误code，错误message）
+//            throw new ScoreException(ResultEnum.PARAM_EXCEPTION.getCode(),
+//                    bindingResult.getFieldError().getDefaultMessage());
+//        }
+//
+//        WechatStudent wechatStudent1 = userService.registerWechatStudent(wechatStudent);
+//        return ResultVOUtil.success(wechatStudent1);
+//    }
+
+    @ApiOperation(value = "用户注册")
     @PostMapping("/registerWechatStudent")
     public ResultVO<?> registerWechatStudent(
-            @Valid WechatStudent wechatStudent, BindingResult bindingResult
-           // ,@RequestParam(value = "openid") String openid
-    ){
-        if (bindingResult.hasErrors()){
-            info = "【学生注册】参数不正确," + wechatStudent.toString();
-            log.error(info);
-            // throw new ScoreException（错误code，错误message）
-            throw new ScoreException(ResultEnum.PARAM_EXCEPTION.getCode(),
-                    bindingResult.getFieldError().getDefaultMessage());
-        }
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid")String openid,
+            @ApiParam(value = "统一登录的主键",required = true)
+            @RequestParam(value = "foreignKeId")String foreignKeId){
 
-        WechatStudent wechatStudent1 = userService.registerWechatStudent(wechatStudent);
-        return ResultVOUtil.success(0);
+        WechatStudent wechatStudent1 = userService.registerWechatStudent(openid,foreignKeId);
+        return ResultVOUtil.success(wechatStudent1);
     }
-
-
 
 }

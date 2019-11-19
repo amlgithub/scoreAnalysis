@@ -9,6 +9,9 @@ import com.zgczx.repository.mysql2.scoretwo.model.ExamCoversionTotal;
 import com.zgczx.repository.mysql1.score.model.ExamInfo;
 import com.zgczx.service.score.ScoreService;
 import com.zgczx.utils.ResultVOUtil;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import java.util.List;
  * @date 2019/9/10 14:44
  * 成绩相关的路由皆由此转发
  */
+@Api(description = "第一个score分析模块")
 @RestController
 @RequestMapping("/score")
 //@CrossOrigin(origins = "*", maxAge = 3600)
@@ -103,14 +107,19 @@ public class ScoreController {
 
 
     /**
+     * 作为定位对比一图：
      * 获取六率信息，高分率、优秀率、良好率、及格率、低分率、超均率，当前学生所处率值
      * @param stuNumber 学生学号
      * @param examType 某次考试
      * @return 返回具体的DTO
      */
+    @ApiOperation(value = "定位对比，获取此用户所在班级的高分、低分、良好、及格、低分人数和自己所处位置")
     @GetMapping(value = "/getSixRateInfo")
-    public ResultVO<?> getSixRateInfo(@RequestParam(value = "stuNumber") String stuNumber,
-                                      @RequestParam(value = "examType") String examType){
+    public ResultVO<?> getSixRateInfo(
+            @ApiParam(value = "用户学号：stuNumber", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "考试名称：examType",  required = true)
+            @RequestParam(value = "examType") String examType){
         List<SixRateDTO> sixRateInfo = scoreService.getSixRateInfo(stuNumber, examType);
         return ResultVOUtil.success(sixRateInfo);
     }

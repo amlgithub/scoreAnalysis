@@ -2,6 +2,8 @@ package com.zgczx.service.scoretwo;
 
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
+import com.zgczx.repository.mysql1.user.model.StudentInfo;
+import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
 
 import java.util.List;
 
@@ -29,5 +31,9 @@ public interface ScoreTwoService {
    List<String> getExamNameByYearMonthList(String openid,String yearMonth);
 
    List<ManuallyEnterGrades> findAll(String openid,String examName);
+
+   StudentInfo verifyStudentCode(String openid, String studentId);
+
+   List<LocationComparisonDTO> getGapValue(String openid, String stuNumber, String examName);
 
 }

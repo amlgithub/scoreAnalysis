@@ -15,5 +15,5 @@ public interface UserService {
 
     String logout(HttpServletRequest request, HttpServletResponse response);
 
-    WechatStudent registerWechatStudent(WechatStudent wechatStudent);
+    WechatStudent registerWechatStudent(String openid, String foreignKeId);
 }

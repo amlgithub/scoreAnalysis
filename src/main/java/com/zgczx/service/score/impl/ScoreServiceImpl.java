@@ -981,12 +981,19 @@ public class ScoreServiceImpl extends BaseFactory implements ScoreService {
 
         List<SixRateDTO> sixRateDTOList = new ArrayList<>();
         SixRateDTO sixRateDTO = new SixRateDTO();
-        sixRateDTO.setHighNumRate(Double.parseDouble(df.format(highnumradio)));
-        sixRateDTO.setExcellentRate(Double.parseDouble(df.format(excellentratio)));
-        sixRateDTO.setGoodRate(Double.parseDouble(df.format(goodratio)));
-        sixRateDTO.setPassRate(Double.parseDouble(df.format(passratio)));
-        sixRateDTO.setFailRate(Double.parseDouble(df.format(failratio)));
-        sixRateDTO.setBeyondRate(Double.parseDouble(df.format(beyondradio)));
+        sixRateDTO.setHighNumRate(highnum);
+        sixRateDTO.setExcellentRate(excellentnum);
+        sixRateDTO.setGoodRate(goodnum);
+        sixRateDTO.setPassRate(passnum);
+        sixRateDTO.setFailRate(failnum);
+        sixRateDTO.setBeyondRate(beyondnum);
+
+//        sixRateDTO.setHighNumRate(Double.parseDouble(df.format(highnumradio)));
+//        sixRateDTO.setExcellentRate(Double.parseDouble(df.format(excellentratio)));
+//        sixRateDTO.setGoodRate(Double.parseDouble(df.format(goodratio)));
+//        sixRateDTO.setPassRate(Double.parseDouble(df.format(passratio)));
+//        sixRateDTO.setFailRate(Double.parseDouble(df.format(failratio)));
+//        sixRateDTO.setBeyondRate(Double.parseDouble(df.format(beyondradio)));
         sixRateDTO.setLocationRate(location);
         sixRateDTOList.add(sixRateDTO);
         long entTime = System.currentTimeMillis();

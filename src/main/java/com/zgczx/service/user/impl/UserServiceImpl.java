@@ -92,20 +92,30 @@ public class UserServiceImpl implements UserService {
         return info;
     }
 
+//    @Override
+//    public WechatStudent registerWechatStudent(WechatStudent wechatStudent) {
+//        if (wechatStudent == null){
+//            info = "【wechatStudent】实体为空";
+//            log.error(info);
+//            throw new ScoreException(ResultEnum.PARAM_IS_INVALID.getCode(),info);
+//        }
+//        if (StringUtils.isEmpty(wechatStudent.getOpenid())){
+//            log.error("【学生注册】openid 为空,openid={}",wechatStudent.getOpenid());
+//            throw new ScoreException(ResultEnum.PARAM_EXCEPTION.getCode(),ResultEnum.PARAM_EXCEPTION.getMessage());
+//        }
+//
+//        WechatStudent save = wechatStudentDao.save(wechatStudent);
+//
+//        return save;
+//    }
+
+
     @Override
-    public WechatStudent registerWechatStudent(WechatStudent wechatStudent) {
-        if (wechatStudent == null){
-            info = "【wechatStudent】实体为空";
-            log.error(info);
-            throw new ScoreException(ResultEnum.PARAM_IS_INVALID.getCode(),info);
-        }
-        if (StringUtils.isEmpty(wechatStudent.getOpenid())){
-            log.error("【学生注册】openid 为空,openid={}",wechatStudent.getOpenid());
-            throw new ScoreException(ResultEnum.PARAM_EXCEPTION.getCode(),ResultEnum.PARAM_EXCEPTION.getMessage());
-        }
-
+    public WechatStudent registerWechatStudent(String openid, String foreignKeId) {
+        WechatStudent wechatStudent = new WechatStudent();
+        wechatStudent.setOpenid(openid);
+        wechatStudent.setForeignKeId(Integer.parseInt(foreignKeId));
         WechatStudent save = wechatStudentDao.save(wechatStudent);
-
         return save;
     }
 }

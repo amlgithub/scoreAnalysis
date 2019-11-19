@@ -1,20 +1,18 @@
 package com.zgczx.controller.score;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
-import com.zgczx.service.score.ScoreService;
+import com.zgczx.repository.mysql1.user.model.StudentInfo;
+import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
 import com.zgczx.service.scoretwo.ScoreTwoService;
 import com.zgczx.utils.ResultVOUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -153,4 +151,32 @@ public class ScoreTwoController {
         return ResultVOUtil.success(list);
     }
 
+
+    //根据学号验证 学校是否提供数据了
+    @ApiOperation(value = "根据学号验证 学校是否提供数据了")
+    @GetMapping(value = "/verifyStudentId")
+    public ResultVO<?> verifyStudentCode(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "学生学号",required = true)
+            @RequestParam(value = "verifyStudentId") String verifyStudentId
+    ){
+        StudentInfo list = scoreTwoService.verifyStudentCode(openid,verifyStudentId);
+        return ResultVOUtil.success(list);
+    }
+
+    //定位对比二图： 和前排人的差距
+    @ApiOperation(value = "定位对比二图： 和前排人的差距")
+    @GetMapping(value = "/getGapValue")
+    public ResultVO<?> getGapValue(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "exam_name全称",required = true)
+            @RequestParam(value = "examName") String examName
+    ){
+        List<LocationComparisonDTO> list = scoreTwoService.getGapValue(openid,stuNumber,examName);
+        return ResultVOUtil.success(list);
+    }
 }

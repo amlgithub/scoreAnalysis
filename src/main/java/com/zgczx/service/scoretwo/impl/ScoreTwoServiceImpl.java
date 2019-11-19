@@ -1,12 +1,16 @@
 package com.zgczx.service.scoretwo.impl;
 
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.zgczx.mapper.ManuallyEnterGradesMapper;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
 import com.zgczx.repository.mysql1.score.dao.ManuallyEnterGradesDao;
+import com.zgczx.repository.mysql1.user.dao.StudentInfoDao;
+import com.zgczx.repository.mysql1.user.model.StudentInfo;
+import com.zgczx.repository.mysql2.scoretwo.dao.ExamCoversionTotalDao;
+import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
+import com.zgczx.repository.mysql2.scoretwo.model.ExamCoversionTotal;
 import com.zgczx.service.scoretwo.ScoreTwoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
  * dao还是用原来的dao，就是impl不超过2000行
@@ -33,6 +37,12 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
     // 导入mybatis映射SQL语句，不能加private
     @Autowired
     ManuallyEnterGradesMapper manuallyEnterGradesMapper;
+
+    @Autowired
+    StudentInfoDao studentInfoDao;
+
+    @Autowired
+    private ExamCoversionTotalDao examCoversionTotalDao;
 
     private String info;
     @Override
@@ -140,5 +150,79 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
         }
         return allByWechatOpenidAndExamName;
+    }
+
+    @Override
+    public StudentInfo verifyStudentCode(String openid, String studentId) {
+        StudentInfo studentInfoByStudentNumber = studentInfoDao.getStudentInfoByStudentNumber(studentId);
+        if (studentInfoByStudentNumber == null){
+            info = "暂无学校提供数据";
+            logger.warn("【您暂无和学校合作】,{}",openid);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
+        }
+
+        return studentInfoByStudentNumber;
+    }
+
+    @Override
+    public List<LocationComparisonDTO> getGapValue(String openid, String stuNumber, String examName) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examName);
+        if (examCoversionTotal == null){
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        String schoolName = examCoversionTotal.getSchoolName();
+        String gradeName = examCoversionTotal.getGradeName();
+        //年级总分降序数组，用数组下标获取年级排名
+        List<String> gradeRankList = examCoversionTotalDao.findAllBySchoolNameAndGradeNameAndExamType(schoolName, gradeName, examName);
+        if (gradeRankList == null){
+            logger.error("【暂无此】'{}',【总的年级排名信息】; 【此用户：】{}",schoolName,openid);
+            info = "【暂无此学校总的年级排名信息】";
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        Map<String, Map<String,String>> map = new HashMap<>();
+        //Map<String, String> gradeMap = new LinkedHashMap<>();//排名map
+        Map<String, String> scoreMap = new LinkedHashMap<>();//分数map
+        Map<String, String> gapValueMap = new LinkedHashMap<>();//差值map
+
+
+        Integer schoolIndex = examCoversionTotal.getSchoolIndex();//获取此用户总分的年级排名
+        Double total = examCoversionTotal.getCoversionTotal();//获取此用户总分
+        //第一名
+        String firstOneValue = String.valueOf(gradeRankList.get(0));//获取年级第一名的总分分数
+        String firstOneGap = String.valueOf(total - Double.parseDouble(firstOneValue) );//与第一名的差值
+        //第50名，这里调成动态的，由前端传要看第几名
+        String secondValue =  String.valueOf(gradeRankList.get(49));//获取的分数，动态的就是 i - 1
+        String secondGap = String.valueOf(total - Double.parseDouble(secondValue));//与第二位（可能是50名）的差值
+        //第100名，这里调成动态的，由前端传要看第几名
+        String thirdValue =  String.valueOf(gradeRankList.get(99));//获取的分数，动态的就是 j - 1
+        String thirdGap = String.valueOf(total - Double.parseDouble(thirdValue));//与第三位（可能是100名）的差值
+        //第150名，这里调成动态的，由前端传要看第几名
+        String fourValue =  String.valueOf(gradeRankList.get(149));//获取的分数，动态的就是 z - 1
+        String fourGap = String.valueOf(total - Double.parseDouble(fourValue));//与第四位（可能是150名）的差值
+
+        scoreMap.put("I", String.valueOf(total));//自己的分数
+        scoreMap.put("150",fourValue);//第150的分数，可以为动态: z
+        scoreMap.put("100",thirdValue);//第100的分数，可以为动态: j
+        scoreMap.put("50",secondValue);//第50的分数，可以为动态: i
+        scoreMap.put("1",firstOneValue);//第1的分数，这个就固定下来
+
+        map.put("scoreMap", scoreMap);
+
+        gapValueMap.put("I", "--");
+        gapValueMap.put("150",fourGap);
+        gapValueMap.put("100",thirdGap);
+        gapValueMap.put("50",secondGap);
+        gapValueMap.put("1",firstOneGap);
+
+        map.put("gapValueMap",gapValueMap);
+
+        List<LocationComparisonDTO> list = new ArrayList<>();
+        LocationComparisonDTO locationComparisonDTO = new LocationComparisonDTO();
+        locationComparisonDTO.setStringMap(map);
+        list.add(locationComparisonDTO);
+
+        return list;
     }
 }
