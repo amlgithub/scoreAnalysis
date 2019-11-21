@@ -1,5 +1,6 @@
 package com.zgczx.service.user;
 
+import com.zgczx.repository.mysql1.user.model.UserFeedBack;
 import com.zgczx.repository.mysql1.user.model.WechatStudent;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,4 +17,10 @@ public interface UserService {
     String logout(HttpServletRequest request, HttpServletResponse response);
 
     WechatStudent registerWechatStudent(String openid, String foreignKeId);
+
+    /**
+     * 新增 用户反馈问题表
+     * @return
+     */
+    UserFeedBack addUserFeedBack(UserFeedBack userFeedBack);
 }

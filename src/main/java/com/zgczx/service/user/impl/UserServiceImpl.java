@@ -4,10 +4,13 @@ import com.zgczx.constans.CookieConstant;
 import com.zgczx.constans.RedisConstans;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
+import com.zgczx.repository.mysql1.user.dao.UserFeedBackDao;
 import com.zgczx.repository.mysql1.user.dao.WechatStudentDao;
+import com.zgczx.repository.mysql1.user.model.UserFeedBack;
 import com.zgczx.repository.mysql1.user.model.WechatStudent;
 import com.zgczx.service.user.UserService;
 import com.zgczx.utils.CookieUtil;
+import com.zgczx.utils.EmojiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -20,6 +23,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +42,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private UserFeedBackDao userFeedBackDao;
 
     private String info;
     @Override
@@ -117,5 +125,14 @@ public class UserServiceImpl implements UserService {
         wechatStudent.setForeignKeId(Integer.parseInt(foreignKeId));
         WechatStudent save = wechatStudentDao.save(wechatStudent);
         return save;
+    }
+
+    @Override
+    public UserFeedBack addUserFeedBack(UserFeedBack userFeedBack) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        log.info("参数-->"+ userFeedBack);
+        userFeedBack.setContent( EmojiUtil.emojiConverterToAlias(userFeedBack.getContent()));
+        userFeedBack.setInsertTime(new Date());
+        return userFeedBackDao.save(userFeedBack);
     }
 }

@@ -3,6 +3,7 @@ package com.zgczx.controller.user;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
+import com.zgczx.repository.mysql1.user.model.UserFeedBack;
 import com.zgczx.repository.mysql1.user.model.WechatStudent;
 import com.zgczx.service.user.UserService;
 import com.zgczx.utils.ResultVOUtil;
@@ -85,4 +86,12 @@ public class UserController {
         return ResultVOUtil.success(wechatStudent1);
     }
 
+    @ApiOperation(value = "用户反馈")
+    @PostMapping("/addUserFeedBack")
+    @ResponseBody
+    public ResultVO<?> addUserFeedBack(UserFeedBack userFeedBack) {
+
+        UserFeedBack rsUserFeedBack = userService.addUserFeedBack(userFeedBack);
+        return ResultVOUtil.success(rsUserFeedBack);
+    }
 }
