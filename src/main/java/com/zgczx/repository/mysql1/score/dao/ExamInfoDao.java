@@ -30,5 +30,5 @@ public interface ExamInfoDao extends JpaRepository<ExamInfo, Integer> {
     ExamInfo getByExamName(String examType);
 
     @Query(value = "SELECT exam_name FROM exam_info ", nativeQuery = true)
-    List<String>getAllExamName();
+    List<String> getAllExamName();
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -14,7 +15,7 @@ import java.util.Objects;
 @Entity
 @Data
 @Table(name = "exam_info", schema = "score_ananlysis_dev", catalog = "")
-public class ExamInfo {
+public class ExamInfo implements Serializable {
     private long id;
     private String examName;
     private String examGrade;
@@ -22,6 +23,16 @@ public class ExamInfo {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp examDate;
     private String paperId;
+    private String schoolName;
+
+    @Column(name = "school_name")
+    public String getSchoolName() {
+        return schoolName;
+    }
+
+    public void setSchoolName(String schoolName) {
+        this.schoolName = schoolName;
+    }
 
     @Id
     @Column(name = "id")

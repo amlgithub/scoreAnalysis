@@ -27,4 +27,14 @@ public class ProjectUrlConfig {
      * 成绩分析系统
      */
     public String score_analysis;
+
+    /**
+     * 获取公众号的AccessToken 的 URL
+     */
+    public String AccessToken;
+
+    /**
+     * 获取jsApi-ticket
+     */
+    public String getticket;
 }

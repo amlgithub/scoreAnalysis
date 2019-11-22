@@ -41,6 +41,7 @@ public class ScoreController {
      * @param examType 具体哪次考试
      * @return ResultVOUtil中的code、msg、data
      */
+    @ApiOperation(value = "一、 获取学生的所有成绩，根据学号id和考试名称")
     @GetMapping("/getExamCoversionTotal")
     public ResultVO<?> getExamCoversionTotal(@RequestParam(value = "userId") Integer userId,
                                              @RequestParam(value = "examType") String examType){
@@ -50,7 +51,7 @@ public class ScoreController {
         return ResultVOUtil.success(examCoversionTotal);
 
     }
-
+    @ApiOperation(value = "二、 查询所有的考试名称")
     @GetMapping(value = "/getListExamInfols", name = "查询所有的考试名称")
     public ResultVO<?>  getListExamInfols(){
 
@@ -65,6 +66,7 @@ public class ScoreController {
      * @param examType 具体某次考试名称
      * @return VO类中的data数据返回
      */
+    @ApiOperation(value = "三、 旭日图中的中心，主要是对年级和班级的进退名次的实现")
     @GetMapping(value = "/getExamCoversionTotalInfo")
     public ResultVO<?> getExamCoversionTotalInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                  @RequestParam(value = "examType") String examType ){
@@ -80,6 +82,7 @@ public class ScoreController {
      * @param examType 具体某次考试名称
      * @return VO类中的data数据返回
      */
+    @ApiOperation(value = "四、旭日图第三层，获取各单科的班排、年排、进退名次，班级年级人数,总分标准，各单科满分标准")
     @GetMapping(value = "/getExamCoversionTotalSingleInfo")
     public ResultVO<?> getExamCoversionTotalSingleInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                        @RequestParam(value = "examType") String examType,
@@ -97,6 +100,7 @@ public class ScoreController {
      * @return 返回DTO
      */
 //    @CrossOrigin(origins = "*", maxAge = 3600)
+    @ApiOperation(value = "五、旭日图的第二层， 获取三科和综合（6选3）的分值，三科班排、年排；综合班排、年排")
     @GetMapping(value = "/getExamCoversionTotalSectionInfo")
     public ResultVO<?> getExamCoversionTotalSectionInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                         @RequestParam(value = "examType") String examType){
@@ -113,7 +117,7 @@ public class ScoreController {
      * @param examType 某次考试
      * @return 返回具体的DTO
      */
-    @ApiOperation(value = "定位对比，获取此用户所在班级的高分、低分、良好、及格、低分人数和自己所处位置")
+    @ApiOperation(value = "六、定位对比，获取此用户所在班级的高分、低分、良好、及格、低分人数和自己所处位置")
     @GetMapping(value = "/getSixRateInfo")
     public ResultVO<?> getSixRateInfo(
             @ApiParam(value = "用户学号：stuNumber", required = true)
@@ -131,6 +135,7 @@ public class ScoreController {
      * @param examType 具体的考试名称
      * @return 返回DTO对象
      */
+    @ApiOperation(value = "七、学科分析,各学科贡献率和各学科均衡差值，都是和年级值对比")
     @GetMapping(value = "/getSubjectAnalysisInfo")
     public ResultVO<?> getSubjectAnalysisInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                               @RequestParam(value = "examType") String examType){
@@ -146,6 +151,7 @@ public class ScoreController {
      * @param examType 具体的考试名称
      * @return 返回DTO对象
      */
+    @ApiOperation(value = "八、历史分析中的-01 ：总分分析，包含总分、班排、年排、班均分，年均分， 以上五个值的标准化（百分率）")
     @GetMapping(value = "/getHistoricalAnalysisTotalInfo")
     public ResultVO<?> getHistoricalAnalysisTotalInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                       @RequestParam(value = "examType") String examType,
@@ -163,6 +169,7 @@ public class ScoreController {
      * @param subject 具体科目
      * @return 返回dto对象
      */
+    @ApiOperation(value = "九、历史分析中的-02 ：单科分数分析，包含单科分值、班排、年排、班均分，年均分， 以上五个值的标准化（百分率）")
     @GetMapping(value = "/getHistoricalAnalysisSingleInfo")
     public ResultVO<?> getHistoricalAnalysisSingleInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                                        @RequestParam(value = "examType") String examType,
@@ -181,6 +188,7 @@ public class ScoreController {
      * @param examType 考试名称
      * @return 返回DTO对象
      */
+    @ApiOperation(value = "十、旭日图中总分、三科、综合、各单科的率值；率值 = 所得分 / 各标准总分")
     @GetMapping(value = "/getAsahiChartAllRate")
     public ResultVO<?> getAsahiChartAllRate(@RequestParam(value = "stuNumber") String stuNumber,
                                             @RequestParam(value = "examType") String examType){
@@ -196,6 +204,7 @@ public class ScoreController {
      * @param examType 考试名称
      * @return DTO对象
      */
+    @ApiOperation(value = "十一、成绩单接口：获取总分的班排、年排，各具体单科的分数、班排、年排")
     @GetMapping(value = "/getScoreReportInfo")
     public ResultVO<?> getScoreReportInfo(@RequestParam(value = "stuNumber") String stuNumber,
                                           @RequestParam(value = "examType") String examType){
