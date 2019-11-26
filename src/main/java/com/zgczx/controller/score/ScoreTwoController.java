@@ -6,6 +6,7 @@ import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.repository.mysql1.user.model.StudentInfo;
+import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
 import com.zgczx.service.scoretwo.ScoreTwoService;
 import com.zgczx.utils.ResultVOUtil;
@@ -177,6 +178,21 @@ public class ScoreTwoController {
             @RequestParam(value = "examName") String examName
     ){
         List<LocationComparisonDTO> list = scoreTwoService.getGapValue(openid,stuNumber,examName);
+        return ResultVOUtil.success(list);
+    }
+
+    //定位对比三图一： 评语中的各个值
+    @ApiOperation(value = "十、 定位对比三：图一上评语中的各个值")
+    @GetMapping(value = "/getCommentValue")
+    public ResultVO<?> getCommentValue(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "考试全称",required = true)
+            @RequestParam(value = "examName") String examName
+    ){
+        List<CommentValueDTO> list = scoreTwoService.getCommentValue(openid,stuNumber,examName);
         return ResultVOUtil.success(list);
     }
 }

@@ -462,7 +462,7 @@ public class ScoreServiceImpl extends BaseFactory implements ScoreService {
         @SuppressWarnings("unchecked")
         List<ExamCoversionTotal> oldClassExamCoversionTotal =  oldClass.getResultList();
         //上次年级排名
-        String oldGradeQuerysql = "select * from exam_coversion_total where valid='1' AND school_name='"+schoolName+"' AND grade_name='\"+gradeName+\"'AND exam_type='"+oldExamType+"' order by "+ subject + " desc";
+        String oldGradeQuerysql = "select * from exam_coversion_total where valid='1' AND school_name='"+schoolName+"' AND grade_name='"+gradeName+"'AND exam_type='"+oldExamType+"' order by "+ subject + " desc";
         Query oldgGradeQuery = entityManagerDb2.createNativeQuery(oldGradeQuerysql, ExamCoversionTotal.class);
         @SuppressWarnings("unchecked")
         List<ExamCoversionTotal> oldGradeExamCoversionTotal = oldgGradeQuery.getResultList();

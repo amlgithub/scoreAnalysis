@@ -9,6 +9,7 @@ import com.zgczx.repository.mysql1.score.dao.ManuallyEnterGradesDao;
 import com.zgczx.repository.mysql1.user.dao.StudentInfoDao;
 import com.zgczx.repository.mysql1.user.model.StudentInfo;
 import com.zgczx.repository.mysql2.scoretwo.dao.ExamCoversionTotalDao;
+import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
 import com.zgczx.repository.mysql2.scoretwo.model.ExamCoversionTotal;
 import com.zgczx.service.scoretwo.ScoreTwoService;
@@ -223,6 +224,54 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         locationComparisonDTO.setStringMap(map);
         list.add(locationComparisonDTO);
 
+        return list;
+    }
+
+    @Override
+    public List<CommentValueDTO> getCommentValue(String openid, String stuNumber, String examName) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examName);
+        if (examCoversionTotal == null){
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        String schoolName = examCoversionTotal.getSchoolName();
+        String gradeName = examCoversionTotal.getGradeName();
+        String classid = examCoversionTotal.getClassId();
+        List<String[]> classTotalRank = examCoversionTotalDao.findClassTotalByClassIdAndExamType(classid, examName, schoolName, gradeName);
+        if (classTotalRank == null){
+            info = "暂无此班级排名信息";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#0.00");
+        // 班级最高分
+        String classRankFirst = String.valueOf(classTotalRank.get(0));//班级第一名分数
+        //班级总人数
+        int classCount = examCoversionTotalDao.countByClassIdAndExamTypeAndValidAndSchoolNameAndGradeName(classid, examName, 1, schoolName, gradeName);
+       //班级总分累加和
+        float classTotalSum = examCoversionTotalDao.sumCoversionTotalByClassIdAndExamTypeAndValidAndSchoolName(classid, examName, 1, schoolName, gradeName);
+        //班级平均分, 保留两位小数
+        String classAvg = String.valueOf(classTotalSum / classCount);
+
+        //年级平均分
+        String gradeAvg = examCoversionTotalDao.totalAverageByExamType(examName, schoolName, gradeName);
+        //总分的年级排名
+        List<String> gradeTotalRank = examCoversionTotalDao.findByTotalScore(examName, schoolName, gradeName);
+        //年级最高分
+        String gradeRankFirst = String.valueOf(gradeTotalRank.get(0));
+
+        //封装DTO
+        List<CommentValueDTO> list = new ArrayList<>();
+        CommentValueDTO commentValueDTO = new CommentValueDTO();
+        commentValueDTO.setClassHighScore(classRankFirst);
+        commentValueDTO.setClassAvgScore(String.format("%.2f",Float.parseFloat(classAvg)));
+        commentValueDTO.setGradeHighScore(gradeRankFirst);
+        commentValueDTO.setGradeAvgScore(String.format("%.2f",Float.parseFloat(gradeAvg)));
+        commentValueDTO.setTotalScore(String.valueOf(examCoversionTotal.getCoversionTotal()));
+
+        list.add(commentValueDTO);
         return list;
     }
 }

@@ -178,12 +178,16 @@ public interface ExamCoversionTotalDao extends JpaRepository<ExamCoversionTotal,
     @Query(value = "select zhengzhi_coversion from exam_coversion_total where exam_type=?1 AND school_name=?2 AND valid=?3 AND class_id=?4 AND grade_name=?5 order by zhengzhi_coversion desc", nativeQuery = true)
     List<String> findByZhengzhiCoversionAndSchoolNameAndValidAndClassId(String examType,String schoolName, int valid,String classid,String gradeName);
 
-    // 获取总分的数组降序; 年级排名
+    // 年级总分排名； 获取总分的数组降序; 年级排名
     @Query(value = "SELECT coversion_total FROM exam_coversion_total WHERE exam_type=?1 AND school_name=?2 AND grade_name=?3 AND valid='1' ORDER BY coversion_total DESC", nativeQuery = true)
     List<String> findByTotalScore(String examType,String schoolName,String gradeName);
-    //11.19 此用户在某学校-某年级-某考试下的年级总分降序，用来获取年级排名
-    @Query(value = "SELECT coversion_total FROM exam_coversion_total WHERE school_name=?1 AND grade_name=?2 AND exam_type=?3 ORDER BY coversion_total DESC", nativeQuery = true)
+    //11.19年级总分排名； 此用户在某学校-某年级-某考试下的年级总分降序，用来获取年级排名
+    @Query(value = "SELECT coversion_total FROM exam_coversion_total WHERE school_name=?1 AND grade_name=?2 AND exam_type=?3 AND valid='1' ORDER BY coversion_total DESC", nativeQuery = true)
     List<String> findAllBySchoolNameAndGradeNameAndExamType(String schoolName,String gradeName,String examName);
+
+    //11.25 班级总分排名； 获取总分的数组降序; 班级排名
+    @Query(value = "SELECT coversion_total AS s FROM exam_coversion_total WHERE class_id=?1 AND exam_type=?2 AND school_name=?3 AND grade_name=?4 AND valid=1 ORDER BY s DESC", nativeQuery = true)
+    List<String[]> findClassTotalByClassIdAndExamType(String classid, String examType,String schoolName,String gradeName);
 
     /**
      *  语数英、物化生、政史地，九门科目的降序排列,班级排名
