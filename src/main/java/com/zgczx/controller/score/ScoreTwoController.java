@@ -1,6 +1,7 @@
 package com.zgczx.controller.score;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
@@ -8,7 +9,10 @@ import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.repository.mysql1.user.model.StudentInfo;
 import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.SingleContrastInfoDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.TotalScoreInfoDTO;
 import com.zgczx.service.scoretwo.ScoreTwoService;
+import com.zgczx.utils.Param;
 import com.zgczx.utils.ResultVOUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 承接ScoreController剩下的接口
@@ -67,15 +72,20 @@ public class ScoreTwoController {
      * 在spring中是RequestResponseBodyMethodProcessor利用HttpMessageConventer做的。
      * @param list
      * @return
+     *
      */
+    //用户手动录入成绩自己各科成绩，暂时没用，用的   "一、 录入成绩，可批量录入"
+    @ApiOperation(value = "一、 录入成绩，可批量录入")
     @PostMapping("/saveList")
-    public ResultVO<?> saveList(@RequestBody String list){
+    public ResultVO<?> saveList(@RequestBody @ApiParam(name="用户Model对象 传参名称为 list",value="传入json格式",required=true) String list){
         List<ManuallyEnterGrades> enterGradesList = JSON.parseObject(list, new TypeReference<List<ManuallyEnterGrades>>() {
         });
         List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(enterGradesList);
 
         return ResultVOUtil.success(list1);
     }
+    //用户手动录入成绩自己各科成绩
+    @ApiOperation(value = "一、 录入成绩，可批量录入")
     @PostMapping("/saveList2")
     public ResultVO<?> saveList2(HttpServletRequest request, HttpServletResponse response){
         String list = request.getParameter("0");
@@ -92,7 +102,7 @@ public class ScoreTwoController {
      * @param openid 用户openid
      * @return StringList 对象
      */
-    @ApiOperation(value = "获取此用户录入数据的所有年份")
+    @ApiOperation(value = "二、录入统计1） 获取此用户录入数据的所有年份")
     @GetMapping("/getYearList")
     public ResultVO<?> getYearList(
             @ApiParam(value = "openid", required = true)
@@ -109,7 +119,7 @@ public class ScoreTwoController {
      * @param year
      * @return
      */
-    @ApiOperation(value = "根据年份和openid获取对应的数据中的月份信息")
+    @ApiOperation(value = "三、录入统计2） 根据年份和openid获取对应的数据中的月份信息")
     @GetMapping(value = "getMonthByYearList")
     public ResultVO<?> getMonthByYearList(
             @ApiParam(value = "用户openid", required = true)
@@ -127,7 +137,7 @@ public class ScoreTwoController {
      * @param yearMonth
      * @return
      */
-    @ApiOperation(value = "根据年份和月份获取对应的数据中的考试名称")
+    @ApiOperation(value = "四、录入统计3） 根据年份和月份获取对应的数据中的考试名称")
     @GetMapping(value = "getExamNameByYearMonthList")
     public ResultVO<?> getExamNameByYearMonthList(
             @ApiParam(value = "用户openid", required = true)
@@ -140,7 +150,7 @@ public class ScoreTwoController {
     }
 
     //获取此用户录入本次考试的所有信息
-    @ApiOperation(value = "根据考试名称和openid获取对应的数据")
+    @ApiOperation(value = "五、录入统计4） 根据考试名称和openid获取对应的数据")
     @GetMapping(value = "/findAll")
     public ResultVO<?> findAll(
             @ApiParam(value = "用户openid", required = true)
@@ -154,7 +164,7 @@ public class ScoreTwoController {
 
 
     //根据学号验证 学校是否提供数据了
-    @ApiOperation(value = "根据学号验证 学校是否提供数据了")
+    @ApiOperation(value = "六、暂时无用，验证目前从统一登录那块验证的；登录模块：根据学号验证 学校是否提供数据了；")
     @GetMapping(value = "/verifyStudentId")
     public ResultVO<?> verifyStudentCode(
             @ApiParam(value = "用户openid", required = true)
@@ -167,7 +177,7 @@ public class ScoreTwoController {
     }
 
     //定位对比二图： 和前排人的差距
-    @ApiOperation(value = "定位对比二图： 和前排人的差距")
+    @ApiOperation(value = "七、定位对比二图： 和前排人的差距")
     @GetMapping(value = "/getGapValue")
     public ResultVO<?> getGapValue(
             @ApiParam(value = "用户openid", required = true)
@@ -182,7 +192,7 @@ public class ScoreTwoController {
     }
 
     //定位对比三图一： 评语中的各个值
-    @ApiOperation(value = "十、 定位对比三：图一上评语中的各个值")
+    @ApiOperation(value = "八、 定位对比三：图一上评语中的各个值")
     @GetMapping(value = "/getCommentValue")
     public ResultVO<?> getCommentValue(
             @ApiParam(value = "用户openid", required = true)
@@ -194,5 +204,65 @@ public class ScoreTwoController {
     ){
         List<CommentValueDTO> list = scoreTwoService.getCommentValue(openid,stuNumber,examName);
         return ResultVOUtil.success(list);
+    }
+
+    //九 定位对比： 1。 总分的 自己排名、目标排名、自己分数、目标分数、差值
+    @ApiOperation(value = "（定位对比从这个开始）九 定位对比： 1。 总分的 自己排名、目标排名、自己分数、目标分数、差值 ")
+    @GetMapping(value = "/getTotalScoreInfo")
+    public ResultVO<?> getTotalScoreInfo(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "考试全称",required = true)
+            @RequestParam(value = "examName") String examName,
+            @ApiParam(value = "总分的目标排名",required = true)
+            @RequestParam(value = "targetRank") String targetRank
+    ){
+        List<TotalScoreInfoDTO> list = scoreTwoService.getTotalScoreInfo(openid,stuNumber,examName,targetRank);
+        return ResultVOUtil.success(list);
+    }
+
+    //十、定位对比： 2。 此用户所选的科目集合
+    @ApiOperation(value = "十、(无用) 定位对比： 此用户所选的科目集合 ")
+    @GetMapping(value = "/getSubjectCollection")
+    public ResultVO<?> getSubjectCollection(
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "考试全称",required = true)
+            @RequestParam(value = "examName") String examName
+    ){
+        List<String> list = scoreTwoService.getSubjectCollection(openid,stuNumber,examName);
+        return ResultVOUtil.success(list);
+    }
+
+    //十一、定位对比：1. 单科的 自己排名、目标排名、自己分数、目标分数、差值
+    @ApiOperation(value = "十一、定位对比：2. 单科的 自己排名、目标排名、自己分数、目标分数、差值")
+    @GetMapping("/getSingleContrastInfo")
+    public ResultVO<?> getSingleContrastInfo(
+//            @ApiParam(value = "用户openid", required = true)
+//            @RequestParam(value = "openid") String openid,
+//            @ApiParam(value = "用户学号", required = true)
+//            @RequestParam(value = "stuNumber") String stuNumber,
+//            @ApiParam(value = "考试全称",required = true)
+//            @RequestParam(value = "examName") String examName,
+            HttpServletRequest request, HttpServletResponse response){
+
+        Map<String, Object> param = Param.getParam(request);
+        //JSONObject singleContrastInfo = scoreTwoService.getSingleContrastInfo(param);
+        List<SingleContrastInfoDTO> singleContrastInfo = scoreTwoService.getSingleContrastInfo(param);
+
+//        // 取出json串
+//        String list = request.getParameter("0");
+////        List<SingleContrastInfoDTO> singleContrastInfo = scoreTwoService.getSingleContrastInfo(openid, stuNumber, examName, list);
+//
+//        // json串处理；暂无用放到，impl
+//        List<ManuallyEnterGrades> enterGradesList = JSON.parseObject(list, new TypeReference<List<ManuallyEnterGrades>>() {
+//        });
+//        List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(enterGradesList);
+
+        return ResultVOUtil.success(singleContrastInfo);
     }
 }

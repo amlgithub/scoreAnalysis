@@ -1,5 +1,9 @@
 package com.zgczx.service.scoretwo.impl;
 
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.zgczx.mapper.ManuallyEnterGradesMapper;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
@@ -11,6 +15,8 @@ import com.zgczx.repository.mysql1.user.model.StudentInfo;
 import com.zgczx.repository.mysql2.scoretwo.dao.ExamCoversionTotalDao;
 import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.SingleContrastInfoDTO;
+import com.zgczx.repository.mysql2.scoretwo.dto.TotalScoreInfoDTO;
 import com.zgczx.repository.mysql2.scoretwo.model.ExamCoversionTotal;
 import com.zgczx.service.scoretwo.ScoreTwoService;
 import org.slf4j.Logger;
@@ -274,4 +280,454 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         list.add(commentValueDTO);
         return list;
     }
+
+    @Override
+    public List<TotalScoreInfoDTO> getTotalScoreInfo(String openid, String stuNumber, String examName, String targetRank) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examName);
+        if (examCoversionTotal == null){
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        String schoolName = examCoversionTotal.getSchoolName();
+        String gradeName = examCoversionTotal.getGradeName();
+        Double myTotalScore = examCoversionTotal.getCoversionTotal();//自己总分值
+        // 本次考试的年级总人数
+        int gradeNumber = examCoversionTotalDao.countByExamTypeAndValidAndSchoolNameAndGradeName(examName, 1, schoolName, gradeName);
+        if (Integer.valueOf(targetRank) > gradeNumber){
+            info = "您设定的目标值大于总人数，请核对后再设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+        }
+        //年级排名数组
+        List<String> gradeRankList = examCoversionTotalDao.findAllBySchoolNameAndGradeNameAndExamType(schoolName, gradeName, examName);
+        //我的排名
+        int myRank = gradeRankList.indexOf(myTotalScore) + 1;
+        //可能有并列，但是并列也是自己的排名
+        if (targetRank.equals(myRank)){
+            info = "您设定的目标值为您自己的排名，请重新设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+        }
+        // 目标排名要从 list中获取分数值 时的值
+        int target = Integer.valueOf(targetRank) - 1;
+        // 目标分数
+        String targetScore = String.valueOf(gradeRankList.get(target));
+        // 差值：我的分数 - 目标分数
+        String scoreDifferentValue = String.valueOf(myTotalScore - Double.parseDouble(targetScore));
+
+        List<TotalScoreInfoDTO> list = new ArrayList<>();
+        TotalScoreInfoDTO totalScoreInfoDTO = new TotalScoreInfoDTO();
+        totalScoreInfoDTO.setMyRank(myRank);
+        totalScoreInfoDTO.setMyScore(String.valueOf(myTotalScore));
+        totalScoreInfoDTO.setTargetRank(Integer.parseInt(targetRank));
+        totalScoreInfoDTO.setTargetScore(targetScore);
+        totalScoreInfoDTO.setScoreDifferentValue(scoreDifferentValue);
+        list.add(totalScoreInfoDTO);
+
+        return list;
+    }
+
+    @Override
+    public List<String> getSubjectCollection(String openid, String stuNumber, String examName) {
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examName);
+        if (examCoversionTotal == null){
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+
+        List<String> list = new LinkedList<>();
+        list.add("语文");
+        list.add("数学");
+        list.add("英语");
+
+        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
+            list.add("物理");
+        }
+        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
+            list.add("化学");
+        }
+        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
+            list.add("生物");
+        }
+        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
+            list.add("政治");
+        }
+        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0") ){
+            list.add("历史");
+        }
+        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
+            list.add("地理");
+        }
+
+//        List<List<String>> list1 = new ArrayList<>();
+//        SubjectCollectionDTO subjectCollectionDTO = new SubjectCollectionDTO();
+//        subjectCollectionDTO.setList(list);
+//        list1.add(list);
+
+        return list;
+    }
+
+    @Override
+    public List<SingleContrastInfoDTO> getSingleContrastInfo(Map<String, Object> map) {
+        JSONObject jsonObject = new JSONObject();
+        String stuNumber = null;
+        if (!map.containsKey("stuNumber")) {
+            jsonObject.put("errno", ResultEnum.RESULE_DATA_NONE);
+            jsonObject.put("errmsg", "stuNumber not exit!");
+           // return jsonObject;
+        } else {
+            stuNumber =  map.get("stuNumber").toString().trim();
+        }
+        String examName = null;
+        if (!map.containsKey("examName")) {
+            jsonObject.put("errno", ResultEnum.RESULE_DATA_NONE);
+            jsonObject.put("errmsg", "examName not exit!");
+           // return jsonObject;
+        } else {
+            examName =  map.get("examName").toString().trim();
+        }
+        //LinkedHashMap将map中的顺序按照添加顺序排列
+        Map<String, Map<String, String>> hashMap = new LinkedHashMap<>();
+        //定义九门课的map
+        Map<String, String> yuwenMap = new HashMap<>();
+        Map<String, String> shuxueMap = new HashMap<>();
+        Map<String, String> yingyuMap = new HashMap<>();
+        Map<String, String> wuliMap = new HashMap<>();
+        Map<String, String> huaxueMap = new HashMap<>();
+        Map<String, String> shengwuMap = new HashMap<>();
+        Map<String, String> diliMap = new HashMap<>();
+        Map<String, String> lishiMap = new HashMap<>();
+        Map<String, String> zhengzhiMap = new HashMap<>();
+        ExamCoversionTotal examCoversionTotal = examCoversionTotalDao.findByStudentNumberAndExamType(stuNumber, examName);
+        if (examCoversionTotal == null){
+            info = "查询此学生的所有信息失败";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        String schoolName = examCoversionTotal.getSchoolName();
+        String gradeName = examCoversionTotal.getGradeName();
+        //语文分数
+        Double yuwenScore = examCoversionTotal.getYuwenScore();
+        //语文年级排名
+        List<String> yuwenRankList = examCoversionTotalDao.findByYuwenScoreAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+        //语文年级人数
+        int yuwenNum = yuwenRankList.size();
+        String yuwenTargeRank = map.get("yuwen").toString().trim();
+        if (Integer.valueOf(yuwenTargeRank) > yuwenNum){
+            info = "您语文设定的目标值大于总人数，请核对后再设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+        }
+        //我的排名
+        int myyuwenRank = yuwenRankList.indexOf(Float.valueOf(yuwenScore.toString())) + 1;
+        //可能有并列，但是并列也是自己的排名
+        if (yuwenTargeRank.equals(myyuwenRank)){
+            info = "您设定的语文目标值为您自己的排名，请重新设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+        }
+        // 目标排名要从 list中获取分数值 时的值
+        int yuwentarget = Integer.valueOf(yuwenTargeRank) - 1;
+        // 目标分数
+        String yuwenTargetScore = String.valueOf(yuwenRankList.get(yuwentarget));
+        // 差值：我的分数 - 目标分数
+        String yuwenScoreDifferentValue = String.valueOf(myyuwenRank - Double.parseDouble(yuwenTargetScore));
+
+        yuwenMap.put("myRank", String.valueOf(myyuwenRank));
+        yuwenMap.put("targetRank",yuwenTargeRank);
+        yuwenMap.put("myScore", String.valueOf(yuwenScore));
+        yuwenMap.put("targetScore",yuwenTargetScore);
+        yuwenMap.put("scoreDifferentValue",yuwenScoreDifferentValue);
+        yuwenMap.put("title", "语文");
+        hashMap.put("yuwen",yuwenMap);
+        //数学分数
+        Double shuxueScore = examCoversionTotal.getShuxueScore();
+        //数学年级排名
+        List<String> shuxueRankList = examCoversionTotalDao.findByShuxueScoreAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+        //数学年级人数
+        int shuxueNum = shuxueRankList.size();
+        String shuxueTargeRank = map.get("shuxue").toString().trim();
+        if (Integer.valueOf(shuxueTargeRank) > shuxueNum){
+            info = "您数学设定的目标值大于总人数，请核对后再设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+        }
+        //我的排名
+        int myshuxueRank = shuxueRankList.indexOf(Float.valueOf(shuxueScore.toString())) + 1;
+        //可能有并列，但是并列也是自己的排名
+        if (shuxueTargeRank.equals(myshuxueRank)){
+            info = "您设定的数学目标值为您自己的排名，请重新设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+        }
+        // 目标排名要从 list中获取分数值 时的值
+        int shuxuetarget = Integer.valueOf(shuxueTargeRank) - 1;
+        // 目标分数
+        String shuxueTargetScore = String.valueOf(shuxueRankList.get(shuxuetarget));
+        // 差值：我的分数 - 目标分数
+        String shuxueScoreDifferentValue = String.valueOf(myshuxueRank - Double.parseDouble(shuxueTargetScore));
+        shuxueMap.put("myRank", String.valueOf(myshuxueRank));
+        shuxueMap.put("targetRank",shuxueTargeRank);
+        shuxueMap.put("myScore", String.valueOf(shuxueScore));
+        shuxueMap.put("targetScore",shuxueTargetScore);
+        shuxueMap.put("scoreDifferentValue",shuxueScoreDifferentValue);
+        shuxueMap.put("title", "数学");
+        hashMap.put("shuxue",shuxueMap);
+
+        //英语分数
+        Double yingyuScore = examCoversionTotal.getYingyuScore();
+        //数学年级排名
+        List<String> yingyuRankList = examCoversionTotalDao.findByYingyuScoreAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+        //数学年级人数
+        int yingyuNum = yingyuRankList.size();
+        String yingyuTargeRank = map.get("yingyu").toString().trim();
+        if (Integer.valueOf(yingyuTargeRank) > yingyuNum){
+            info = "您英语设定的目标值大于总人数，请核对后再设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+        }
+        //我的排名
+        int myyingyuRank = yingyuRankList.indexOf(Float.valueOf(yingyuScore.toString())) + 1;
+        //可能有并列，但是并列也是自己的排名
+        if (yingyuTargeRank.equals(myyingyuRank)){
+            info = "您设定的英语目标值为您自己的排名，请重新设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+        }
+        // 目标排名要从 list中获取分数值 时的值
+        int yingyutarget = Integer.valueOf(yingyuTargeRank) - 1;
+        // 目标分数
+        String yingyuTargetScore = String.valueOf(yingyuRankList.get(yingyutarget));
+        // 差值：我的分数 - 目标分数
+        String yingyuScoreDifferentValue = String.valueOf(myyingyuRank - Double.parseDouble(yingyuTargetScore));
+        yingyuMap.put("myRank", String.valueOf(myyingyuRank));
+        yingyuMap.put("targetRank",yingyuTargeRank);
+        yingyuMap.put("myScore", String.valueOf(yingyuScore));
+        yingyuMap.put("targetScore",yingyuTargetScore);
+        yingyuMap.put("scoreDifferentValue",yingyuScoreDifferentValue);
+        yingyuMap.put("title", "英语");
+        hashMap.put("yingyu",yingyuMap);
+
+        if (!examCoversionTotal.getWuliCoversion().toString().equals("0.0")){
+            //物理分数
+            Double wuliScore = examCoversionTotal.getWuliCoversion();
+            //物理年级排名
+            List<String> wuliRankList = examCoversionTotalDao.findByWuliCoversionAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+            //物理年级人数
+            int wuliNum = wuliRankList.size();
+            String wuliTargeRank = map.get("wuli").toString().trim();
+            if (Integer.valueOf(wuliTargeRank) > wuliNum){
+                info = "您物理设定的目标值大于总人数，请核对后再设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+            }
+            //我的排名
+            int mywuliRank = wuliRankList.indexOf(Float.valueOf(wuliScore.toString())) + 1;
+            //可能有并列，但是并列也是自己的排名
+            if (wuliTargeRank.equals(mywuliRank)){
+                info = "您设定的物理目标值为您自己的排名，请重新设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+            }
+            // 目标排名要从 list中获取分数值 时的值
+            int wulitarget = Integer.valueOf(wuliTargeRank) - 1;
+            // 目标分数
+            String wuliTargetScore = String.valueOf(wuliRankList.get(wulitarget));
+            // 差值：我的分数 - 目标分数
+            String wuliScoreDifferentValue = String.valueOf(mywuliRank - Double.parseDouble(wuliTargetScore));
+            wuliMap.put("myRank", String.valueOf(mywuliRank));
+            wuliMap.put("targetRank",wuliTargeRank);
+            wuliMap.put("myScore", String.valueOf(wuliScore));
+            wuliMap.put("targetScore",wuliTargetScore);
+            wuliMap.put("scoreDifferentValue",wuliScoreDifferentValue);
+            wuliMap.put("title", "物理");
+            hashMap.put("wuli",wuliMap);
+        }
+
+        if (!examCoversionTotal.getHuaxueCoversion().toString().equals("0.0")){
+            //化学分数
+            Double huaxueScore = examCoversionTotal.getHuaxueCoversion();
+            //化学年级排名
+            List<String> huaxueRankList = examCoversionTotalDao.findByHuaxueCoversionAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+            //化学年级人数
+            int huaxueNum = huaxueRankList.size();
+            String huaxueTargeRank = map.get("huaxue").toString().trim();
+            if (Integer.valueOf(huaxueTargeRank) > huaxueNum){
+                info = "您化学设定的目标值大于总人数，请核对后再设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+            }
+            //我的排名
+            int myhuaxueRank = huaxueRankList.indexOf(Float.valueOf(huaxueScore.toString())) + 1;
+            //可能有并列，但是并列也是自己的排名
+            if (huaxueTargeRank.equals(myhuaxueRank)){
+                info = "您设定的化学目标值为您自己的排名，请重新设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+            }
+            // 目标排名要从 list中获取分数值 时的值
+            int huaxuetarget = Integer.valueOf(huaxueTargeRank) - 1;
+            // 目标分数
+            String huaxueTargetScore = String.valueOf(huaxueRankList.get(huaxuetarget));
+            // 差值：我的分数 - 目标分数
+            String huaxueScoreDifferentValue = String.valueOf(myhuaxueRank - Double.parseDouble(huaxueTargetScore));
+            huaxueMap.put("myRank", String.valueOf(myhuaxueRank));
+            huaxueMap.put("targetRank",huaxueTargeRank);
+            huaxueMap.put("myScore", String.valueOf(huaxueScore));
+            huaxueMap.put("targetScore",huaxueTargetScore);
+            huaxueMap.put("scoreDifferentValue",huaxueScoreDifferentValue);
+            huaxueMap.put("title", "化学");
+            hashMap.put("huaxue",huaxueMap);
+        }
+        if (!examCoversionTotal.getShengwuCoversion().toString().equals("0.0")){
+            //生物分数
+            Double shengwuScore = examCoversionTotal.getShengwuCoversion();
+            //生物年级排名
+            List<String> shengwuRankList = examCoversionTotalDao.findByShengwuCoversionAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+            //生物年级人数
+            int shengwuNum = shengwuRankList.size();
+            String shengwuTargeRank = map.get("shengwu").toString().trim();
+            if (Integer.valueOf(shengwuTargeRank) > shengwuNum){
+                info = "您生物设定的目标值大于总人数，请核对后再设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+            }
+            //我的排名
+            int myshengwuRank = shengwuRankList.indexOf(Float.valueOf(shengwuScore.toString())) + 1;
+            //可能有并列，但是并列也是自己的排名
+            if (shengwuTargeRank.equals(myshengwuRank)){
+                info = "您设定的生物目标值为您自己的排名，请重新设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+            }
+            // 目标排名要从 list中获取分数值 时的值
+            int shengwutarget = Integer.valueOf(shengwuTargeRank) - 1;
+            // 目标分数
+            String shengwuTargetScore = String.valueOf(shengwuRankList.get(shengwutarget));
+            // 差值：我的分数 - 目标分数
+            String shengwuScoreDifferentValue = String.valueOf(myshengwuRank - Double.parseDouble(shengwuTargetScore));
+            shengwuMap.put("myRank", String.valueOf(myshengwuRank));
+            shengwuMap.put("targetRank",shengwuTargeRank);
+            shengwuMap.put("myScore", String.valueOf(shengwuScore));
+            shengwuMap.put("targetScore",shengwuTargetScore);
+            shengwuMap.put("scoreDifferentValue",shengwuScoreDifferentValue);
+            shengwuMap.put("title", "生物");
+            hashMap.put("shengwu",shengwuMap);
+        }
+        if (!examCoversionTotal.getLishiCoversion().toString().equals("0.0") ){
+            //历史分数
+            Double lishiScore = examCoversionTotal.getLishiCoversion();
+            //历史年级排名
+            List<String> lishiRankList = examCoversionTotalDao.findByLishiCoversionAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+            //历史年级人数
+            int lishiNum = lishiRankList.size();
+            String lishiTargeRank = map.get("lishi").toString().trim();
+            if (Integer.valueOf(lishiTargeRank) > lishiNum){
+                info = "您历史设定的目标值大于总人数，请核对后再设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+            }
+            //我的排名
+            int mylishiRank = lishiRankList.indexOf(Float.valueOf(lishiScore.toString())) + 1;
+            //可能有并列，但是并列也是自己的排名
+            if (lishiTargeRank.equals(mylishiRank)){
+                info = "您设定的历史目标值为您自己的排名，请重新设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+            }
+            // 目标排名要从 list中获取分数值 时的值
+            int lishitarget = Integer.valueOf(lishiTargeRank) - 1;
+            // 目标分数
+            String lishiTargetScore = String.valueOf(lishiRankList.get(lishitarget));
+            // 差值：我的分数 - 目标分数
+            String lishiScoreDifferentValue = String.valueOf(mylishiRank - Double.parseDouble(lishiTargetScore));
+            lishiMap.put("myRank", String.valueOf(mylishiRank));
+            lishiMap.put("targetRank",lishiTargeRank);
+            lishiMap.put("myScore", String.valueOf(lishiScore));
+            lishiMap.put("targetScore",lishiTargetScore);
+            lishiMap.put("scoreDifferentValue",lishiScoreDifferentValue);
+            lishiMap.put("title", "历史");
+            hashMap.put("lishi",lishiMap);
+        }
+        if (!examCoversionTotal.getDiliCoversion().toString().equals("0.0")){
+            //地理分数
+            Double diliScore = examCoversionTotal.getDiliCoversion();
+            //地理年级排名
+            List<String> diliRankList = examCoversionTotalDao.findByDiliCoversionAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+            //地理年级人数
+            int diliNum = diliRankList.size();
+            String diliTargeRank = map.get("dili").toString().trim();
+            if (Integer.valueOf(diliTargeRank) > diliNum){
+                info = "您地理设定的目标值大于总人数，请核对后再设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+            }
+            //我的排名
+            int mydiliRank = diliRankList.indexOf(Float.valueOf(diliScore.toString())) + 1;
+            //可能有并列，但是并列也是自己的排名
+            if (diliTargeRank.equals(mydiliRank)){
+                info = "您设定的地理目标值为您自己的排名，请重新设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+            }
+            // 目标排名要从 list中获取分数值 时的值
+            int dilitarget = Integer.valueOf(diliTargeRank) - 1;
+            // 目标分数
+            String diliTargetScore = String.valueOf(diliRankList.get(dilitarget));
+            // 差值：我的分数 - 目标分数
+            String diliScoreDifferentValue = String.valueOf(mydiliRank - Double.parseDouble(diliTargetScore));
+            diliMap.put("myRank", String.valueOf(mydiliRank));
+            diliMap.put("targetRank",diliTargeRank);
+            diliMap.put("myScore", String.valueOf(diliScore));
+            diliMap.put("targetScore",diliTargetScore);
+            diliMap.put("scoreDifferentValue",diliScoreDifferentValue);
+            diliMap.put("title", "地理");
+            hashMap.put("dili",diliMap);
+        }
+        if (!examCoversionTotal.getZhengzhiCoversion().toString().equals("0.0")){
+            //政治分数
+            Double zhengzhiScore = examCoversionTotal.getZhengzhiCoversion();
+            //政治年级排名
+            List<String> zhengzhiRankList = examCoversionTotalDao.findByZhengzhiCoversionAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
+            //政治年级人数
+            int zhengzhiNum = zhengzhiRankList.size();
+            String zhengzhiTargeRank = map.get("zhengzhi").toString().trim();
+            if (Integer.valueOf(zhengzhiTargeRank) > zhengzhiNum){
+                info = "您政治设定的目标值大于总人数，请核对后再设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+            }
+            //我的排名
+            int myzhengzhiRank = zhengzhiRankList.indexOf(Float.valueOf(zhengzhiScore.toString())) + 1;
+            //可能有并列，但是并列也是自己的排名
+            if (zhengzhiTargeRank.equals(myzhengzhiRank)){
+                info = "您设定的政治目标值为您自己的排名，请重新设定";
+                logger.error(info);
+                throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+            }
+            // 目标排名要从 list中获取分数值 时的值
+            int zhengzhitarget = Integer.valueOf(zhengzhiTargeRank) - 1;
+            // 目标分数
+            String zhengzhiTargetScore = String.valueOf(zhengzhiRankList.get(zhengzhitarget));
+            // 差值：我的分数 - 目标分数
+            String zhengzhiScoreDifferentValue = String.valueOf(myzhengzhiRank - Double.parseDouble(zhengzhiTargetScore));
+            zhengzhiMap.put("myRank", String.valueOf(myzhengzhiRank));
+            zhengzhiMap.put("targetRank",zhengzhiTargeRank);
+            zhengzhiMap.put("myScore", String.valueOf(zhengzhiScore));
+            zhengzhiMap.put("targetScore",zhengzhiTargetScore);
+            zhengzhiMap.put("scoreDifferentValue",zhengzhiScoreDifferentValue);
+            zhengzhiMap.put("title", "政治");
+            hashMap.put("zhengzhi",zhengzhiMap);
+        }
+
+        logger.info("map: {}",map);
+        List<SingleContrastInfoDTO> list = new ArrayList<>();
+        SingleContrastInfoDTO singleContrastInfoDTO = new SingleContrastInfoDTO();
+        singleContrastInfoDTO.setMap(hashMap);
+        list.add(singleContrastInfoDTO);
+        return list;
+    }
+
 }

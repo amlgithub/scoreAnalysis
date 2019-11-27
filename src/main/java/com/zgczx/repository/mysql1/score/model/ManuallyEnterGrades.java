@@ -1,6 +1,7 @@
 package com.zgczx.repository.mysql1.score.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -14,6 +15,7 @@ import java.util.Objects;
 @Entity
 @Data
 //@Table(name = "manually_enter_grades", schema = "score_ananlysis_dev", catalog = "")
+@ApiModel(value = "ManuallyEnterGrades实体对象", description = "批量录入实体")
 @Table(name = "manually_enter_grades")
 public class ManuallyEnterGrades {
     @Id
