@@ -1,6 +1,7 @@
 package com.zgczx.service.scoretwo;
 
 import com.alibaba.fastjson.JSONObject;
+import com.zgczx.repository.mysql1.score.dto.ManuallyEnterGradesDTO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.GoalSet;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
@@ -36,7 +37,7 @@ public interface ScoreTwoService {
 
    List<String> getExamNameByYearMonthList(String openid,String yearMonth);
 
-   List<ManuallyEnterGrades> findAll(String openid,String examName);
+   List<ManuallyEnterGradesDTO> findAll(String openid, String examName);
 
    StudentInfo verifyStudentCode(String openid, String studentId);
 
@@ -55,6 +56,11 @@ public interface ScoreTwoService {
    List<SingleContrastInfoDTO> getSingleContrastInfo(Map<String, Object> map);
 
    GoalSet findTargetValue(String stuNumber, String examName);
+
+   ManuallyEnterGrades deleteManuallyEnter(String stuNumber, String openid,String examName);
+
+   ManuallyEnterGrades updateManuallyEnter(String stuNumber, String openid,String oldexamName,ManuallyEnterGrades manuallyEnterGrades);
+
 
 
 }

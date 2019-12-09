@@ -46,7 +46,6 @@ public class ManuallyEnterGrades {
     private String gradeRank;
     @Basic
     @Column(name = "exam_name")
-
     private String examName;
 
     //解决返回给前端的是一个时间戳，改成为年月日时分秒格式
@@ -55,104 +54,8 @@ public class ManuallyEnterGrades {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp updatetime;
 
-//    @Id
-//    @Column(name = "id")
-//    public int getId() {
-//        return id;
-//    }
-//
-//    public void setId(int id) {
-//        this.id = id;
-//    }
-//
-//    @Basic
-//    @Column(name = "wechat_openid")
-//    public String getWechatOpenid() {
-//        return wechatOpenid;
-//    }
-//
-//    public void setWechatOpenid(String wechatOpenid) {
-//        this.wechatOpenid = wechatOpenid;
-//    }
-//
-//    @Basic
-//    @Column(name = "student_number")
-//    public String getStudentNumber() {
-//        return studentNumber;
-//    }
-//
-//    public void setStudentNumber(String studentNumber) {
-//        this.studentNumber = studentNumber;
-//    }
-//
-//    @Basic
-//    @Column(name = "subject_name")
-//    public String getSubjectName() {
-//        return subjectName;
-//    }
-//
-//    public void setSubjectName(String subjectName) {
-//        this.subjectName = subjectName;
-//    }
-//
-//    @Basic
-//    @Column(name = "score")
-//    public String getScore() {
-//        return score;
-//    }
-//
-//    public void setScore(String score) {
-//        this.score = score;
-//    }
-//
-//    @Basic
-//    @Column(name = "class_rank")
-//    public String getClassRank() {
-//        return classRank;
-//    }
-//
-//    public void setClassRank(String classRank) {
-//        this.classRank = classRank;
-//    }
-//
-//    @Basic
-//    @Column(name = "grade_rank")
-//    public String getGradeRank() {
-//        return gradeRank;
-//    }
-//
-//    public void setGradeRank(String gradeRank) {
-//        this.gradeRank = gradeRank;
-//    }
-//
-//    @Basic
-//    @Column(name = "exam_name")
-//    public String getExamName() {
-//        return examName;
-//    }
-//
-//    public void setExamName(String examName) {
-//        this.examName = examName;
-//    }
-//
-//    @Basic
-//    @Column(name = "inserttime")
-//    public Timestamp getInserttime() {
-//        return inserttime;
-//    }
-//
-//    public void setInserttime(Timestamp inserttime) {
-//        this.inserttime = inserttime;
-//    }
-//
-//    @Basic
-//    @Column(name = "updatetime")
-//    public Timestamp getUpdatetime() {
-//        return updatetime;
-//    }
-//
-//    public void setUpdatetime(Timestamp updatetime) {
-//        this.updatetime = updatetime;
-//    }
+    @Column(name = "imgurl")
+    @Basic
+    private String imgurl;
 
 }

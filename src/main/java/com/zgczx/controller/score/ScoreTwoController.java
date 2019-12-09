@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.VO.ResultVO;
+import com.zgczx.repository.mysql1.score.dto.ManuallyEnterGradesDTO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.GoalSet;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
@@ -151,7 +152,7 @@ public class ScoreTwoController {
     }
 
     //获取此用户录入本次考试的所有信息
-    @ApiOperation(value = "五、录入统计4） 根据考试名称和openid获取对应的数据")
+    @ApiOperation(value = "#12.9: 五、录入统计4） 根据考试名称和openid获取对应的数据")
     @GetMapping(value = "/findAll")
     public ResultVO<?> findAll(
             @ApiParam(value = "用户openid", required = true)
@@ -159,7 +160,7 @@ public class ScoreTwoController {
             @ApiParam(value = "exam_name全称",required = true)
             @RequestParam(value = "examName") String examName
     ){
-        List<ManuallyEnterGrades> list = scoreTwoService.findAll(openid,examName);
+        List<ManuallyEnterGradesDTO> list = scoreTwoService.findAll(openid,examName);
         return ResultVOUtil.success(list);
     }
 
@@ -280,4 +281,33 @@ public class ScoreTwoController {
         return ResultVOUtil.success(list);
     }
 
+
+    @ApiOperation(value = "#12.9: 十三、 录入统计中的 删除 功能")
+    @GetMapping(value = "/deleteManuallyEnter")
+    public ResultVO<?> deleteManuallyEnter(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "考试全称",required = true)
+            @RequestParam(value = "examName") String examName
+    ){
+        ManuallyEnterGrades list = scoreTwoService.deleteManuallyEnter(stuNumber,openid,examName);
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "#12.9: 十四、 录入统计中的 更新 功能")
+    @PostMapping(value = "/updateManuallyEnter")
+    public ResultVO<?> updateManuallyEnter(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam(value = "openid") String openid,
+            @ApiParam(value = "考试全称",required = true)
+            @RequestParam(value = "oldexamName") String oldexamName,
+            ManuallyEnterGrades manuallyEnterGrades
+    ){
+        ManuallyEnterGrades list = scoreTwoService.updateManuallyEnter(stuNumber,openid,oldexamName,manuallyEnterGrades);
+        return ResultVOUtil.success(list);
+    }
 }

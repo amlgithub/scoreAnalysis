@@ -2,6 +2,7 @@ package com.zgczx.repository.mysql1.score.dao;
 
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -30,4 +31,15 @@ public interface ManuallyEnterGradesDao extends JpaRepository<ManuallyEnterGrade
     //动态太拼接openid 和 其他的条件
     @Query(value = "SELECT * FROM manually_enter_grades WHERE student_number=?2 AND wechat_openid IN (?1)", nativeQuery = true)
     List<ManuallyEnterGrades> findByWechatOpenidInAndStudentNumber(List<String> openids,String studengNumber);
+
+    // 手动录入成绩，删除功能，根据openid和examName
+    ManuallyEnterGrades deleteByWechatOpenidAndExamName(String openid, String examname);
+
+//    @Modifying :只能用于返回值为 void int
+//    @Query(name = "", nativeQuery = true)
+//    ManuallyEnterGrades updateByWechatOpenidAndExamName(String openid, String examname);
+
+    // 获取录入的某条数据，根据openid、studentnumber 、examName
+    @Query(value = "SELECT * FROM manually_enter_grades WHERE wechat_openid=?1 AND student_number=?2 AND exam_name=?3 ", nativeQuery = true)
+    ManuallyEnterGrades findByWechatOpenidAndStudentNumberAndExamName(String openid,String studentNumber,String examName);
 }

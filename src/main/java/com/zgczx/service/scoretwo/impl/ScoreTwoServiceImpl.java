@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.mapper.ManuallyEnterGradesMapper;
 import com.zgczx.repository.mysql1.score.dao.GoalSetDao;
+import com.zgczx.repository.mysql1.score.dto.ManuallyEnterGradesDTO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
 import com.zgczx.repository.mysql1.score.model.GoalSet;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
@@ -155,14 +156,24 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
     }
 
     @Override
-    public List<ManuallyEnterGrades> findAll(String openid, String examName) {
+    public List<ManuallyEnterGradesDTO> findAll(String openid, String examName) {
         List<ManuallyEnterGrades> allByWechatOpenidAndExamName = manuallyEnterGradesDao.findAllByWechatOpenidAndExamName(openid, examName);
         if (allByWechatOpenidAndExamName == null || allByWechatOpenidAndExamName.size() == 0){
             info = "您未录入数据";
             logger.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
         }
-        return allByWechatOpenidAndExamName;
+        String imgurl = allByWechatOpenidAndExamName.get(0).getImgurl();
+        String[] split = imgurl.split(",");
+        System.out.println(split);
+
+        List<ManuallyEnterGradesDTO> list = new ArrayList<>();
+        ManuallyEnterGradesDTO manuallyEnterGradesDTO = new ManuallyEnterGradesDTO();
+        manuallyEnterGradesDTO.setManuallyEnterGrades(allByWechatOpenidAndExamName.get(0));
+        manuallyEnterGradesDTO.setImgurllist(split);
+
+        list.add(manuallyEnterGradesDTO);
+        return list;
     }
 
     @Override
@@ -811,5 +822,41 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         }
 
         return targetValue.get(0);
+    }
+
+    @Override
+    public ManuallyEnterGrades deleteManuallyEnter(String stuNumber, String openid, String examName) {
+        List<ManuallyEnterGrades> allByWechatOpenidAndExamName = manuallyEnterGradesDao.findAllByWechatOpenidAndExamName(openid, examName);
+        if (allByWechatOpenidAndExamName == null || allByWechatOpenidAndExamName.size() == 0){
+            info = "您未录入此数据";
+            logger.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
+        }
+
+        return manuallyEnterGradesDao.deleteByWechatOpenidAndExamName(openid, examName);
+    }
+
+    @Override
+    public ManuallyEnterGrades updateManuallyEnter(String stuNumber, String openid, String oldexamName,ManuallyEnterGrades manuallyEnterGrades) {
+        ManuallyEnterGrades model = manuallyEnterGradesDao.findByWechatOpenidAndStudentNumberAndExamName(openid, stuNumber,oldexamName);
+        if (model == null ){
+            info = "您未录入此数据";
+            logger.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
+        }
+
+        model.setSubjectName(manuallyEnterGrades.getSubjectName());
+        model.setScore(manuallyEnterGrades.getScore());
+        model.setClassRank(manuallyEnterGrades.getClassRank());
+        model.setGradeRank(manuallyEnterGrades.getGradeRank());
+        model.setExamName(manuallyEnterGrades.getExamName());
+        model.setImgurl(manuallyEnterGrades.getImgurl());
+
+        Timestamp date = new Timestamp(System.currentTimeMillis());
+        model.setUpdatetime(date);
+
+        ManuallyEnterGrades save = manuallyEnterGradesDao.save(model);
+
+        return save;
     }
 }
