@@ -2,6 +2,7 @@ package com.zgczx.service.scoretwo;
 
 import com.alibaba.fastjson.JSONObject;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
+import com.zgczx.repository.mysql1.score.model.GoalSet;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.repository.mysql1.user.model.StudentInfo;
 import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
@@ -52,5 +53,8 @@ public interface ScoreTwoService {
    //JSONObject getSingleContrastInfo(Map<String, Object> map);
 
    List<SingleContrastInfoDTO> getSingleContrastInfo(Map<String, Object> map);
+
+   GoalSet findTargetValue(String stuNumber, String examName);
+
 
 }

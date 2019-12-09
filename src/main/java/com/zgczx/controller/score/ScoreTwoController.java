@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
+import com.zgczx.repository.mysql1.score.model.GoalSet;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.repository.mysql1.user.model.StudentInfo;
 import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
@@ -265,4 +266,18 @@ public class ScoreTwoController {
 
         return ResultVOUtil.success(singleContrastInfo);
     }
+
+    //定位中查询之前各科设定的目标值
+    @ApiOperation(value = "十二、 定位中查询之前各科设定的目标值")
+    @GetMapping(value = "/findTargetValue")
+    public ResultVO<?> findTargetValue(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam(value = "stuNumber") String stuNumber,
+            @ApiParam(value = "考试全称",required = true)
+            @RequestParam(value = "examName") String examName
+    ){
+        GoalSet list = scoreTwoService.findTargetValue(stuNumber,examName);
+        return ResultVOUtil.success(list);
+    }
+
 }

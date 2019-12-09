@@ -126,6 +126,7 @@
             <version>1.2.16</version>
         </dependency>
 
+
         <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis -->
         <!--<dependency>-->
             <!--<groupId>org.springframework.boot</groupId>-->
@@ -144,6 +145,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- 处理emoji -->
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>java-emoji-converter</artifactId>
+            <version>0.0.1</version>
         </dependency>
 
     </dependencies>

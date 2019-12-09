@@ -5,7 +5,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.zgczx.mapper.ManuallyEnterGradesMapper;
+import com.zgczx.repository.mysql1.score.dao.GoalSetDao;
 import com.zgczx.repository.mysql1.score.dto.MonthByYearListDTO;
+import com.zgczx.repository.mysql1.score.model.GoalSet;
 import com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
@@ -23,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -50,6 +53,9 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
 
     @Autowired
     private ExamCoversionTotalDao examCoversionTotalDao;
+
+    @Autowired
+    private GoalSetDao goalSetDao;
 
     private String info;
     @Override
@@ -370,6 +376,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
     }
 
     @Override
+    @Transactional
     public List<SingleContrastInfoDTO> getSingleContrastInfo(Map<String, Object> map) {
         JSONObject jsonObject = new JSONObject();
         String stuNumber = null;
@@ -388,8 +395,25 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         } else {
             examName =  map.get("examName").toString().trim();
         }
+        String openid = null;// 用户openid
+        if (!map.containsKey("openid")) {
+            jsonObject.put("errno", ResultEnum.RESULE_DATA_NONE);
+            jsonObject.put("errmsg", "openid not exit!");
+            // return jsonObject;
+        } else {
+            openid =  map.get("openid").toString().trim();
+        }
+
+        // 创建目标设定表的实体,往里面存放设定的目标值
+        GoalSet goalSet = new GoalSet();
+        goalSet.setStudentNumber(stuNumber);
+        goalSet.setExamName(examName);
+        goalSet.setOpenid(openid);
+
         //LinkedHashMap将map中的顺序按照添加顺序排列
         Map<String, Map<String, String>> hashMap = new LinkedHashMap<>();
+
+        Map<String, String> totalMap = new HashMap<>();//总分map
         //定义九门课的map
         Map<String, String> yuwenMap = new HashMap<>();
         Map<String, String> shuxueMap = new HashMap<>();
@@ -415,6 +439,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         //语文年级人数
         int yuwenNum = yuwenRankList.size();
         String yuwenTargeRank = map.get("yuwen").toString().trim();
+        goalSet.setYuwen(yuwenTargeRank);// 语文目标名次
         if (Integer.valueOf(yuwenTargeRank) > yuwenNum){
             info = "您语文设定的目标值大于总人数，请核对后再设定";
             logger.error(info);
@@ -433,7 +458,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         // 目标分数
         String yuwenTargetScore = String.valueOf(yuwenRankList.get(yuwentarget));
         // 差值：我的分数 - 目标分数
-        String yuwenScoreDifferentValue = String.valueOf(myyuwenRank - Double.parseDouble(yuwenTargetScore));
+        String yuwenScoreDifferentValue = String.valueOf(yuwenScore - Double.parseDouble(yuwenTargetScore));
 
         yuwenMap.put("myRank", String.valueOf(myyuwenRank));
         yuwenMap.put("targetRank",yuwenTargeRank);
@@ -449,6 +474,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         //数学年级人数
         int shuxueNum = shuxueRankList.size();
         String shuxueTargeRank = map.get("shuxue").toString().trim();
+        goalSet.setShuxue(shuxueTargeRank);//数学目标名次
         if (Integer.valueOf(shuxueTargeRank) > shuxueNum){
             info = "您数学设定的目标值大于总人数，请核对后再设定";
             logger.error(info);
@@ -467,7 +493,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         // 目标分数
         String shuxueTargetScore = String.valueOf(shuxueRankList.get(shuxuetarget));
         // 差值：我的分数 - 目标分数
-        String shuxueScoreDifferentValue = String.valueOf(myshuxueRank - Double.parseDouble(shuxueTargetScore));
+        String shuxueScoreDifferentValue = String.valueOf(shuxueScore - Double.parseDouble(shuxueTargetScore));
         shuxueMap.put("myRank", String.valueOf(myshuxueRank));
         shuxueMap.put("targetRank",shuxueTargeRank);
         shuxueMap.put("myScore", String.valueOf(shuxueScore));
@@ -478,11 +504,12 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
 
         //英语分数
         Double yingyuScore = examCoversionTotal.getYingyuScore();
-        //数学年级排名
+        //英语年级排名
         List<String> yingyuRankList = examCoversionTotalDao.findByYingyuScoreAndSchoolNameAndValid(examName, schoolName, 1, gradeName);
-        //数学年级人数
+        //英语年级人数
         int yingyuNum = yingyuRankList.size();
         String yingyuTargeRank = map.get("yingyu").toString().trim();
+        goalSet.setYingyu(yingyuTargeRank);//英语目标名次
         if (Integer.valueOf(yingyuTargeRank) > yingyuNum){
             info = "您英语设定的目标值大于总人数，请核对后再设定";
             logger.error(info);
@@ -501,7 +528,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         // 目标分数
         String yingyuTargetScore = String.valueOf(yingyuRankList.get(yingyutarget));
         // 差值：我的分数 - 目标分数
-        String yingyuScoreDifferentValue = String.valueOf(myyingyuRank - Double.parseDouble(yingyuTargetScore));
+        String yingyuScoreDifferentValue = String.valueOf(yingyuScore - Double.parseDouble(yingyuTargetScore));
         yingyuMap.put("myRank", String.valueOf(myyingyuRank));
         yingyuMap.put("targetRank",yingyuTargeRank);
         yingyuMap.put("myScore", String.valueOf(yingyuScore));
@@ -518,6 +545,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             //物理年级人数
             int wuliNum = wuliRankList.size();
             String wuliTargeRank = map.get("wuli").toString().trim();
+            goalSet.setWuli(wuliTargeRank);//物理目标名次
             if (Integer.valueOf(wuliTargeRank) > wuliNum){
                 info = "您物理设定的目标值大于总人数，请核对后再设定";
                 logger.error(info);
@@ -536,7 +564,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             // 目标分数
             String wuliTargetScore = String.valueOf(wuliRankList.get(wulitarget));
             // 差值：我的分数 - 目标分数
-            String wuliScoreDifferentValue = String.valueOf(mywuliRank - Double.parseDouble(wuliTargetScore));
+            String wuliScoreDifferentValue = String.valueOf(wuliScore - Double.parseDouble(wuliTargetScore));
             wuliMap.put("myRank", String.valueOf(mywuliRank));
             wuliMap.put("targetRank",wuliTargeRank);
             wuliMap.put("myScore", String.valueOf(wuliScore));
@@ -554,6 +582,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             //化学年级人数
             int huaxueNum = huaxueRankList.size();
             String huaxueTargeRank = map.get("huaxue").toString().trim();
+            goalSet.setHuaxue(huaxueTargeRank);//化学目标名次
             if (Integer.valueOf(huaxueTargeRank) > huaxueNum){
                 info = "您化学设定的目标值大于总人数，请核对后再设定";
                 logger.error(info);
@@ -572,7 +601,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             // 目标分数
             String huaxueTargetScore = String.valueOf(huaxueRankList.get(huaxuetarget));
             // 差值：我的分数 - 目标分数
-            String huaxueScoreDifferentValue = String.valueOf(myhuaxueRank - Double.parseDouble(huaxueTargetScore));
+            String huaxueScoreDifferentValue = String.valueOf(huaxueScore - Double.parseDouble(huaxueTargetScore));
             huaxueMap.put("myRank", String.valueOf(myhuaxueRank));
             huaxueMap.put("targetRank",huaxueTargeRank);
             huaxueMap.put("myScore", String.valueOf(huaxueScore));
@@ -589,6 +618,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             //生物年级人数
             int shengwuNum = shengwuRankList.size();
             String shengwuTargeRank = map.get("shengwu").toString().trim();
+            goalSet.setShengwu(shengwuTargeRank);//生物目标名次
             if (Integer.valueOf(shengwuTargeRank) > shengwuNum){
                 info = "您生物设定的目标值大于总人数，请核对后再设定";
                 logger.error(info);
@@ -607,7 +637,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             // 目标分数
             String shengwuTargetScore = String.valueOf(shengwuRankList.get(shengwutarget));
             // 差值：我的分数 - 目标分数
-            String shengwuScoreDifferentValue = String.valueOf(myshengwuRank - Double.parseDouble(shengwuTargetScore));
+            String shengwuScoreDifferentValue = String.valueOf(shengwuScore - Double.parseDouble(shengwuTargetScore));
             shengwuMap.put("myRank", String.valueOf(myshengwuRank));
             shengwuMap.put("targetRank",shengwuTargeRank);
             shengwuMap.put("myScore", String.valueOf(shengwuScore));
@@ -624,6 +654,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             //历史年级人数
             int lishiNum = lishiRankList.size();
             String lishiTargeRank = map.get("lishi").toString().trim();
+            goalSet.setLishi(lishiTargeRank);//历史目标名次
             if (Integer.valueOf(lishiTargeRank) > lishiNum){
                 info = "您历史设定的目标值大于总人数，请核对后再设定";
                 logger.error(info);
@@ -642,7 +673,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             // 目标分数
             String lishiTargetScore = String.valueOf(lishiRankList.get(lishitarget));
             // 差值：我的分数 - 目标分数
-            String lishiScoreDifferentValue = String.valueOf(mylishiRank - Double.parseDouble(lishiTargetScore));
+            String lishiScoreDifferentValue = String.valueOf(lishiScore - Double.parseDouble(lishiTargetScore));
             lishiMap.put("myRank", String.valueOf(mylishiRank));
             lishiMap.put("targetRank",lishiTargeRank);
             lishiMap.put("myScore", String.valueOf(lishiScore));
@@ -659,6 +690,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             //地理年级人数
             int diliNum = diliRankList.size();
             String diliTargeRank = map.get("dili").toString().trim();
+            goalSet.setDili(diliTargeRank);//地理目标名次
             if (Integer.valueOf(diliTargeRank) > diliNum){
                 info = "您地理设定的目标值大于总人数，请核对后再设定";
                 logger.error(info);
@@ -677,7 +709,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             // 目标分数
             String diliTargetScore = String.valueOf(diliRankList.get(dilitarget));
             // 差值：我的分数 - 目标分数
-            String diliScoreDifferentValue = String.valueOf(mydiliRank - Double.parseDouble(diliTargetScore));
+            String diliScoreDifferentValue = String.valueOf(diliScore - Double.parseDouble(diliTargetScore));
             diliMap.put("myRank", String.valueOf(mydiliRank));
             diliMap.put("targetRank",diliTargeRank);
             diliMap.put("myScore", String.valueOf(diliScore));
@@ -694,6 +726,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             //政治年级人数
             int zhengzhiNum = zhengzhiRankList.size();
             String zhengzhiTargeRank = map.get("zhengzhi").toString().trim();
+            goalSet.setZhengzhi(zhengzhiTargeRank);//政治目标名次
             if (Integer.valueOf(zhengzhiTargeRank) > zhengzhiNum){
                 info = "您政治设定的目标值大于总人数，请核对后再设定";
                 logger.error(info);
@@ -712,7 +745,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             // 目标分数
             String zhengzhiTargetScore = String.valueOf(zhengzhiRankList.get(zhengzhitarget));
             // 差值：我的分数 - 目标分数
-            String zhengzhiScoreDifferentValue = String.valueOf(myzhengzhiRank - Double.parseDouble(zhengzhiTargetScore));
+            String zhengzhiScoreDifferentValue = String.valueOf(zhengzhiScore - Double.parseDouble(zhengzhiTargetScore));
             zhengzhiMap.put("myRank", String.valueOf(myzhengzhiRank));
             zhengzhiMap.put("targetRank",zhengzhiTargeRank);
             zhengzhiMap.put("myScore", String.valueOf(zhengzhiScore));
@@ -722,6 +755,44 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             hashMap.put("zhengzhi",zhengzhiMap);
         }
 
+        Double myTotalScore = examCoversionTotal.getCoversionTotal();//自己总分值
+        String targetRank = map.get("total").toString().trim();//总分目标设定
+        goalSet.setTotalScore(targetRank);//总分目标名次
+        // 本次考试的年级总人数
+        int gradeNumber = examCoversionTotalDao.countByExamTypeAndValidAndSchoolNameAndGradeName(examName, 1, schoolName, gradeName);
+        if (Integer.valueOf(targetRank) > gradeNumber){
+            info = "您设定的目标值大于总人数，请核对后再设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_OUT_RANGE, info);
+        }
+        //年级排名数组
+        List<String> gradeRankList = examCoversionTotalDao.findAllBySchoolNameAndGradeNameAndExamType(schoolName, gradeName, examName);
+        //我的排名
+        int myRank = gradeRankList.indexOf(Float.valueOf(myTotalScore.toString())) + 1;
+        //可能有并列，但是并列也是自己的排名
+        if (targetRank.equals(myRank)){
+            info = "您设定的目标值为您自己的排名，请重新设定";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
+        }
+        // 目标排名要从 list中获取分数值 时的值
+        int target = Integer.valueOf(targetRank) - 1;
+        // 目标分数
+        String targetScore = String.valueOf(gradeRankList.get(target));
+        // 差值：我的分数 - 目标分数
+        String scoreDifferentValue = String.valueOf(myTotalScore - Double.parseDouble(targetScore));
+        totalMap.put("myRank", String.valueOf(myRank));
+        totalMap.put("targetRank",targetRank);
+        totalMap.put("myScore", String.valueOf(myTotalScore));
+        totalMap.put("targetScore",targetScore);
+        totalMap.put("scoreDifferentValue",scoreDifferentValue);
+        totalMap.put("title", "总分");
+        hashMap.put("total",totalMap);
+
+        //保存目标名次表数据
+        GoalSet save = goalSetDao.save(goalSet);
+        logger.info("【保存的各科目标数据：】,{}",save);
+
         logger.info("map: {}",map);
         List<SingleContrastInfoDTO> list = new ArrayList<>();
         SingleContrastInfoDTO singleContrastInfoDTO = new SingleContrastInfoDTO();
@@ -730,4 +801,15 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         return list;
     }
 
+    @Override
+    public GoalSet findTargetValue(String stuNumber, String examName) {
+        List<GoalSet> targetValue = goalSetDao.findTargetValue(stuNumber, examName);
+        if (targetValue.size() == 0){
+            info = "您为首次使用此功能，请您设定目标对比值";
+            logger.error(info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+
+        return targetValue.get(0);
+    }
 }
