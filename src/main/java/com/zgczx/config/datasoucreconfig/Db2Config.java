@@ -18,7 +18,12 @@ import javax.sql.DataSource;
 import java.util.Map;
 import java.util.Properties;
 
-
+/**
+ * 第二数据源的具体配置
+ * 这种配置是 1.多版本的
+ * @author aml
+ * @date 2019/10/10 10:45
+ */
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(

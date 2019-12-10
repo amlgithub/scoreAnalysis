@@ -111,7 +111,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
                 throw new ScoreException(ResultEnum.DATA_ALREADY_EXISTED,info);
             }
         }
-        logger.info("【list】: {}",list);
+        logger.info("【打印传参的list】: {}",list);
 
         List<ManuallyEnterGrades> save = manuallyEnterGradesDao.save(list);
         if (save == null || save.size() == 0){
@@ -186,7 +186,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             ManuallyEnterGradesDTO manuallyEnterGradesDTO = new ManuallyEnterGradesDTO();
             manuallyEnterGradesDTO.setManuallyEnterGrades(manuallyEnterGrades);
             List<String> stringList = new ArrayList<>();
-            String imgurl = manuallyEnterGrades.getImgurl();
+            String imgurl = manuallyEnterGrades.getImgs();
             String[] split = null;
             if (imgurl != null){
                 split = imgurl.split(",");
@@ -899,7 +899,7 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         model.setClassRank(manuallyEnterGrades.getClassRank());
         model.setGradeRank(manuallyEnterGrades.getGradeRank());
         model.setExamName(manuallyEnterGrades.getExamName());
-        model.setImgurl(manuallyEnterGrades.getImgurl());
+        model.setImgs(manuallyEnterGrades.getImgs());
 
         Timestamp date = new Timestamp(System.currentTimeMillis());
         model.setUpdatetime(date);

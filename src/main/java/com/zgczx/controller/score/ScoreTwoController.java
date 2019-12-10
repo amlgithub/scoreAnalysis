@@ -82,6 +82,7 @@ public class ScoreTwoController {
     public ResultVO<?> saveList(@RequestBody @ApiParam(name="用户Model对象 传参名称为 list",value="传入json格式",required=true) String list){
         List<ManuallyEnterGrades> enterGradesList = JSON.parseObject(list, new TypeReference<List<ManuallyEnterGrades>>() {
         });
+        log.info("【打印出传参情况：】{}",enterGradesList);
         List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(enterGradesList);
 
         return ResultVOUtil.success(list1);
@@ -91,8 +92,10 @@ public class ScoreTwoController {
     @PostMapping("/saveList2")
     public ResultVO<?> saveList2(HttpServletRequest request, HttpServletResponse response){
         String list = request.getParameter("0");
+        log.info("【打印没映射的参数情况：】{}",list);
         List<ManuallyEnterGrades> enterGradesList = JSON.parseObject(list, new TypeReference<List<ManuallyEnterGrades>>() {
         });
+        log.info("【打印出传参情况：】{}",enterGradesList);
         List<ManuallyEnterGrades> list1 = scoreTwoService.saveList(enterGradesList);
 
         return ResultVOUtil.success(list1);

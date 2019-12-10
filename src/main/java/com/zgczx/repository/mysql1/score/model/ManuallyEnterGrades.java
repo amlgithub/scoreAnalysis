@@ -54,8 +54,9 @@ public class ManuallyEnterGrades {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp updatetime;
 
-    @Column(name = "imgurl")
+    @Column(name = "imgs")
     @Basic
-    private String imgurl;
+    private String imgs;
+
 
 }
