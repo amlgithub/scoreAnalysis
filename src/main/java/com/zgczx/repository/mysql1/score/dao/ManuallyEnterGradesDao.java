@@ -21,7 +21,7 @@ public interface ManuallyEnterGradesDao extends JpaRepository<ManuallyEnterGrade
     @Query(value = "SELECT COUNT(exam_name) FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2", nativeQuery = true)
     int countByWechatOpenidAndExamName(String openid, String examName);
 
-    @Query(value = "SELECT exam_name FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2", nativeQuery = true)
+    @Query(value = "SELECT DISTINCT exam_name FROM manually_enter_grades WHERE wechat_openid =?1 AND exam_name LIKE ?2", nativeQuery = true)
     List<String> getExamNameByYearMonthAndWechatOpenid(String openid, String yearMonth);
 
     List<ManuallyEnterGrades> findAllByWechatOpenidAndExamName(String openid,String examName);
@@ -32,8 +32,8 @@ public interface ManuallyEnterGradesDao extends JpaRepository<ManuallyEnterGrade
     @Query(value = "SELECT * FROM manually_enter_grades WHERE student_number=?2 AND wechat_openid IN (?1)", nativeQuery = true)
     List<ManuallyEnterGrades> findByWechatOpenidInAndStudentNumber(List<String> openids,String studengNumber);
 
-    // 手动录入成绩，删除功能，根据openid和examName
-    ManuallyEnterGrades deleteByWechatOpenidAndExamName(String openid, String examname);
+    // 手动录入成绩，删除 某条 数据功能，根据openid和examName
+    int deleteByStudentNumberAndExamNameAndSubjectName(String studentNumber, String examname,String subject);
 
 //    @Modifying :只能用于返回值为 void int
 //    @Query(name = "", nativeQuery = true)
@@ -42,4 +42,9 @@ public interface ManuallyEnterGradesDao extends JpaRepository<ManuallyEnterGrade
     // 获取录入的某条数据，根据openid、studentnumber 、examName
     @Query(value = "SELECT * FROM manually_enter_grades WHERE wechat_openid=?1 AND student_number=?2 AND exam_name=?3 ", nativeQuery = true)
     ManuallyEnterGrades findByWechatOpenidAndStudentNumberAndExamName(String openid,String studentNumber,String examName);
+
+    // 批量录入手动录入成绩实体时，判断如果其中有某条数据 已经录入过，就不允许此次录入操作
+    ManuallyEnterGrades findAllByStudentNumberAndExamNameAndSubjectName(String studentNumber, String examname, String subjectName);
+
+
 }

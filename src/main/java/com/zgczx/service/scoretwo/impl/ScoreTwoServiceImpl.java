@@ -25,6 +25,7 @@ import com.zgczx.service.scoretwo.ScoreTwoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +99,20 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             logger.error("批量录入list={} ,为空", list);
             throw new ScoreException(ResultEnum.DATA_IS_WRONG,"数据为null");
         }
+
+        for (ManuallyEnterGrades model : list){
+            String studentNumber = model.getStudentNumber();
+            String subjectName = model.getSubjectName();
+            String examName = model.getExamName();
+            ManuallyEnterGrades manuallyEnterGrades = manuallyEnterGradesDao.findAllByStudentNumberAndExamNameAndSubjectName(studentNumber, examName, subjectName);
+            if (manuallyEnterGrades != null){
+                info = "您已经录过此数据，暂不允许重复录入，请重新核对再录入";
+                logger.error("重复数据为={} ", manuallyEnterGrades);
+                throw new ScoreException(ResultEnum.DATA_ALREADY_EXISTED,info);
+            }
+        }
+        logger.info("【list】: {}",list);
+
         List<ManuallyEnterGrades> save = manuallyEnterGradesDao.save(list);
         if (save == null || save.size() == 0){
             info = "批量插入手动录入成绩出错";
@@ -163,17 +178,46 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             logger.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
         }
+
+        // 这种才是真正的list，之前都放到map中是不太对的，这样的话才真正用了DTO的返回结构
+        List<ManuallyEnterGradesDTO> gradesDTOList = new ArrayList<>();
+        for (ManuallyEnterGrades manuallyEnterGrades : allByWechatOpenidAndExamName){
+
+            ManuallyEnterGradesDTO manuallyEnterGradesDTO = new ManuallyEnterGradesDTO();
+            manuallyEnterGradesDTO.setManuallyEnterGrades(manuallyEnterGrades);
+            List<String> stringList = new ArrayList<>();
+            String imgurl = manuallyEnterGrades.getImgurl();
+            String[] split = null;
+            if (imgurl != null){
+                split = imgurl.split(",");
+
+                for (String s : split){
+                    stringList.add(s);
+                }
+            }
+            manuallyEnterGradesDTO.setImgurllist(stringList);
+            gradesDTOList.add(manuallyEnterGradesDTO);
+        }
+
+
+     /*   List<String> stringList = new ArrayList<>();
         String imgurl = allByWechatOpenidAndExamName.get(0).getImgurl();
-        String[] split = imgurl.split(",");
-        System.out.println(split);
+        String[] split = null;
+        if (imgurl != null){
+            split = imgurl.split(",");
+
+            for (String s : split){
+                stringList.add(s);
+            }
+        }
 
         List<ManuallyEnterGradesDTO> list = new ArrayList<>();
         ManuallyEnterGradesDTO manuallyEnterGradesDTO = new ManuallyEnterGradesDTO();
         manuallyEnterGradesDTO.setManuallyEnterGrades(allByWechatOpenidAndExamName.get(0));
-        manuallyEnterGradesDTO.setImgurllist(split);
+        manuallyEnterGradesDTO.setImgurllist(stringList);
 
-        list.add(manuallyEnterGradesDTO);
-        return list;
+        list.add(manuallyEnterGradesDTO);*/
+        return gradesDTOList;
     }
 
     @Override
@@ -824,21 +868,26 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
         return targetValue.get(0);
     }
 
+    @Transactional
+    @Modifying
     @Override
-    public ManuallyEnterGrades deleteManuallyEnter(String stuNumber, String openid, String examName) {
-        List<ManuallyEnterGrades> allByWechatOpenidAndExamName = manuallyEnterGradesDao.findAllByWechatOpenidAndExamName(openid, examName);
-        if (allByWechatOpenidAndExamName == null || allByWechatOpenidAndExamName.size() == 0){
+    public int deleteManuallyEnter(String stuNumber, String openid, String examName,String subject) {
+        ManuallyEnterGrades allByWechatOpenidAndExamName = manuallyEnterGradesDao.findAllByStudentNumberAndExamNameAndSubjectName(stuNumber, examName,subject);
+        if (allByWechatOpenidAndExamName == null){
             info = "您未录入此数据";
             logger.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE,info);
         }
+        // 是否还需要 记录谁 操作的，openid
+        //int a = manuallyEnterGradesDao.deleteByStudentNumberAndExamNameAndSubjectName(stuNumber, examName, subject);
+        return manuallyEnterGradesDao.deleteByStudentNumberAndExamNameAndSubjectName(stuNumber, examName, subject);
 
-        return manuallyEnterGradesDao.deleteByWechatOpenidAndExamName(openid, examName);
     }
 
     @Override
-    public ManuallyEnterGrades updateManuallyEnter(String stuNumber, String openid, String oldexamName,ManuallyEnterGrades manuallyEnterGrades) {
-        ManuallyEnterGrades model = manuallyEnterGradesDao.findByWechatOpenidAndStudentNumberAndExamName(openid, stuNumber,oldexamName);
+    public ManuallyEnterGrades updateManuallyEnter(String stuNumber, String openid, String oldexamName,String subject,ManuallyEnterGrades manuallyEnterGrades) {
+       // ManuallyEnterGrades model = manuallyEnterGradesDao.findByWechatOpenidAndStudentNumberAndExamName(openid, stuNumber,oldexamName);
+        ManuallyEnterGrades model = manuallyEnterGradesDao.findAllByStudentNumberAndExamNameAndSubjectName(stuNumber, oldexamName,subject);
         if (model == null ){
             info = "您未录入此数据";
             logger.error("【错误信息】: {}", info);

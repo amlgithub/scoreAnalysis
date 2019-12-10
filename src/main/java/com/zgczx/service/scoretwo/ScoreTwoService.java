@@ -10,6 +10,8 @@ import com.zgczx.repository.mysql2.scoretwo.dto.CommentValueDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.LocationComparisonDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.SingleContrastInfoDTO;
 import com.zgczx.repository.mysql2.scoretwo.dto.TotalScoreInfoDTO;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -57,9 +59,11 @@ public interface ScoreTwoService {
 
    GoalSet findTargetValue(String stuNumber, String examName);
 
-   ManuallyEnterGrades deleteManuallyEnter(String stuNumber, String openid,String examName);
+   @Transactional
+   @Modifying
+   int deleteManuallyEnter(String stuNumber, String openid,String examName,String subject);
 
-   ManuallyEnterGrades updateManuallyEnter(String stuNumber, String openid,String oldexamName,ManuallyEnterGrades manuallyEnterGrades);
+   ManuallyEnterGrades updateManuallyEnter(String stuNumber, String openid,String oldexamName,String subject,ManuallyEnterGrades manuallyEnterGrades);
 
 
 

@@ -290,9 +290,11 @@ public class ScoreTwoController {
             @ApiParam(value = "用户openid", required = true)
             @RequestParam(value = "openid") String openid,
             @ApiParam(value = "考试全称",required = true)
-            @RequestParam(value = "examName") String examName
+            @RequestParam(value = "examName") String examName,
+            @ApiParam(value = "subject科目名称", required = true)
+            @RequestParam(value = "subject") String subject
     ){
-        ManuallyEnterGrades list = scoreTwoService.deleteManuallyEnter(stuNumber,openid,examName);
+        int list = scoreTwoService.deleteManuallyEnter(stuNumber,openid,examName,subject);
         return ResultVOUtil.success(list);
     }
 
@@ -305,9 +307,11 @@ public class ScoreTwoController {
             @RequestParam(value = "openid") String openid,
             @ApiParam(value = "考试全称",required = true)
             @RequestParam(value = "oldexamName") String oldexamName,
+            @ApiParam(value = "subject科目名称", required = true)
+            @RequestParam(value = "subject") String subject,
             ManuallyEnterGrades manuallyEnterGrades
     ){
-        ManuallyEnterGrades list = scoreTwoService.updateManuallyEnter(stuNumber,openid,oldexamName,manuallyEnterGrades);
+        ManuallyEnterGrades list = scoreTwoService.updateManuallyEnter(stuNumber,openid,oldexamName,subject,manuallyEnterGrades);
         return ResultVOUtil.success(list);
     }
 }
