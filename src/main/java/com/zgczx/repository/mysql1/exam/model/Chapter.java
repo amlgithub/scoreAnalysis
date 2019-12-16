@@ -2,6 +2,8 @@ package com.zgczx.repository.mysql1.exam.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -11,6 +13,8 @@ import java.sql.Timestamp;
  * @author aml
  * @date 2019/12/11 11:23
  */
+@DynamicUpdate//生成动态的update语句,如果这个字段的值是null就不会被加入到update语句中
+@DynamicInsert// 如果这个字段的值是null就不会加入到insert语句当中.
 @Entity
 @Data
 @Table(name="e_chapter")
@@ -22,6 +26,7 @@ public class Chapter {
     @Column(name = "subject_id")
     private int subjectId;
 
+    private String subject;
     private String chapter;
 
     private String section;

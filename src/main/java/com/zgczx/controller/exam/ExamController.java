@@ -1,6 +1,7 @@
 package com.zgczx.controller.exam;
 
 import com.zgczx.VO.ResultVO;
+import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import com.zgczx.service.exam.ExamService;
 import com.zgczx.utils.ResultVOUtil;
@@ -43,26 +44,30 @@ public class ExamController {
         return ResultVOUtil.success(text);
     }
 
-    @ApiOperation(value = "二、 获取此年级的所有章目")
+    @ApiOperation(value = "二、 获取此科目此年级的所有章目")
     @GetMapping("/getAllChapter")
     public ResultVO<?> getAllChapter(
             @ApiParam(value = "levelName年级水平", required = true)
-            @RequestParam("levelName") String levelName
+            @RequestParam("levelName") String levelName,
+            @ApiParam(value = "subject科目名称", required = true)
+            @RequestParam("subject") String subject
     ){
-        List<String> list = examService.getAllChapter(levelName);
+        List<String> list = examService.getAllChapter(levelName,subject);
 
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "三、 获取此年级所有的 小节名称")
+    @ApiOperation(value = "三、 获取此科目此年级所有的 小节名称")
     @GetMapping("/getAllSection")
     public ResultVO<?> getAllSection(
             @ApiParam(value = "levelName年级水平", required = true)
             @RequestParam("levelName") String levelName,
             @ApiParam(value = "chapter具体章名称", required = true)
-            @RequestParam("chapter") String chapter
+            @RequestParam("chapter") String chapter,
+            @ApiParam(value = "subject科目名称", required = true)
+            @RequestParam("subject") String subject
     ){
-        List<String> list = examService.getAllSection(levelName,chapter);
+        List<String> list = examService.getAllSection(levelName,chapter,subject);
 
         return ResultVOUtil.success(list);
     }
@@ -72,7 +77,7 @@ public class ExamController {
     @GetMapping("/splitExam")
     public ResultVO<?> splitExam(
             @ApiParam(value = "试卷全称", required = true)
-            @RequestParam("examName") String examName,
+            @RequestParam("paperName") String examName,
             @ApiParam(value = "科目名称", required = true)
             @RequestParam("subject") String subject
     ){
@@ -85,11 +90,28 @@ public class ExamController {
     @GetMapping("/findExamQuestionInfo")
     public ResultVO<?> findExamQuestionInfo(
             @ApiParam(value = "试卷全称", required = true)
-            @RequestParam("examName") String examName,
+            @RequestParam("paperName") String examName,
             @ApiParam(value = "科目名称", required = true)
             @RequestParam("subject") String subject
     ){
-        List<Question> list = examService.findExamQuestionInfo(examName,subject);
+        List<QuestionDTO> list = examService.findExamQuestionInfo(examName,subject);
+
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "六、判断此题用户是否做对,并记录到表中")
+    @GetMapping("/judgeQuestionRight")
+    public ResultVO<?> judgeQuestionRight(
+            @ApiParam(value = "主键id", required = true)
+            @RequestParam("id") int id,
+            @ApiParam(value = "studentNumber用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "commitString一道题提交的内容", required = true)
+            @RequestParam("commitString") String commitString
+    ){
+        Question list = examService.judgeQuestionRight(id,studentNumber,openid);
 
         return ResultVOUtil.success(list);
     }

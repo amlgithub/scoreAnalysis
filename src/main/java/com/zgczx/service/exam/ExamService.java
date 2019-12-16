@@ -1,6 +1,7 @@
 package com.zgczx.service.exam;
 
 
+import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,11 +17,13 @@ public interface ExamService {
 
     String parseWord(MultipartFile file, HttpSession session, HttpServletRequest request);
 
-    List<String> getAllChapter(String levelName);
+    List<String> getAllChapter(String levelName,String subject);
 
-    List<String> getAllSection(String levelName,String chapter);
+    List<String> getAllSection(String levelName,String chapter,String subject);
 
     List<Question> splitExam(String examName, String subject);
 
-    List<Question> findExamQuestionInfo(String examName, String subject);
+    List<QuestionDTO> findExamQuestionInfo(String examName, String subject);
+
+    Question judgeQuestionRight(int id,String studentNumber, String openid);
 }

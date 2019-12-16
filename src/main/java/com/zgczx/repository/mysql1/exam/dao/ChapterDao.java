@@ -16,11 +16,11 @@ import java.util.List;
 public interface ChapterDao extends JpaRepository<Chapter, Integer> {
 
     //1. 获取 此年级的所有的章名称：例如获取高一的所有章
-    @Query(value = "select DISTINCT chapter from e_chapter where level_name=?1", nativeQuery = true)
-    List<String> findByLevelName(String levelName);
+    @Query(value = "select DISTINCT chapter from e_chapter where level_name=?1 and subject=?2 ", nativeQuery = true)
+    List<String> findByLevelNameAndSubject(String levelName, String subject);
 
     //2. 获取所有的 节名称，根据 高中 和 章的名称
-    @Query(value = "SELECT section FROM e_chapter WHERE level_name=?1 AND chapter=?2 ", nativeQuery = true)
-    List<String> findByLevelNameAndChapter(String levelName, String chapter);
+    @Query(value = "SELECT section FROM e_chapter WHERE level_name=?1 AND chapter=?2 and subject=?3 ", nativeQuery = true)
+    List<String> findByLevelNameAndChapterAndSubject(String levelName, String chapter, String subject);
 
 }

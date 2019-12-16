@@ -5,6 +5,7 @@ import com.zgczx.exception.ScoreException;
 import com.zgczx.repository.mysql1.exam.dao.ChapterDao;
 import com.zgczx.repository.mysql1.exam.dao.ExamPaperDao;
 import com.zgczx.repository.mysql1.exam.dao.QuestionDao;
+import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.ExamPaper;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +18,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static com.zgczx.utils.FilterStringUtil.filterAlphabetCapital;
-import static com.zgczx.utils.FilterStringUtil.filterMiddleBrackets;
+import static com.zgczx.utils.FilterStringUtil.*;
+import static com.zgczx.utils.FilterStringUtil.filterspecial;
+import static com.zgczx.utils.RecursionTreeUtil.permute;
+import static com.zgczx.utils.RecursionTreeUtil.randomSort;
 import static com.zgczx.utils.WordRedUtil.readWord;
 
 /**
@@ -58,8 +62,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public List<String> getAllChapter(String levelName) {
-        List<String> name = chapterDao.findByLevelName(levelName);
+    public List<String> getAllChapter(String levelName, String subject) {
+        List<String> name = chapterDao.findByLevelNameAndSubject(levelName,subject);
         if (name == null || name.size() == 0) {
             info = "暂时没有此年级的章目";
             log.error("【错误信息】: {}", info);
@@ -70,8 +74,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public List<String> getAllSection(String levelName, String chapter) {
-        List<String> name = chapterDao.findByLevelNameAndChapter(levelName, chapter);
+    public List<String> getAllSection(String levelName, String chapter, String subject) {
+        List<String> name = chapterDao.findByLevelNameAndChapterAndSubject(levelName, chapter,subject);
         if (name == null || name.size() == 0) {
             info = "暂时没有此年级此章目的小节";
             log.error("【错误信息】: {}", info);
@@ -176,7 +180,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public List<Question> findExamQuestionInfo(String examName, String subject) {
+    public List<QuestionDTO> findExamQuestionInfo(String examName, String subject) {
         ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndDeleted(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
@@ -192,7 +196,116 @@ public class ExamServiceImpl implements ExamService {
             idList.add(integer);
             //System.out.println(idList);
         }
-        List<Question> questions = questionDao.findByIdIn(idList);
-        return questions;
+        List<QuestionDTO> list = new ArrayList<>();
+        for (Integer integer : idList){
+            QuestionDTO questionDTO = new QuestionDTO();
+            Question one = questionDao.findOne(integer);
+            questionDTO.setQuestion(one);
+
+            List<String> optionList = new LinkedList<>();
+            List<String> optionList1 = new LinkedList<>();
+            List<String> optionList2 = new LinkedList<>();
+
+            List<Map<String, String>> optionMapList = new LinkedList<>();
+            Map<String, String> map = new HashMap<>();
+
+            String oneQuestionOption = one.getQuestionOption();//获取所有选项的文本
+            String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+
+            log.info("【去除t,n等字符】： {}",questionOption);
+            int i1 = questionOption.indexOf("A．");
+            int i2 = questionOption.indexOf("B．");
+            int i3 = questionOption.indexOf("C．");
+            int i4 = questionOption.indexOf("D．");
+
+            boolean contains = questionOption.contains("D．");//判断选项中是否包含 D选项
+
+//            String str1 = questionOption.substring(i1, i2);//A选项
+//            String str2 = questionOption.substring(i2, i3);//B选项
+//            String str3 = questionOption.substring(i3, i4);//C选项
+//            String str4 = questionOption.substring(i4, questionOption.length());//D选项
+            String str1 = questionOption.substring(i1+2, i2);//A选项
+            String str2 = questionOption.substring(i2+2, i3);//B选项
+            String str3 = questionOption.substring(i3+2, i4);//C选项
+            String str4 = questionOption.substring(i4+2, questionOption.length());//D选项
+
+            optionList.add(str1);
+            optionList.add(str2);
+            optionList.add(str3);
+            optionList.add(str4);
+
+            // 将选项内容做映射，请求全排列，
+            Map<Integer, String> sortMap = new HashMap<>();
+            sortMap.put(1,str1);
+            sortMap.put(2,str2);
+            sortMap.put(3,str3);
+            sortMap.put(4,str4);
+            optionList2.add(questionOption.substring(i1, i1+2));
+            optionList2.add(questionOption.substring(i2, i2+2));
+            optionList2.add(questionOption.substring(i3, i3+2));
+            optionList2.add(questionOption.substring(i4, i4+2));
+            int[] array = new int[]{1,2,3,4};
+            int[] ints = randomSort(array,0);
+            for (int i=0; i< ints.length; i++){
+                String s = sortMap.get(ints[i]);
+                String s1 = optionList2.get(i);
+                optionList1.add(s1+s);
+
+                //optionList1.add(sortMap.get(ints[i]));
+            }
+            System.out.println(optionList1);
+           for (int i =0; i < optionList1.size(); i++){
+               String s = optionList1.get(i);
+
+           }
+
+
+
+/*       List<String> randomList = new LinkedList<>();
+       randomList.add(questionOption.substring(i1, i1+2));
+       randomList.add(questionOption.substring(i2, i2+2));
+       randomList.add(questionOption.substring(i3, i3+2));
+       randomList.add(questionOption.substring(i4, i4+2));
+
+       Map<String, String> sortMap = new HashMap<>();
+       // 此方案失败，每次请求的顺序一样
+       for (int i =0; i < optionList.size(); i++) {
+           String s = null;
+           int random = 0;
+           if (randomList.size() == 1){
+               s = randomList.get(0);
+
+           }else {
+                random = (int) (Math.random() * (randomList.size() - 1) + 1);
+                s = randomList.get(random);
+           }
+           String s1 = s + optionList.get(i);
+           sortMap.put(s,s1);
+           randomList.remove(random);
+       }
+            optionList1.add(sortMap.get("A．"));
+            optionList1.add(sortMap.get("B．"));
+            optionList1.add(sortMap.get("C．"));
+            optionList1.add(sortMap.get("D．"));
+            questionDTO.setRandomOption(optionList1);*/
+
+            questionDTO.setOption(optionList);
+            questionDTO.setRandomOption(optionList1);
+
+            list.add(questionDTO);
+        }
+        return list;
+    }
+
+    @Override
+    public Question judgeQuestionRight(int id, String studentNumber, String openid) {
+        Question question = questionDao.findOne(id);
+        if (question == null){
+            info = "您所查询的此题不存在，请核对后再查";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+
+        return null;
     }
 }

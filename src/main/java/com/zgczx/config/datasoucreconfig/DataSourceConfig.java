@@ -27,4 +27,11 @@ public class DataSourceConfig {
     public DataSource db2DataSource(){
         return DataSourceBuilder.create().build();
     }
+
+    @Bean(name = "db3DataSource")
+    @Qualifier("db3DataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.db3")// 指定配置文件中的数据源前缀
+    public DataSource db3DataSource(){
+        return DataSourceBuilder.create().build();
+    }
 }

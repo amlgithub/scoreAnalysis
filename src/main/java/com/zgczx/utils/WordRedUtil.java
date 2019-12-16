@@ -22,7 +22,10 @@ import java.util.List;
 
 /**
  * 读取Word 的 util
- *
+ * //以数字开头并且包含.表示一个新的题目开始
+ *             String regex = "^\\d{1,10}\\.";
+ *  *             Pattern pattern = Pattern.compile(regex);
+ *  *             pattern.matcher(line)
  * @author aml
  * @date 2019/12/11 15:23
  */

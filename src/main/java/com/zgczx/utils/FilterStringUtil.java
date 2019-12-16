@@ -1,5 +1,8 @@
 package com.zgczx.utils;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * 正则匹配string中所需要的内容
  *
@@ -44,6 +47,31 @@ public class FilterStringUtil {
     public static String filterMiddleBrackets(String alph) {
         alph = alph.replaceAll("\\[|\\]|\\s", "");
         return alph;
+    }
+
+
+
+    /**
+     * 专门用于 获取题的接口，筛选选项中的 特殊字符
+     *  // 去除\s,\t,\n 和 t ,n 等符号
+     * @param alph
+     * @return
+     */
+    public static String filterspecial(String alph) {
+//        Pattern p = Pattern.compile("\\s*|\\t|\\r|\\n");
+        Pattern p = Pattern.compile("\\\\s*|\\t|\\r|\\n|t|n");
+        Matcher m = p.matcher(alph);
+        boolean b = m.find();
+        String s = null;
+        if (b == true){
+            s = m.replaceAll("");
+        }else {
+            s = alph;
+        }
+
+
+       // alph = alph.replaceAll("\\s*|\\t|\\r|\\n", "");
+        return s;
     }
 
     /**
@@ -135,6 +163,10 @@ public class FilterStringUtil {
 
         String s = filterMiddleBrackets("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
         System.out.println("sssssssssssssssssssss:   " + s);
+
+        String s1 = "A．一定的流动性\\t\\t\\t\\t\\t\\t\\t\\tB．选择透性\\nC．较大的稳定性\\t\\t\\t\\t\\t\\t\\t\\tD．运输物质的功能\\n";
+        String filterspecial = filterspecial(s1);
+        System.out.println(filterspecial);
     }
 
 
