@@ -13,5 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface ExamPaperDao extends JpaRepository<ExamPaper, Integer> {
 
     //1. 获取此试卷的所有信息，根据 试卷名称和科目
-    ExamPaper findByExamNameAndSubjectAndDeleted(String examName, String subject,int deleted);
+    ExamPaper findByExamNameAndSubjectAndValid(String examName, String subject,int deleted);
+
+
 }

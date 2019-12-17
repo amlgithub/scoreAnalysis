@@ -24,15 +24,25 @@ public class UserQuestionRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name = "student_number")
     private String studentNumber;
+    private String openid;
     private String subject;
+    @Column(name = "question_text_content")
     private String questionTextContent;
+    @Column(name = "user_answer")
     private String userAnswer;
+    @Column(name = "do_right")
     private int doRight;
+    @Column(name = "question_id")
     private int questionId;
+    @Column(name = "exam_paper_id")
     private int examPaperId;
+    @Column(name = "customer_score")
     private String customerScore;
+    @Column(name = "question_score")
     private String questionScore;
+    @Column(name = "do_time")
     private String doTime;
     private int status;
     //解决返回给前端的是一个时间戳，改成为年月日时分秒格式

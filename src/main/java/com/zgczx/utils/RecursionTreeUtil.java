@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,6 +15,9 @@ import java.util.List;
  */
 @Slf4j
 public class RecursionTreeUtil {
+
+    // 定义一个 全局变量，来存放递归打印的 结果
+    public static List<String> list = new ArrayList<>();
 
     /**
      * @param s    字符串
@@ -42,34 +46,32 @@ public class RecursionTreeUtil {
         s[j] = tmp;
     }
 
-    public static void main(String[] args) {
-//            char[] s = {'a','b','c','d'};
-//            permutation(s, 0, 3);
-
-        int[] array = new int[]{1, 2, 3, 4};
-        randomSort(array, 0);
-
-        List<int[]> list = new ArrayList<>();
-
-    }
 
     public static void permute(int[] array, int start) {
 
         if (start == array.length) {  // 输出
-
             System.out.println(Arrays.toString(array));
 
+//            list.add(Arrays.toString(array));// 全局变量接收 递归结果
         } else {
             for (int i = start; i < array.length; ++i) {
                 swap(array, start, i);  //  交换元素
                 permute(array, start + 1);  //交换后，再进行全排列算法
                 swap(array, start, i);  //还原成原来的数组，便于下一次的全排列
-                // System.out.println("swap:  "+Arrays.toString(array));
+
             }
         }
 
     }
 
+    /**
+     * #19.12.16
+     * 让每道题选项随机的 函数，但这个方法不太好
+     *
+     * @param array 有几个选项
+     * @param start 从 0 开始
+     * @return
+     */
     public static int[] randomSort(int[] array, int start) {
 
         int random = (int) (Math.random() * (array.length - 1) + 1);
@@ -84,5 +86,19 @@ public class RecursionTreeUtil {
         array[s] = array[i];
         array[i] = t;
     }
+
+
+    public static void main(String[] args) {
+//            char[] s = {'a','b','c','d'};
+//            permutation(s, 0, 3);
+
+        int[] array = new int[]{1, 2, 3, 4};
+//        randomSort(array, 0);
+
+        permute(array, 0);
+
+
+    }
+
 
 }

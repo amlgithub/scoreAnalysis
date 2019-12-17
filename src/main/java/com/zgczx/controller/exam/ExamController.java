@@ -3,6 +3,7 @@ package com.zgczx.controller.exam;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
+import com.zgczx.repository.mysql1.exam.model.UserQuestionRecord;
 import com.zgczx.service.exam.ExamService;
 import com.zgczx.utils.ResultVOUtil;
 import io.swagger.annotations.Api;
@@ -99,10 +100,10 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "六、判断此题用户是否做对,并记录到表中")
+    @ApiOperation(value = "六、用户所有的做题记录")
     @GetMapping("/judgeQuestionRight")
     public ResultVO<?> judgeQuestionRight(
-            @ApiParam(value = "主键id", required = true)
+            @ApiParam(value = "哪道题：题库表的主键id", required = true)
             @RequestParam("id") int id,
             @ApiParam(value = "studentNumber用户学号", required = true)
             @RequestParam("studentNumber") String studentNumber,
@@ -111,7 +112,7 @@ public class ExamController {
             @ApiParam(value = "commitString一道题提交的内容", required = true)
             @RequestParam("commitString") String commitString
     ){
-        Question list = examService.judgeQuestionRight(id,studentNumber,openid);
+        UserQuestionRecord list = examService.judgeQuestionRight(id,studentNumber,openid,commitString);
 
         return ResultVOUtil.success(list);
     }

@@ -15,12 +15,13 @@ public class QuestionDTO {
 
     private Question question;
 
-    // 选项列表ABCD
-    private List<String> option;
+//    // 选项列表ABCD
+//    private List<String> option;
 
     // 选项列表ABCD
     private List<String> randomOption;
 
-    // 选项和答案
-//    private List<Map<String, String>> optionMapList;
+    // 此题的正确选项，随着答案文本，选项跟着变化
+    private String rightOption;
+
 }

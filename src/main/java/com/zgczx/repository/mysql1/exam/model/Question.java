@@ -68,7 +68,7 @@ public class Question {
     @Column(name = "core_literacy")
     private String coreLiteracy;
 
-    private int deleted;
+    private int valid;
     @Column(name = "question_imgs")
     private String questionImgs;
 

@@ -38,7 +38,7 @@ public class SplitPaperUtil {
 
     @Transactional
     public List<Question> splitExam(String examName, String subject) {
-        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndDeleted(examName, subject, 1);
+        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
@@ -115,7 +115,7 @@ public class SplitPaperUtil {
             } else {
                 question.setCorrectText(contentD);
             }
-            question.setDeleted(1);//1：此数据有效
+            question.setValid(1);//1：此数据有效
             Question save = questionDao.save(question);
         }
         List<Question> list = questionDao.findByExamName("3.1 细胞膜的结构和功能");

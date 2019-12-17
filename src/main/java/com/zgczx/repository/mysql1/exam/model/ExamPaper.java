@@ -57,7 +57,7 @@ public class ExamPaper {
     private String questionList;
     @Column(name = "create_user")
     private String createUser;
-    private int deleted;
+    private int valid;
     private String rank;
     //解决返回给前端的是一个时间戳，改成为年月日时分秒格式
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

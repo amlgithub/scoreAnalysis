@@ -5,9 +5,11 @@ import com.zgczx.exception.ScoreException;
 import com.zgczx.repository.mysql1.exam.dao.ChapterDao;
 import com.zgczx.repository.mysql1.exam.dao.ExamPaperDao;
 import com.zgczx.repository.mysql1.exam.dao.QuestionDao;
+import com.zgczx.repository.mysql1.exam.dao.UserQuestionRecordDao;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.ExamPaper;
 import com.zgczx.repository.mysql1.exam.model.Question;
+import com.zgczx.repository.mysql1.exam.model.UserQuestionRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,9 @@ import java.util.regex.Pattern;
 
 import static com.zgczx.utils.FilterStringUtil.*;
 import static com.zgczx.utils.FilterStringUtil.filterspecial;
+import static com.zgczx.utils.FullPermutationUtil.l;
 import static com.zgczx.utils.RecursionTreeUtil.permute;
+import static com.zgczx.utils.FullPermutationUtil.permute2;
 import static com.zgczx.utils.RecursionTreeUtil.randomSort;
 import static com.zgczx.utils.WordRedUtil.readWord;
 
@@ -44,6 +48,9 @@ public class ExamServiceImpl implements ExamService {
 
     @Autowired
     private ExamPaperDao examPaperDao;
+
+    @Autowired
+    private UserQuestionRecordDao userQuestionRecordDao;
 
     private String info;
 
@@ -88,7 +95,7 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     @Override
     public List<Question> splitExam(String examName, String subject) {
-        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndDeleted(examName, subject, 1);
+        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
@@ -165,7 +172,7 @@ public class ExamServiceImpl implements ExamService {
             } else {
                 question.setCorrectText(contentD);
             }
-            question.setDeleted(1);//1：此数据有效
+            question.setValid(1);//1：此数据有效
             Question save = questionDao.save(question);
         }
         List<Question> list = questionDao.findByExamName("3.1 细胞膜的结构和功能");
@@ -181,7 +188,7 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public List<QuestionDTO> findExamQuestionInfo(String examName, String subject) {
-        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndDeleted(examName, subject, 1);
+        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
@@ -218,7 +225,11 @@ public class ExamServiceImpl implements ExamService {
             int i3 = questionOption.indexOf("C．");
             int i4 = questionOption.indexOf("D．");
 
-            boolean contains = questionOption.contains("D．");//判断选项中是否包含 D选项
+            List<Integer> letterList = new ArrayList<>();
+            letterList.add(i1);
+            letterList.add(i2);
+            letterList.add(i3);
+            letterList.add(i4);
 
 //            String str1 = questionOption.substring(i1, i2);//A选项
 //            String str2 = questionOption.substring(i2, i3);//B选项
@@ -236,6 +247,7 @@ public class ExamServiceImpl implements ExamService {
 
             // 将选项内容做映射，请求全排列，
             Map<Integer, String> sortMap = new HashMap<>();
+
             sortMap.put(1,str1);
             sortMap.put(2,str2);
             sortMap.put(3,str3);
@@ -244,52 +256,56 @@ public class ExamServiceImpl implements ExamService {
             optionList2.add(questionOption.substring(i2, i2+2));
             optionList2.add(questionOption.substring(i3, i3+2));
             optionList2.add(questionOption.substring(i4, i4+2));
+
             int[] array = new int[]{1,2,3,4};
-            int[] ints = randomSort(array,0);
+
+            boolean contains = questionOption.contains("E．");//判断选项中是否包含 D选项
+            if (contains){
+                int i5 = questionOption.indexOf("E．");
+                letterList.add(i5);
+                String str5 = questionOption.substring(i5+2, questionOption.length());//E选项
+                optionList.add(str5);
+                sortMap.put(5,str5);
+                optionList2.add(questionOption.substring(i5, i5+2));
+                array = new int[]{1,2,3,4,5};
+            }
+/*
+  这里 是 实现 随机选项的 方案 2： 使用的是 全排列，随机性高，但是 递归过程慢，耗时长
+ */
+//            permute2(array,0);// 调用 全排列的递归函数
+//            int random = (int) (Math.random() * (l.size() - 1) + 1); // 从递归得到的全排列中获取 任意的 一个结果
+//            String s2 = filterMiddleBrackets(l.get(random));
+//            String replace = s2.replace("\"", "");
+//            String[] split = replace.split(",");
+//            for (int i = 0; i < split.length; i++){
+//                String s3 = split[i];
+//                int s4 = Integer.parseInt(s3.replaceAll("\"", ""));
+//                String s = sortMap.get(s4);
+//                String s1 = optionList2.get(i);
+//                optionList1.add(s1+s);
+//            }
+
+/*
+  这里 是 实现 随机选项的 方案 1： 使用的是random，随机性不高
+ */
+            int[] ints = randomSort(array,0);// 这个是随机函数，不是全排列函数
             for (int i=0; i< ints.length; i++){
                 String s = sortMap.get(ints[i]);
                 String s1 = optionList2.get(i);
                 optionList1.add(s1+s);
-
                 //optionList1.add(sortMap.get(ints[i]));
             }
             System.out.println(optionList1);
            for (int i =0; i < optionList1.size(); i++){
-               String s = optionList1.get(i);
 
+               String answer = optionLetter(optionList1.get(i));
+               if (one.getCorrectText().equals(answer)){
+                   String answerOption = optionList1.get(i).substring(0, 1);
+                   questionDTO.setRightOption(answerOption);
+               }
            }
 
-
-
-/*       List<String> randomList = new LinkedList<>();
-       randomList.add(questionOption.substring(i1, i1+2));
-       randomList.add(questionOption.substring(i2, i2+2));
-       randomList.add(questionOption.substring(i3, i3+2));
-       randomList.add(questionOption.substring(i4, i4+2));
-
-       Map<String, String> sortMap = new HashMap<>();
-       // 此方案失败，每次请求的顺序一样
-       for (int i =0; i < optionList.size(); i++) {
-           String s = null;
-           int random = 0;
-           if (randomList.size() == 1){
-               s = randomList.get(0);
-
-           }else {
-                random = (int) (Math.random() * (randomList.size() - 1) + 1);
-                s = randomList.get(random);
-           }
-           String s1 = s + optionList.get(i);
-           sortMap.put(s,s1);
-           randomList.remove(random);
-       }
-            optionList1.add(sortMap.get("A．"));
-            optionList1.add(sortMap.get("B．"));
-            optionList1.add(sortMap.get("C．"));
-            optionList1.add(sortMap.get("D．"));
-            questionDTO.setRandomOption(optionList1);*/
-
-            questionDTO.setOption(optionList);
+//            questionDTO.setOption(optionList);
             questionDTO.setRandomOption(optionList1);
 
             list.add(questionDTO);
@@ -298,14 +314,31 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public Question judgeQuestionRight(int id, String studentNumber, String openid) {
+    public UserQuestionRecord judgeQuestionRight(int id, String studentNumber, String openid,String commitString) {
         Question question = questionDao.findOne(id);
         if (question == null){
             info = "您所查询的此题不存在，请核对后再查";
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
+        String subjectName = questionDao.getSubjectName(id);
+        UserQuestionRecord userQuestionRecord  = new UserQuestionRecord();
 
-        return null;
+        String userAnswer = optionLetter(commitString);
+        if (question.getCorrectText().equals(userAnswer)){
+            userQuestionRecord.setDoRight(1);
+        }else {
+            userQuestionRecord.setDoRight(2);
+        }
+        userQuestionRecord.setUserAnswer(userAnswer);
+        userQuestionRecord.setSubject(subjectName);
+        userQuestionRecord.setStudentNumber(studentNumber);
+        userQuestionRecord.setOpenid(openid);
+        userQuestionRecord.setQuestionId(id);
+        userQuestionRecord.setExamPaperId(question.getExamId());
+
+        UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
+
+        return save;
     }
 }

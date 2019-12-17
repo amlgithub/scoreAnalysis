@@ -100,6 +100,11 @@ public class FilterStringUtil {
         return character;
     }
 
+    public static String optionLetter(String character) {
+        character = character.replaceAll("A．|B．|C．|D．|E．", "");
+        return character;
+    }
+
     /**
      * @param args
      * @Title : main
@@ -167,6 +172,9 @@ public class FilterStringUtil {
         String s1 = "A．一定的流动性\\t\\t\\t\\t\\t\\t\\t\\tB．选择透性\\nC．较大的稳定性\\t\\t\\t\\t\\t\\t\\t\\tD．运输物质的功能\\n";
         String filterspecial = filterspecial(s1);
         System.out.println(filterspecial);
+
+        String s2 = optionLetter("A．C．B．D．E.一定的流动性");
+        System.out.println("s2:   "+ s2);
     }
 
 
