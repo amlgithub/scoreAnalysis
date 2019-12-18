@@ -1,8 +1,10 @@
 package com.zgczx.controller.exam;
 
 import com.zgczx.VO.ResultVO;
+import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
+import com.zgczx.repository.mysql1.exam.model.UserCollect;
 import com.zgczx.repository.mysql1.exam.model.UserQuestionRecord;
 import com.zgczx.service.exam.ExamService;
 import com.zgczx.utils.ResultVOUtil;
@@ -100,9 +102,9 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "六、用户所有的做题记录")
-    @GetMapping("/judgeQuestionRight")
-    public ResultVO<?> judgeQuestionRight(
+    @ApiOperation(value = "六、【属于做一道题后，做题记录跟着变化】动态实时呈现用户做题详情 并记录用户所有的做题情况")
+    @GetMapping("/doQuestionInfo")
+    public ResultVO<?> doQuestionInfo(
             @ApiParam(value = "哪道题：题库表的主键id", required = true)
             @RequestParam("id") int id,
             @ApiParam(value = "studentNumber用户学号", required = true)
@@ -110,10 +112,53 @@ public class ExamController {
             @ApiParam(value = "用户学号", required = true)
             @RequestParam("openid") String openid,
             @ApiParam(value = "commitString一道题提交的内容", required = true)
-            @RequestParam("commitString") String commitString
+            @RequestParam("commitString") String commitString,
+            @ApiParam(value = "试卷全称", required = true)
+            @RequestParam("paperName") String examName,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject
     ){
-        UserQuestionRecord list = examService.judgeQuestionRight(id,studentNumber,openid,commitString);
+        DoQuestionInfoDTO list = examService.judgeQuestionRight(id,studentNumber,openid,commitString,examName,subject);
 
         return ResultVOUtil.success(list);
     }
+
+    @ApiOperation(value = "七、记录用户的收藏情况 ")
+    @GetMapping("/insertCollect")
+    public ResultVO<?> insertCollect(
+            @ApiParam(value = "哪道题：题库表的主键id", required = true)
+            @RequestParam("id") int id,
+            @ApiParam(value = "studentNumber用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "分类名称", required = true)
+            @RequestParam("classification") String classification,
+            @ApiParam(value = "这道题提交的内容", required = true)
+            @RequestParam("commitString") String commitString
+//            @ApiParam(value = "试卷全称", required = true)
+//            @RequestParam("paperName") String examName,
+//            @ApiParam(value = "科目名称", required = true)
+//            @RequestParam("subject") String subject
+    ){
+        UserCollect list = examService.insertCollect(id,studentNumber,openid,classification,commitString);//,examName,subject
+
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "八、【不做题时查看】用户做题详情；需求：点击类似做题页面的键盘，出现的正确、错误、未做数量  ")
+    @GetMapping("/getDoQuestionInfo")
+    public ResultVO<?> getDoQuestionInfo(
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("paperName") String examName,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject
+    ){
+
+        DoQuestionInfoDTO list = examService.getDoQuestionInfo(studentNumber,examName,subject);
+
+        return ResultVOUtil.success(list);
+    }
+
 }

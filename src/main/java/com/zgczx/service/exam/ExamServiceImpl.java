@@ -2,13 +2,12 @@ package com.zgczx.service.exam;
 
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
-import com.zgczx.repository.mysql1.exam.dao.ChapterDao;
-import com.zgczx.repository.mysql1.exam.dao.ExamPaperDao;
-import com.zgczx.repository.mysql1.exam.dao.QuestionDao;
-import com.zgczx.repository.mysql1.exam.dao.UserQuestionRecordDao;
+import com.zgczx.repository.mysql1.exam.dao.*;
+import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.ExamPaper;
 import com.zgczx.repository.mysql1.exam.model.Question;
+import com.zgczx.repository.mysql1.exam.model.UserCollect;
 import com.zgczx.repository.mysql1.exam.model.UserQuestionRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +50,9 @@ public class ExamServiceImpl implements ExamService {
 
     @Autowired
     private UserQuestionRecordDao userQuestionRecordDao;
+
+    @Autowired
+    private UserCollectDao userCollectDao;
 
     private String info;
 
@@ -304,7 +306,7 @@ public class ExamServiceImpl implements ExamService {
                    questionDTO.setRightOption(answerOption);
                }
            }
-
+//Collections.shuffle(list);//集合打乱顺序
 //            questionDTO.setOption(optionList);
             questionDTO.setRandomOption(optionList1);
 
@@ -313,8 +315,9 @@ public class ExamServiceImpl implements ExamService {
         return list;
     }
 
+    @Transactional
     @Override
-    public UserQuestionRecord judgeQuestionRight(int id, String studentNumber, String openid,String commitString) {
+    public DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String examName, String subject) {
         Question question = questionDao.findOne(id);
         if (question == null){
             info = "您所查询的此题不存在，请核对后再查";
@@ -339,6 +342,168 @@ public class ExamServiceImpl implements ExamService {
 
         UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
 
+        DoQuestionInfoDTO dto = getDto(studentNumber, examName, subject);
+//        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
+//        if (examPaper == null) {
+//            info = "暂时没有此科目的此试卷";
+//            log.error("【错误信息】: {}", info);
+//            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+//        }
+//        // 去除[] 和 空格，或者从插库时处理，直接就存1,2,3... ；而不是存成[1, 2, 3...]
+//        String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+//
+//        List<Integer> idList = new ArrayList<>();
+//        for (int i = 0; i < questionList.length; i++) {
+//            int integer = Integer.parseInt(questionList[i]);
+//            idList.add(integer);
+//        }
+//        // 这一份试卷的 题的数量
+//        int questionCount = idList.size();
+//        //  获取某学生->某科目 -> 某试卷的所有做题记录；
+//        List<UserQuestionRecord> stulist = userQuestionRecordDao.getByStudentNumberAndSubjectAndExamPaperId(studentNumber, subject, question.getExamId());
+//        int doRight = 0;
+//        int doError = 0;
+//        List<Integer> doRightList = new ArrayList<>(); // 做对的题号
+//        List<Integer> doErrorList = new ArrayList<>(); // 做错的题号
+//        List<Integer> notDoList = new ArrayList<>();
+//        for (UserQuestionRecord questionRecord : stulist){
+//            if (questionRecord.getDoRight() == 1){
+//                if (!doRightList.contains(questionRecord.getQuestionId())){
+//                    doRightList.add(questionRecord.getQuestionId());
+//                    doRight++;
+//                }
+//
+//            }else {
+//                if (!doErrorList.contains(questionRecord.getQuestionId())){
+//                    doErrorList.add(questionRecord.getQuestionId());
+//                    doError++;
+//                }
+//
+//            }
+//        }
+//        int notDo = questionCount - doRight - doError;
+//        for (int i = 1; i <= questionCount; i++){
+//            if (!doRightList.contains(i) && !doErrorList.contains(i)){
+//                notDoList.add(i);
+//            }
+//        }
+//        log.info("【总共做题数量：】{}", questionCount);
+//        log.info("【作对题的数量：】{}", doRight);
+//        log.info("【作错题的数量：】{}", doError);
+//        log.info("【未做题的数量：】{}", notDo);
+//
+//        //List<DoQuestionInfoDTO> dtoList = new ArrayList<>();
+//        DoQuestionInfoDTO dto = new DoQuestionInfoDTO();
+//        dto.setQuestionCount(questionCount);
+//        dto.setDoRight(doRight);
+//        dto.setDoError(doError);
+//        dto.setNotDo(notDo);
+//        dto.setDoRightList(doRightList);
+//        dto.setDoErrorList(doErrorList);
+//        dto.setNotDoList(notDoList);
+
+       // dtoList.add(dto);
+
+        return dto;
+    }
+
+    @Override
+    public UserCollect insertCollect(int id, String studentNumber, String openid, String classification, String commitString) {
+        Question question = questionDao.findOne(id);
+        if (question == null){
+            info = "您所查询的此题不存在，请核对后再查";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 科目名称
+        String subjectName = questionDao.getSubjectName(id);
+
+        String userAnswer = optionLetter(commitString);
+
+        UserCollect userCollect = new UserCollect();
+        userCollect.setStudentNumber(studentNumber);
+        userCollect.setOpenid(openid);
+        userCollect.setSubject(subjectName);
+        userCollect.setExamPaperId(question.getExamId());
+        userCollect.setQuestionId(id);
+        userCollect.setUserAnswer(userAnswer);
+        userCollect.setClassification(classification);
+
+        UserCollect save = userCollectDao.save(userCollect);
         return save;
+    }
+
+    @Override
+    public DoQuestionInfoDTO getDoQuestionInfo(String studentNumber, String examName, String subject) {
+        DoQuestionInfoDTO dto = getDto(studentNumber, examName, subject);
+        return dto;
+    }
+
+    /**
+     * 将六、八、接口公共的抽出来： 动态实时呈现用户做题详情 并记录用户所有的做题情况 接口中
+     * 获取 做题情况抽出来，作为一个 公共的函数
+     * @author aml
+     * @date 2019/12/18 15:02
+     */
+    public DoQuestionInfoDTO getDto(String studentNumber,String examName, String subject) {
+        ExamPaper examPaper = examPaperDao.getBy(examName, subject, 1);
+        if (examPaper == null) {
+            info = "暂时没有此科目的此试卷";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 去除[] 和 空格，或者从插库时处理，直接就存1,2,3... ；而不是存成[1, 2, 3...]
+        String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+
+        List<Integer> idList = new ArrayList<>();
+        for (int i = 0; i < questionList.length; i++) {
+            int integer = Integer.parseInt(questionList[i]);
+            idList.add(integer);
+        }
+        // 这一份试卷的 题的数量
+        int questionCount = idList.size();
+        //  获取某学生->某科目 -> 某试卷的所有做题记录；
+        List<UserQuestionRecord> stulist = userQuestionRecordDao.getByStudentNumberAndSubjectAndExamPaperId(studentNumber, subject, examPaper.getId());
+        int doRight = 0;
+        int doError = 0;
+        List<Integer> doRightList = new ArrayList<>(); // 做对的题号
+        List<Integer> doErrorList = new ArrayList<>(); // 做错的题号
+        List<Integer> notDoList = new ArrayList<>();
+        for (UserQuestionRecord questionRecord : stulist) {
+            if (questionRecord.getDoRight() == 1) {
+                if (!doRightList.contains(questionRecord.getQuestionId())) {
+                    doRightList.add(questionRecord.getQuestionId());
+                    doRight++;
+                }
+
+            } else {
+                if (!doErrorList.contains(questionRecord.getQuestionId())) {
+                    doErrorList.add(questionRecord.getQuestionId());
+                    doError++;
+                }
+
+            }
+        }
+        int notDo = questionCount - doRight - doError;
+        for (int i = 1; i <= questionCount; i++) {
+            if (!doRightList.contains(i) && !doErrorList.contains(i)) {
+                notDoList.add(i);
+            }
+        }
+        log.info("【总共做题数量：】{}", questionCount);
+        log.info("【作对题的数量：】{}", doRight);
+        log.info("【作错题的数量：】{}", doError);
+        log.info("【未做题的数量：】{}", notDo);
+
+        //List<DoQuestionInfoDTO> dtoList = new ArrayList<>();
+        DoQuestionInfoDTO dto = new DoQuestionInfoDTO();
+        dto.setQuestionCount(questionCount);
+        dto.setDoRight(doRight);
+        dto.setDoError(doError);
+        dto.setNotDo(notDo);
+        dto.setDoRightList(doRightList);
+        dto.setDoErrorList(doErrorList);
+        dto.setNotDoList(notDoList);
+        return dto;
     }
 }

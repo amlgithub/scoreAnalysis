@@ -1,8 +1,10 @@
 package com.zgczx.service.exam;
 
 
+import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
+import com.zgczx.repository.mysql1.exam.model.UserCollect;
 import com.zgczx.repository.mysql1.exam.model.UserQuestionRecord;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,5 +28,9 @@ public interface ExamService {
 
     List<QuestionDTO> findExamQuestionInfo(String examName, String subject);
 
-    UserQuestionRecord judgeQuestionRight(int id, String studentNumber, String openid, String commitString);
+    DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String paperName, String subject);
+
+    UserCollect insertCollect(int id, String studentNumber, String openid, String classification,String commitString);
+
+    DoQuestionInfoDTO getDoQuestionInfo(String studentNumber, String examName, String subject);
 }
