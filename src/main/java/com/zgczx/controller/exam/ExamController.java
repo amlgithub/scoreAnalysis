@@ -2,6 +2,7 @@ package com.zgczx.controller.exam;
 
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
+import com.zgczx.repository.mysql1.exam.dto.EchoDoQuestionDTO;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import com.zgczx.repository.mysql1.exam.model.UserCollect;
@@ -95,9 +96,13 @@ public class ExamController {
             @ApiParam(value = "试卷全称", required = true)
             @RequestParam("paperName") String examName,
             @ApiParam(value = "科目名称", required = true)
-            @RequestParam("subject") String subject
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid
     ){
-        List<QuestionDTO> list = examService.findExamQuestionInfo(examName,subject);
+        List<QuestionDTO> list = examService.findExamQuestionInfo(examName,subject,studentNumber,openid);
 
         return ResultVOUtil.success(list);
     }
@@ -116,9 +121,11 @@ public class ExamController {
             @ApiParam(value = "试卷全称", required = true)
             @RequestParam("paperName") String examName,
             @ApiParam(value = "科目名称", required = true)
-            @RequestParam("subject") String subject
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "试卷id", required = true)
+            @RequestParam("sourcePaperId") int sourcePaperId
     ){
-        DoQuestionInfoDTO list = examService.judgeQuestionRight(id,studentNumber,openid,commitString,examName,subject);
+        DoQuestionInfoDTO list = examService.judgeQuestionRight(id,studentNumber,openid,commitString,examName,subject,sourcePaperId);
 
         return ResultVOUtil.success(list);
     }
@@ -133,16 +140,16 @@ public class ExamController {
             @ApiParam(value = "用户学号", required = true)
             @RequestParam("openid") String openid,
             @ApiParam(value = "分类名称", required = true)
-            @RequestParam("classification") String classification,
-            @ApiParam(value = "这道题提交的内容", required = true)
-            @RequestParam("commitString") String commitString
+            @RequestParam("classification") String classification
+//            @ApiParam(value = "这道题提交的内容", required = true)
+//            @RequestParam("commitString") String commitString
 //            @ApiParam(value = "试卷全称", required = true)
 //            @RequestParam("paperName") String examName,
 //            @ApiParam(value = "科目名称", required = true)
 //            @RequestParam("subject") String subject
     ){
-        UserCollect list = examService.insertCollect(id,studentNumber,openid,classification,commitString);//,examName,subject
-
+        //UserCollect list = examService.insertCollect(id,studentNumber,openid,classification,commitString);//,examName,subject
+        UserCollect list = examService.insertCollect(id,studentNumber,openid,classification);
         return ResultVOUtil.success(list);
     }
 
@@ -153,10 +160,50 @@ public class ExamController {
             @ApiParam(value = "用户学号", required = true)
             @RequestParam("paperName") String examName,
             @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "试卷id", required = true)
+            @RequestParam("sourcePaperId") int sourcePaperId
+    ){
+
+        DoQuestionInfoDTO list = examService.getDoQuestionInfo(studentNumber,examName,subject,sourcePaperId);
+
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "九、回显这个用户最近做的章节练习情况  ")
+    @GetMapping("/echoDoQuestionInfo")
+    public ResultVO<?> echoDoQuestionInfo(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "试卷名称", required = true)
+            @RequestParam("paperName") String examName,
+            @ApiParam(value = "科目名称", required = true)
             @RequestParam("subject") String subject
     ){
 
-        DoQuestionInfoDTO list = examService.getDoQuestionInfo(studentNumber,examName,subject);
+        List<EchoDoQuestionDTO> list = examService.echoDoQuestionInfo(studentNumber,examName,subject);
+
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "十、取消收藏  ")
+    @GetMapping("/cancelCollect")
+    public ResultVO<?> cancelCollect(
+            @ApiParam(value = "哪道题：题库表的主键id", required = true)
+            @RequestParam("id") int id,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "试卷名称", required = true)
+            @RequestParam("paperName") String examName,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "取消收藏传值为 2", required = true)
+            @RequestParam("cancel") int cancel
+    ){
+
+        UserCollect list = examService.cancelCollect(id,studentNumber,openid,examName,subject,cancel);
 
         return ResultVOUtil.success(list);
     }

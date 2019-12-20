@@ -2,6 +2,7 @@ package com.zgczx.service.exam;
 
 
 import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
+import com.zgczx.repository.mysql1.exam.dto.EchoDoQuestionDTO;
 import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import com.zgczx.repository.mysql1.exam.model.UserCollect;
@@ -26,11 +27,16 @@ public interface ExamService {
 
     List<Question> splitExam(String examName, String subject);
 
-    List<QuestionDTO> findExamQuestionInfo(String examName, String subject);
+    List<QuestionDTO> findExamQuestionInfo(String examName, String subject,String studentNumber,String openid);
 
-    DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String paperName, String subject);
+    DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String paperName, String subject, int sourcePaperId);
 
-    UserCollect insertCollect(int id, String studentNumber, String openid, String classification,String commitString);
+//    UserCollect insertCollect(int id, String studentNumber, String openid, String classification,String commitString);
+    UserCollect insertCollect(int id, String studentNumber, String openid, String classification);
 
-    DoQuestionInfoDTO getDoQuestionInfo(String studentNumber, String examName, String subject);
+    DoQuestionInfoDTO getDoQuestionInfo(String studentNumber, String examName, String subject, int sourcePaperId);
+
+    List<EchoDoQuestionDTO> echoDoQuestionInfo(String studentNumber, String examName, String subject);
+
+    UserCollect cancelCollect(int id,String studentNumber, String openid,String examName, String subject, int cancel);
 }

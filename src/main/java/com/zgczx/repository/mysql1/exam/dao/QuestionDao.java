@@ -24,4 +24,6 @@ public interface QuestionDao extends JpaRepository<Question, Integer> {
     // 3. 获取此道题的 科目名称 ： 根据 question中的主键id
     @Query(value = "SELECT SUBJECT FROM e_exam_paper WHERE id=(SELECT exam_id FROM e_question WHERE id =?1 )", nativeQuery = true)
     String getSubjectName(int id);
+
+
 }

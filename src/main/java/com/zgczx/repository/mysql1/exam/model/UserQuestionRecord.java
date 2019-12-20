@@ -36,6 +36,8 @@ public class UserQuestionRecord {
     private int doRight;
     @Column(name = "question_id")
     private int questionId;
+
+    private int times;
     @Column(name = "exam_paper_id")
     private int examPaperId;
     @Column(name = "customer_score")

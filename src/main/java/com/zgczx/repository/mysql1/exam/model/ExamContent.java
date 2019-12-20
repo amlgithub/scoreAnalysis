@@ -26,6 +26,7 @@ public class ExamContent {
 
     private String subject;
 
+    @Column(name = "exam_name")
     private String examName;
 
     private String content;
