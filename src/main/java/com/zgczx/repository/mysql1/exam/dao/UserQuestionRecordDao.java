@@ -25,4 +25,19 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
     // 3. 获取 此用户回显的 做题记录
     @Query(value = "SELECT * FROM e_user_question_record  WHERE student_number=?1 AND SUBJECT=?2 AND exam_paper_id=?3 ORDER BY times DESC\n", nativeQuery = true)
     List<UserQuestionRecord> getByStudentNumberAndSubjectAndExamPaperId(String studentNumber,String subject,int sourcePaperId);
+
+    //4. 获取此学生-》此科目-》所有错题的试卷id： exam_paper_id
+    @Query(value = "SELECT DISTINCT exam_paper_id FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 ", nativeQuery = true)
+    List<Integer> getAllExamPaperId(String stuNumber, String subject);
+
+    //5. 获取此用户-》此科目-》章节练习中 所有错的 题号 和 试卷名称（每节的名称）
+    @Query(value = "SELECT DISTINCT question_id,exam_paper_name FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 AND do_right=?3 AND exam_category=?3 ", nativeQuery = true)
+    List<String> getAllErrInfo(String stuNumber,String subject,int doRight,String examCategory);
+
+    //6. 获取此用户-》此科目-》章节练习-》所有试卷名称
+    @Query(value = "SELECT DISTINCT exam_paper_name FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 AND exam_category=?3 ", nativeQuery = true)
+    List<String> getAllExamPaperName(String stuNumber,String subject,String examCategory);
+
+    //7. 获取此用户-》此科目-》章节练习中 所有错题的信息
+    List<UserQuestionRecord> getByStudentNumberAndSubjectAndDoRightAndExamCategory(String stuNumber,String subject,int doRight,String examCategory);
 }

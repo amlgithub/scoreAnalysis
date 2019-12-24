@@ -1,12 +1,16 @@
 package com.zgczx.service.exam;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.google.gson.Gson;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
 import com.zgczx.repository.mysql1.exam.dao.*;
-import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
-import com.zgczx.repository.mysql1.exam.dto.EchoDoQuestionDTO;
-import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
+import com.zgczx.repository.mysql1.exam.dto.*;
 import com.zgczx.repository.mysql1.exam.model.*;
+import com.zgczx.repository.mysql3.unifiedlogin.dao.UserLoginDao;
+import com.zgczx.repository.mysql3.unifiedlogin.model.UserLogin;
+import com.zgczx.utils.StringToMapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,9 +27,6 @@ import java.util.regex.Pattern;
 
 import static com.zgczx.utils.FilterStringUtil.*;
 import static com.zgczx.utils.FilterStringUtil.filterspecial;
-import static com.zgczx.utils.FullPermutationUtil.l;
-import static com.zgczx.utils.RecursionTreeUtil.permute;
-import static com.zgczx.utils.FullPermutationUtil.permute2;
 import static com.zgczx.utils.RecursionTreeUtil.randomSort;
 import static com.zgczx.utils.WordRedUtil.readWord;
 
@@ -54,6 +55,12 @@ public class ExamServiceImpl implements ExamService {
 
     @Autowired
     private ExamContentDao examContentDao;
+
+    @Autowired
+    private UserPaperRecordDao userPaperRecordDao;
+
+    @Autowired
+    private UserLoginDao userLoginDao;
 
     private String info;
 
@@ -198,7 +205,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public List<QuestionDTO> findExamQuestionInfo(String examName, String subject,String studentNumber,String openid) {
+    public List<QuestionDTO> findExamQuestionInfo(String examName, String subject, String studentNumber, String openid) {
         ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
@@ -322,9 +329,9 @@ public class ExamServiceImpl implements ExamService {
             questionDTO.setSourcePaperId(examPaper.getId());
 
             UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(studentNumber, subject, examPaper.getId(), integer, 1);
-            if (userCollect != null){
+            if (userCollect != null) {
                 questionDTO.setCollect(1);
-            }else {
+            } else {
                 questionDTO.setCollect(2);
             }
 
@@ -342,6 +349,10 @@ public class ExamServiceImpl implements ExamService {
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
+        // 获取此试卷的所有信息
+        ExamPaper paper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
+        String examSource = paper.getExamSource();// 获取试卷的类别，章节练习，模拟考试，历年真题等
+        String paperExamName = paper.getExamName();
         String subjectName = questionDao.getSubjectName(id);
 
         List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
@@ -362,6 +373,8 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setQuestionId(id);
             userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(1);
+            userQuestionRecord.setExamPaperName(paperExamName);
+            userQuestionRecord.setExamCategory(examSource);
             UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
         } else {
             int times = repatQuestion.get(0).getTimes();
@@ -381,6 +394,8 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setQuestionId(id);
             userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(repatTime);
+            userQuestionRecord.setExamPaperName(paperExamName);
+            userQuestionRecord.setExamCategory(examSource);
 
             UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
         }
@@ -486,7 +501,6 @@ public class ExamServiceImpl implements ExamService {
     }
 
 
-
     @Override
     public List<EchoDoQuestionDTO> echoDoQuestionInfo(String studentNumber, String examName, String subject) {
         ExamPaper examPaper = examPaperDao.getBy(examName, subject, 1);
@@ -519,12 +533,12 @@ public class ExamServiceImpl implements ExamService {
             }
 
         }
-    return echoDoQuestionDTOList;
+        return echoDoQuestionDTOList;
     }
 
 
     @Override
-    public UserCollect cancelCollect(int id,String studentNumber, String openid, String examName, String subject, int cancel) {
+    public UserCollect cancelCollect(int id, String studentNumber, String openid, String examName, String subject, int cancel) {
         ExamPaper examPaper = examPaperDao.getBy(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
@@ -532,7 +546,7 @@ public class ExamServiceImpl implements ExamService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
         UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(studentNumber, subject, examPaper.getId(), id, 1);
-        if (userCollect == null){
+        if (userCollect == null) {
             info = "您此题还未收藏过，暂无法取消收藏";
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
@@ -542,10 +556,180 @@ public class ExamServiceImpl implements ExamService {
         return save;
     }
 
+    @Override
+    public UserPaperRecord fullPaperRecord(String studentNumber, String openid, String examName, String subject, String examPaperContent, String examPaperAnwer) {
+        ExamPaper examPaper = examPaperDao.getBy(examName, subject, 1);
+        if (examPaper == null) {
+            info = "暂时没有此科目的此试卷";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        List<UserPaperRecord> paperRecordlist = userPaperRecordDao.getByStudentNumberAndSubjectAndExamPaperId(studentNumber, subject, examPaper.getId());
+        int times = 1;
+        if (paperRecordlist.size() == 0) {
+            UserPaperRecord userPaperRecord = new UserPaperRecord();
+            userPaperRecord.setStudentNumber(studentNumber);
+            userPaperRecord.setOpenid(openid);
+            userPaperRecord.setExamPaperId(examPaper.getId());
+            userPaperRecord.setSubject(subject);
+            userPaperRecord.setExamPaperContent(examPaperContent);
+            userPaperRecord.setExamPaperAnwer(examPaperAnwer);
+            userPaperRecord.setTimes(times);
+
+            UserPaperRecord save = userPaperRecordDao.save(userPaperRecord);
+            return save;
+        } else {
+            int times1 = paperRecordlist.get(0).getTimes() + 1;
+            UserPaperRecord userPaperRecord = new UserPaperRecord();
+            userPaperRecord.setStudentNumber(studentNumber);
+            userPaperRecord.setOpenid(openid);
+            userPaperRecord.setExamPaperId(examPaper.getId());
+            userPaperRecord.setSubject(subject);
+            userPaperRecord.setExamPaperContent(examPaperContent);
+            userPaperRecord.setExamPaperAnwer(examPaperAnwer);
+            userPaperRecord.setTimes(times1);
+
+            UserPaperRecord save = userPaperRecordDao.save(userPaperRecord);
+            return save;
+        }
+
+    }
+
+    @Override
+    public ChapterErrNumberDTO getChapterErrNumber(String stuNumber, String openid, String subject) {
+        UserLogin userInfo = userLoginDao.findByDiyid(stuNumber);// 获取此用户的所有基本信息
+        if (userInfo == null) {
+            info = "暂时没有学号所对应的信息，请认真核对您的学号";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        String gradeLevel = userInfo.getGradeLevel();//此用户的年级水平，例如高1
+        //1. 先获取 所有节的名称
+        List<String> paperName = userQuestionRecordDao.getAllExamPaperName(stuNumber, subject, "章节练习");
+        //2. 根据所有 节的名称 获取所有章的名称
+        List<String> chapterNameList = chapterDao.findBySectionIn(paperName);
+        //3. 获取所有 错题信息
+        List<UserQuestionRecord> errInList = userQuestionRecordDao.getByStudentNumberAndSubjectAndDoRightAndExamCategory(stuNumber, subject, 2, "章节练习");
+        // 4. 筛选属于
+
+//            for (int i =0; i < chapterNameList.size(); i++){
+//                if (paperName.getExamPaperName().equals(chapterNameList.get(i))){
+//
+//
+//
+//                }
+//
+//        }
+
+
+        List<String> errInfo = userQuestionRecordDao.getAllErrInfo(stuNumber, subject, 2, "章节练习");
+        if (errInfo.size() == 0) {
+            info = "您所做的章节练习中还没错题";
+            ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
+            chapterErrNumberDTO.setGradeLevel(gradeLevel);
+            chapterErrNumberDTO.setChapterNumber(null);
+            return chapterErrNumberDTO;
+        } else {
+            //
+
+
+        }
+
+        return null;
 
 
 
+       /* //获取 此用户有错题的 所有试卷id
+        List<Integer> examPaperIdList = userQuestionRecordDao.getAllExamPaperId(stuNumber, subject);
+        if (examPaperIdList.size() == 0){
+            info = "您所做的练习中还没错题";
+            ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
+            chapterErrNumberDTO.setGradeLevel(gradeLevel);
+            chapterErrNumberDTO.setChapterNumber(null);
+            return chapterErrNumberDTO;
+        }else {
+            // 获取试卷的 exam_source试卷来源名称： 例如：模拟考试；历年真题；章节练习；专项练习等
+            List<ExamPaper> examPaperList = examPaperDao.findByIdIn(examPaperIdList);
+            for (ExamPaper examPaper : examPaperList){
+                if (examPaper.getExamSource().equals("章节练习")){
 
+                }
+                int id = examPaper.getId();
+                String examName = examPaper.getExamName(); //
+
+            }
+
+        }*/
+
+
+    }
+
+    @Override
+    public List<EchoPaperCompleteDTO> echoPaperInfo(String stuNumber, String openid, String subject, String examName) {
+        ExamPaper examPaper = examPaperDao.getBy(examName, subject, 1);
+        if (examPaper == null) {
+            info = "暂时没有此科目的此试卷";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        List<UserPaperRecord> paperRecordList = userPaperRecordDao.getByStudentNumberAndSubjectAndExamPaperId(stuNumber, subject, examPaper.getId());
+        if (paperRecordList.size() == 0) {
+            info = "您还没做过此时卷，因此暂无保存进度";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.NEVER_DID_THIS_PAPER, info);
+
+        } else {
+            String examPaperContent1 = paperRecordList.get(0).getExamPaperContent();
+
+            String examPaperContent = examPaperContent1.replaceAll("\\{\"question\":", "");
+            String s1 = filter1(examPaperContent);
+            String s2 = filter2(s1);
+            String b = s2.replaceAll("(\",\"B)", "B");
+            String c = b.replaceAll("(\",\"C)", "C");
+            String d = c.replaceAll("(\",\"D)", "D");
+//            Map<String, Object> map = new HashMap<String, Object>();
+//            map = gson.fromJson(text, map.getClass());
+            List<EchoPaperDTO> echoPaperDTOList = JSON.parseObject(d, new TypeReference<List<EchoPaperDTO>>() {
+            });
+
+            //处理 用户的所有选项
+            String paperAnwer = paperRecordList.get(0).getExamPaperAnwer();
+            StringToMapUtil stringToMapUtil = new StringToMapUtil();
+            Map<String, String> map = stringToMapUtil.stringToMap(paperAnwer);
+            log.info("【map: 】{}", map);
+            EchoPaperCompleteDTO completeDTO = new EchoPaperCompleteDTO();
+            for (String value : map.values()){
+                if (value.equals("")){
+                    completeDTO.setEffective(2);//此时卷没做完
+                    break;
+                }
+                completeDTO.setEffective(1);//此试卷已经做完
+            }
+
+            int complete = 1;// 默认此题为 已经做完此时卷
+            List<EchoPaperCompleteDTO> completeDTOList = new ArrayList<>();
+            List<EchoPaperTotalDTO> list = new ArrayList<>();
+
+            for (int i = 0; i < echoPaperDTOList.size(); i++) {
+                EchoPaperTotalDTO paperTotalDTO = new EchoPaperTotalDTO();
+                String o = String.valueOf(map.get(String.valueOf(i)));
+                if (o.equals("")) {
+                    complete = 2;
+                    paperTotalDTO.setUserOption("");
+                }else {
+                    paperTotalDTO.setUserOption(String.valueOf(o));
+                }
+                paperTotalDTO.setEchoPaperDTO(echoPaperDTOList.get(i));
+                paperTotalDTO.setComplete(complete);
+                list.add(paperTotalDTO);
+                completeDTO.setList(list);
+                completeDTOList.add(completeDTO);
+            }
+           // log.info("【list: 】{}", list);
+            return completeDTOList;
+        }
+
+    }
 
     /**
      * 公共函数 1.
@@ -622,12 +806,13 @@ public class ExamServiceImpl implements ExamService {
         dto.setNotDoList(notDoList);
         return dto;
     }
+
     /**
      * 公共函数 2
      * 将一份试卷中的 question_list 转换为 list 数组: 用来获取此试卷的题号
      * 这个 抽取为公共函数
      */
-    public static List<Integer> questionList(String questionListString){
+    public static List<Integer> questionList(String questionListString) {
         String[] questionList = filterMiddleBrackets(questionListString).split(",");
 
         List<Integer> idList = new ArrayList<>();
@@ -638,9 +823,6 @@ public class ExamServiceImpl implements ExamService {
         }
         return idList;
     }
-
-
-
 
 
 }

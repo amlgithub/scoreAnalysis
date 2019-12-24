@@ -105,10 +105,12 @@ public class ScoreTwoServiceImpl implements ScoreTwoService {
             String subjectName = model.getSubjectName();
             String examName = model.getExamName();
             ManuallyEnterGrades manuallyEnterGrades = manuallyEnterGradesDao.findAllByStudentNumberAndExamNameAndSubjectName(studentNumber, examName, subjectName);
+
             if (manuallyEnterGrades != null){
-                info = "您已经录过此数据，暂不允许重复录入，请重新核对再录入";
-                logger.error("重复数据为={} ", manuallyEnterGrades);
-                throw new ScoreException(ResultEnum.DATA_ALREADY_EXISTED,info);
+                manuallyEnterGradesDao.delete(manuallyEnterGrades);//将之前录入过的成绩，删除
+//                info = "您已经录过此数据，暂不允许重复录入，请重新核对再录入";
+//                logger.error("重复数据为={} ", manuallyEnterGrades);
+//                throw new ScoreException(ResultEnum.DATA_ALREADY_EXISTED,info);
             }
         }
         logger.info("【打印传参的list】: {}",list);

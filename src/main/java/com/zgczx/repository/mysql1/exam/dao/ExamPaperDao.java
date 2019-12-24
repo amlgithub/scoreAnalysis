@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 试卷表
  * @author aml
@@ -19,4 +21,6 @@ public interface ExamPaperDao extends JpaRepository<ExamPaper, Integer> {
     @Query(value = "select * from e_exam_paper where exam_name=?1 and subject=?2 and valid=?3", nativeQuery = true)
     ExamPaper getBy(String examName, String subject,int deleted);
 
+    //3. 获取所有的试卷信息，从而判断哪个属于章节练习，根据idList
+    List<ExamPaper> findByIdIn(List idList);
 }

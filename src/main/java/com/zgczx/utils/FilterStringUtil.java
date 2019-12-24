@@ -49,7 +49,30 @@ public class FilterStringUtil {
         return alph;
     }
 
+    // 1)去除 指定的字符串,切记 要加上()；里面写要匹配的 字符串内容
+    public static String filter1(String alph) {
+        alph = alph.replaceAll("(\\},\"randomOption\":\\[)", ",\"randomOption\":");
+        return alph;
+    }
 
+    // 2)去除 指定的字符串,切记 要加上()；里面写要匹配的 字符串内容
+    public static String filter2(String alph) {
+        alph = alph.replaceAll("(\\],\"rightOption\":)", ",\"rightOption\":");
+        return alph;
+    }
+    //3) 去除 指定的字符串,切记 要加上()；里面写要匹配的 字符串内容
+    public static String filter3(String alph) {
+        String b = alph.replaceAll("(\",\"B)", "B");
+        String c = b.replaceAll("(\",\"C)", "C");
+        String d = c.replaceAll("(\",\"D)", "D");
+        return d;
+    }
+
+    // 去掉 大括号
+    public static String braces(String alph) {
+        alph = alph.replaceAll("(\\{|\\}|\")", "");
+        return alph;
+    }
 
     /**
      * 专门用于 获取题的接口，筛选选项中的 特殊字符
@@ -113,68 +136,77 @@ public class FilterStringUtil {
      * @Description :
      */
     public static void main(String[] args) {
-        /**
-         * 声明字符串you
-         */
-        String you = "^&^&^you123$%$%你好";
-        /**
-         * 调用过滤出数字的方法
-         */
-        you = filterNumber(you);
-        /**
-         * 打印结果
-         */
-        System.out.println("过滤出数字：" + you);
+//        /**
+//         * 声明字符串you
+//         */
+//        String you = "^&^&^you123$%$%你好";
+//        /**
+//         * 调用过滤出数字的方法
+//         */
+//        you = filterNumber(you);
+//        /**
+//         * 打印结果
+//         */
+//        System.out.println("过滤出数字：" + you);
+//
+//        /**
+//         * 声明字符串hai
+//         */
+//        String hai = "￥%……4556ahihdjsadhj$%$%你好吗wewewe";
+//        /**
+//         * 调用过滤出字母的方法
+//         */
+//        hai = filterAlphabet(hai);
+//        /**
+//         * 打印结果
+//         */
+//        System.out.println("过滤出字母：" + hai);
+//
+//        /**
+//         * 声明字符串dong
+//         */
+//        String dong = "$%$%$张三34584yuojk李四@#￥#%%￥……%&";
+//        /**
+//         * 调用过滤出中文的方法
+//         */
+//        dong = filterChinese(dong);
+//        /**
+//         * 打印结果
+//         */
+//        System.out.println("过滤出中文：" + dong);
+//
+//        /**
+//         * 声明字符串str
+//         */
+//        String str = "$%$%$张三34584yuojk李四@#￥#%%￥……%&";
+//        /**
+//         * 调用过滤出字母、数字和中文的方法
+//         */
+//        str = filter(str);
+//        /**
+//         * 打印结果
+//         */
+//        System.out.println("过滤出字母、数字和中文：" + str);
+//
+//
+//        String s = filterMiddleBrackets("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+//        System.out.println("sssssssssssssssssssss:   " + s);
+//
+//        String s1 = "A．一定的流动性\\t\\t\\t\\t\\t\\t\\t\\tB．选择透性\\nC．较大的稳定性\\t\\t\\t\\t\\t\\t\\t\\tD．运输物质的功能\\n";
+//        String filterspecial = filterspecial(s1);
+//        System.out.println(filterspecial);
+//
+//        String s2 = optionLetter("A．C．B．D．E.一定的流动性");
+//        System.out.println("s2:   "+ s2);
 
-        /**
-         * 声明字符串hai
-         */
-        String hai = "￥%……4556ahihdjsadhj$%$%你好吗wewewe";
-        /**
-         * 调用过滤出字母的方法
-         */
-        hai = filterAlphabet(hai);
-        /**
-         * 打印结果
-         */
-        System.out.println("过滤出字母：" + hai);
+//        String s3 = filter1("},\"randomOption\":[");
+//        System.out.println("ddd: "+s3);
+//
+//        String s4 = filter2("],\"rightOption\":");
+//        System.out.println("444: "+s4);
 
-        /**
-         * 声明字符串dong
-         */
-        String dong = "$%$%$张三34584yuojk李四@#￥#%%￥……%&";
-        /**
-         * 调用过滤出中文的方法
-         */
-        dong = filterChinese(dong);
-        /**
-         * 打印结果
-         */
-        System.out.println("过滤出中文：" + dong);
-
-        /**
-         * 声明字符串str
-         */
-        String str = "$%$%$张三34584yuojk李四@#￥#%%￥……%&";
-        /**
-         * 调用过滤出字母、数字和中文的方法
-         */
-        str = filter(str);
-        /**
-         * 打印结果
-         */
-        System.out.println("过滤出字母、数字和中文：" + str);
-
-
-        String s = filterMiddleBrackets("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
-        System.out.println("sssssssssssssssssssss:   " + s);
-
-        String s1 = "A．一定的流动性\\t\\t\\t\\t\\t\\t\\t\\tB．选择透性\\nC．较大的稳定性\\t\\t\\t\\t\\t\\t\\t\\tD．运输物质的功能\\n";
-        String filterspecial = filterspecial(s1);
-        System.out.println(filterspecial);
-
-        String s2 = optionLetter("A．C．B．D．E.一定的流动性");
-        System.out.println("s2:   "+ s2);
+        String braces = braces("{\"0\":\"\",\"1\":\"\",\"2\":\"\",\"3\":\"\",\"4\":\"\",\"5\":\"\",\"6\":\"\",\"7\":\"\",\"8\":\"\",\"9\":\"\"}");
+        System.out.println(braces);
     }
 
 

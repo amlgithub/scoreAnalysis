@@ -1,11 +1,10 @@
 package com.zgczx.controller.exam;
 
 import com.zgczx.VO.ResultVO;
-import com.zgczx.repository.mysql1.exam.dto.DoQuestionInfoDTO;
-import com.zgczx.repository.mysql1.exam.dto.EchoDoQuestionDTO;
-import com.zgczx.repository.mysql1.exam.dto.QuestionDTO;
+import com.zgczx.repository.mysql1.exam.dto.*;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import com.zgczx.repository.mysql1.exam.model.UserCollect;
+import com.zgczx.repository.mysql1.exam.model.UserPaperRecord;
 import com.zgczx.repository.mysql1.exam.model.UserQuestionRecord;
 import com.zgczx.service.exam.ExamService;
 import com.zgczx.utils.ResultVOUtil;
@@ -208,4 +207,59 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
+
+    @ApiOperation(value = "十一、 用户整套试卷（一节题）的记录")
+    @PostMapping("/fullPaperRecord")
+    public ResultVO<?> fullPaperRecord(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "试卷名称", required = true)
+            @RequestParam("paperName") String examName,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "此试卷的所有内容（为了记录此时每道题的选项内容）", required = true)
+            @RequestParam("examPaperContent") String examPaperContent,
+            @ApiParam(value = "此时卷用户的答题信息", required = true)
+            @RequestParam("examPaperAnwer") String examPaperAnwer
+    ){
+
+        UserPaperRecord userPaperRecord = examService.fullPaperRecord(studentNumber,openid,examName,subject,examPaperContent,examPaperAnwer);
+        return ResultVOUtil.success(userPaperRecord);
+    }
+
+    @ApiOperation(value = "十二、点击练习错题时，展现的章节名称和对应的错题数量  ")
+    @GetMapping("/getChapterErrNumber")
+    public ResultVO<?> getChapterErrNumber(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject
+    ){
+
+        ChapterErrNumberDTO list = examService.getChapterErrNumber(studentNumber,openid,subject);
+
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "十三、将用户最近做的此试卷信息回显给用户  ")
+    @GetMapping("/echoPaperInfo")
+    public ResultVO<?> echoPaperInfo(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "试卷名称", required = true)
+            @RequestParam("paperName") String examName
+    ){
+
+        List<EchoPaperCompleteDTO> list = examService.echoPaperInfo(studentNumber,openid,subject,examName);
+
+        return ResultVOUtil.success(list);
+    }
 }

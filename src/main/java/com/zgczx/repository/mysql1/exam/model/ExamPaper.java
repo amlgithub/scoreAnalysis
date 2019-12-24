@@ -55,6 +55,8 @@ public class ExamPaper {
 
     @Column(name = "question_list")
     private String questionList;
+    @Column(name = "grade_level")
+    private String gradeLevel;
     @Column(name = "create_user")
     private String createUser;
     private int valid;

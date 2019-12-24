@@ -9,16 +9,17 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 /**
- * 题库中的 用户做题记录表，存放用户所有做题记录
+ * 用户做试卷的记录表
+ * 试卷： 将章节中的 每一节也抽象看为 一套试卷
  * @author aml
- * @date 2019/12/11 14:34
+ * @date 2019/12/22 19:11
  */
 @DynamicUpdate//生成动态的update语句,如果这个字段的值是null就不会被加入到update语句中
 @DynamicInsert// 如果这个字段的值是null就不会加入到insert语句当中.
 @Data
 @Entity
-@Table(name = "e_user_question_record")
-public class UserQuestionRecord {
+@Table(name = "e_user_paper_record")
+public class UserPaperRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,35 +29,25 @@ public class UserQuestionRecord {
     private String studentNumber;
     private String openid;
     private String subject;
-    @Column(name = "question_text_content")
-    private String questionTextContent;
-    @Column(name = "user_answer")
-    private String userAnswer;
-    @Column(name = "do_right")
-    private int doRight;
-    @Column(name = "question_id")
-    private int questionId;
-
-    private int times;
     @Column(name = "exam_paper_id")
     private int examPaperId;
-    @Column(name = "exam_paper_name")
-    private String examPaperName;
-    @Column(name = "exam_category")
-    private String examCategory;
+    @Column(name = "exam_paper_content")
+    private String examPaperContent;
+    @Column(name = "exam_paper_anwer")
+    private String examPaperAnwer;
 
+    private int times;
     @Column(name = "customer_score")
     private String customerScore;
-    @Column(name = "question_score")
-    private String questionScore;
     @Column(name = "do_time")
     private String doTime;
-    private int status;
+
     //解决返回给前端的是一个时间戳，改成为年月日时分秒格式
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp inserttime;
     //解决返回给前端的是一个时间戳，改成为年月日时分秒格式
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Timestamp updatetime;
+
 
 }

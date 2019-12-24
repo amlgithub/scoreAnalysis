@@ -23,4 +23,10 @@ public interface ChapterDao extends JpaRepository<Chapter, Integer> {
     @Query(value = "SELECT section FROM e_chapter WHERE level_name=?1 AND chapter=?2 and subject=?3 ", nativeQuery = true)
     List<String> findByLevelNameAndChapterAndSubject(String levelName, String chapter, String subject);
 
+    //3. 获取所有章的名称，根据节的名称
+//    SELECT DISTINCT chapter FROM e_chapter WHERE section IN('第1节　细胞膜的结构和功能','第2节　细胞','ddd')
+    @Query(value = "SELECT DISTINCT chapter FROM e_chapter WHERE section IN(?1)", nativeQuery = true)
+    List<String> findBySectionIn(List<String> sectionList);
+
+
 }
