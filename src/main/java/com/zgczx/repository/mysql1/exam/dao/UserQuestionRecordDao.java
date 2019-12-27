@@ -30,8 +30,8 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
     @Query(value = "SELECT DISTINCT exam_paper_id FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 ", nativeQuery = true)
     List<Integer> getAllExamPaperId(String stuNumber, String subject);
 
-    //5. 获取此用户-》此科目-》章节练习中 所有错的 题号 和 试卷名称（每节的名称）
-    @Query(value = "SELECT DISTINCT question_id,exam_paper_name FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 AND do_right=?3 AND exam_category=?3 ", nativeQuery = true)
+    //5. 获取此用户-》此科目-》章节练习中 所有错的  试卷名称（每节的名称）
+    @Query(value = "SELECT DISTINCT exam_paper_name FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 AND do_right=?3 AND exam_category=?4 ", nativeQuery = true)
     List<String> getAllErrInfo(String stuNumber,String subject,int doRight,String examCategory);
 
     //6. 获取此用户-》此科目-》章节练习-》所有试卷名称
@@ -40,4 +40,9 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
 
     //7. 获取此用户-》此科目-》章节练习中 所有错题的信息
     List<UserQuestionRecord> getByStudentNumberAndSubjectAndDoRightAndExamCategory(String stuNumber,String subject,int doRight,String examCategory);
+
+    //8. 获取此节的 所有错题数量
+    @Query(value = "SELECT COUNT(DISTINCT question_id) FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 AND exam_paper_name=?3",nativeQuery = true)
+    int getByErrNumber(String stuNumber,String subject,String examPaperName);
+
 }

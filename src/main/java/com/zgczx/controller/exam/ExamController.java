@@ -262,4 +262,15 @@ public class ExamController {
 
         return ResultVOUtil.success(list);
     }
+
+    @ApiOperation(value = "十四、查询此题是否收藏过  ")
+    @GetMapping("findCollectInfo")
+    public ResultVO<?> findCollectInfo(
+            @ApiParam(value = "哪道题：题库表的主键id", required = true)
+            @RequestParam("id") int id
+    ){
+        FindCollectDTO list = examService.findCollectInfo(id);
+        return ResultVOUtil.success(list);
+    }
+
 }

@@ -604,13 +604,12 @@ public class ExamServiceImpl implements ExamService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
         String gradeLevel = userInfo.getGradeLevel();//此用户的年级水平，例如高1
-        //1. 先获取 所有节的名称
-        List<String> paperName = userQuestionRecordDao.getAllExamPaperName(stuNumber, subject, "章节练习");
-        //2. 根据所有 节的名称 获取所有章的名称
-        List<String> chapterNameList = chapterDao.findBySectionIn(paperName);
-        //3. 获取所有 错题信息
-        List<UserQuestionRecord> errInList = userQuestionRecordDao.getByStudentNumberAndSubjectAndDoRightAndExamCategory(stuNumber, subject, 2, "章节练习");
-        // 4. 筛选属于
+//        //1. 先获取 所有节的名称
+//        List<String> paperName = userQuestionRecordDao.getAllExamPaperName(stuNumber, subject, "章节练习");
+//
+//        //3. 获取所有 错题信息
+//        List<UserQuestionRecord> errInList = userQuestionRecordDao.getByStudentNumberAndSubjectAndDoRightAndExamCategory(stuNumber, subject, 2, "章节练习");
+//        // 4. 筛选属于
 
 //            for (int i =0; i < chapterNameList.size(); i++){
 //                if (paperName.getExamPaperName().equals(chapterNameList.get(i))){
@@ -620,22 +619,56 @@ public class ExamServiceImpl implements ExamService {
 //                }
 //
 //        }
+        Map<String, Integer> chapterErrNumMap = new HashMap<>();
+        List<String> chapterSectionList = new ArrayList<>();//章-节 list
+        Map<String, String> chapterSectionMap = new HashMap<>();//章-节 map
+        Map<String, Integer> sectionErrNumMap = new HashMap<>();// 节-错题数量 map
 
-
-        List<String> errInfo = userQuestionRecordDao.getAllErrInfo(stuNumber, subject, 2, "章节练习");
-        if (errInfo.size() == 0) {
+        //1. 先 获取此用户-》此科目-》章节练习中 所有错题  试卷名称（每节的名称）
+        List<String> paperName = userQuestionRecordDao.getAllErrInfo(stuNumber, subject, 2, "章节练习");
+        if (paperName.size() == 0) {
             info = "您所做的章节练习中还没错题";
             ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
             chapterErrNumberDTO.setGradeLevel(gradeLevel);
             chapterErrNumberDTO.setChapterNumber(null);
             return chapterErrNumberDTO;
         } else {
-            //
+            //2. 根据所有 节的名称 获取所有章的名称
+            List<String> chapterNameList = chapterDao.findBySectionIn(paperName);
+            for (String chapterName : chapterNameList){
+                //3. 获取所有节的名称，根据章名称和科目
+                List<String> sectionList = chapterDao.findByChapterAndSubject(chapterName, subject);
+                for (String section: sectionList){
+                    //4. 获取此节的 错题数量
+                    int errNumber = userQuestionRecordDao.getByErrNumber(stuNumber, subject, section);
+                    chapterSectionList.add(chapterName+","+section);
+                    chapterSectionMap.put(chapterName,section);
+                    sectionErrNumMap.put(section,errNumber);
+                }
+            }
 
-
+            log.info("【chapterSectionMap】{}",chapterSectionMap);
+            log.info("【sectionErrNumMap】{}",sectionErrNumMap);
+            log.info("【chapterSectionList】{}",chapterSectionList);
         }
+        ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
+        for (String string : chapterSectionList){
+            int i = string.indexOf(",");
+            String chapterName = string.substring(0, i);
+            String sectionName = string.substring(i + 1, string.length());
+            Integer integer = sectionErrNumMap.get(sectionName);
+            if (chapterErrNumMap.containsKey(chapterName)){
+                Integer integer1 = chapterErrNumMap.get(chapterName);
+                integer += integer1;
+                chapterErrNumMap.put(chapterName,integer);
+            }
+            chapterErrNumMap.put(chapterName,integer);
+        }
+        chapterErrNumberDTO.setGradeLevel(gradeLevel);
+        chapterErrNumberDTO.setChapterNumber(chapterErrNumMap);
+        log.info("【chapterErrNumMap】{}",chapterErrNumMap);
 
-        return null;
+        return chapterErrNumberDTO;
 
 
 
@@ -698,11 +731,21 @@ public class ExamServiceImpl implements ExamService {
             Map<String, String> map = stringToMapUtil.stringToMap(paperAnwer);
             log.info("【map: 】{}", map);
             EchoPaperCompleteDTO completeDTO = new EchoPaperCompleteDTO();
-            for (String value : map.values()){
-                if (value.equals("")){
+//            for (String value : map.values()){
+//                if (value.equals("")){
+//                    completeDTO.setEffective(2);//此时卷没做完
+//                    break;
+//                }
+//                completeDTO.setEffective(1);//此试卷已经做完
+//            }
+
+            for(Map.Entry<String, String> entry : map.entrySet()){
+                if (entry.getValue().equals("")){
                     completeDTO.setEffective(2);//此时卷没做完
+                    completeDTO.setFirstNoDoneNum(entry.getKey());
                     break;
                 }
+                completeDTO.setFirstNoDoneNum(String.valueOf(map.entrySet().size()));
                 completeDTO.setEffective(1);//此试卷已经做完
             }
 
@@ -719,14 +762,48 @@ public class ExamServiceImpl implements ExamService {
                 }else {
                     paperTotalDTO.setUserOption(String.valueOf(o));
                 }
-                paperTotalDTO.setEchoPaperDTO(echoPaperDTOList.get(i));
+                EchoPaperDTO paperDTO = echoPaperDTOList.get(i);
+                paperTotalDTO.setQuestion(paperDTO);
+                //将 选项的字符文本，封装为linkedlist按顺序添加
+                List<String> list1 = stringTurnList(paperDTO.getRandomOption());
+                paperTotalDTO.setRandomOption(list1);
+
                 paperTotalDTO.setComplete(complete);
+                // 此题是否已经收藏过,如果userCollect存在，则此题收藏了
+                UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(stuNumber, subject, examPaper.getId(), paperDTO.getId(), 1);
+                if (userCollect == null){
+                    paperTotalDTO.setCollect(2);
+                }else {
+                    paperTotalDTO.setCollect(1);
+                }
+
+                // 设置 rightOption
+                paperTotalDTO.setRightOption(paperDTO.getRightOption());
+                //设置 sourcePaperId
+                paperTotalDTO.setSourcePaperId(paperDTO.getSourcePaperId());
                 list.add(paperTotalDTO);
                 completeDTO.setList(list);
-                completeDTOList.add(completeDTO);
+
             }
+            completeDTOList.add(completeDTO);
            // log.info("【list: 】{}", list);
             return completeDTOList;
+        }
+
+    }
+
+    @Override
+    public FindCollectDTO findCollectInfo(int id) {
+        int valid =1;//收藏的标志
+        UserCollect userCollect = userCollectDao.findByQuestionIdAndValid(id, 1);
+
+        FindCollectDTO findCollectDTO = new FindCollectDTO();
+        if (userCollect == null){
+            findCollectDTO.setCollect(2);
+            return findCollectDTO;
+        }else {
+            findCollectDTO.setCollect(1);
+            return findCollectDTO;
         }
 
     }
@@ -824,6 +901,29 @@ public class ExamServiceImpl implements ExamService {
         return idList;
     }
 
+    /**
+     * 公共函数 3
+     *  A．较大的稳定性B．选择透性C．一定的流动性D．运输物质的功能
+     * 将 上述字符串 切分然后放到list中
+     */
+    public static List<String> stringTurnList(String string){
+        List<String> list = new LinkedList<>();
+        int i1 = string.indexOf("A．");
+        int i2 = string.indexOf("B．");
+        int i3 = string.indexOf("C．");
+        int i4 = string.indexOf("D．");
+
+        String str1 = string.substring(i1, i2);//A选项
+        String str2 = string.substring(i2, i3);//B选项
+        String str3 = string.substring(i3, i4);//C选项
+        String str4 = string.substring(i4, string.length());//D选项
+        list.add(str1);
+        list.add(str2);
+        list.add(str3);
+        list.add(str4);
+
+        return list;
+    }
 
 }
 

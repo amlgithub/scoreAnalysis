@@ -15,4 +15,6 @@ public class EchoPaperCompleteDTO {
     private List<EchoPaperTotalDTO> list;
 
     private int effective;//2此时卷没做完; 1 为时卷做完;
+
+    private String firstNoDoneNum;// 此试卷中第一道未做的 题号
 }

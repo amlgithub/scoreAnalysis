@@ -69,4 +69,11 @@ public interface ExamService {
      * @return
      */
     List<EchoPaperCompleteDTO> echoPaperInfo(String stuNumber, String openid, String subject, String examName);
+
+    /**
+     * 十四、查询此题是否收藏过
+     * @param id
+     * @return
+     */
+    FindCollectDTO findCollectInfo(int id);
 }

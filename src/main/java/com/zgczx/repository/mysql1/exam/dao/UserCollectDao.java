@@ -17,5 +17,7 @@ public interface UserCollectDao extends JpaRepository<UserCollect, Integer> {
     @Query(value = "SELECT * FROM e_user_collect WHERE student_number=?1 AND SUBJECT=?2 AND exam_paper_id=?3 AND question_id=?4 AND valid=?5", nativeQuery = true)
     UserCollect getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(String stuNumber,String subject,int paperId,int questionId,int valid);
 
+    //2. 查询此题是否收藏
+    UserCollect findByQuestionIdAndValid(int id, int valid);
 
 }
