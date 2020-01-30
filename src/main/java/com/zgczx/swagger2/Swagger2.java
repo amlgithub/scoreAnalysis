@@ -24,7 +24,7 @@ public class Swagger2 {
     public Docket createRestApi() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(apiInfo())
-                //.pathMapping("/score_analysis")  //本地将这里注销，线上需要将这里打开，线上的url通过nginx代理的
+//                .pathMapping("/score_analysis")  //本地将这里注销，线上需要将这里打开，线上的url通过nginx代理的
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.zgczx.controller")) //Controller所在包(必须新建包)
                 .paths(PathSelectors.any())

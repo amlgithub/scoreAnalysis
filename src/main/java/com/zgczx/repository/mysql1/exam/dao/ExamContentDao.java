@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ExamContentDao extends JpaRepository<ExamContent, Integer> {
+
+    ExamContent findByExamNameAndSubject(String examName, String subject);
 }

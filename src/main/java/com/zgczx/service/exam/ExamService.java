@@ -1,6 +1,9 @@
 package com.zgczx.service.exam;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.zgczx.repository.mysql1.exam.dto.*;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import com.zgczx.repository.mysql1.exam.model.UserCollect;
@@ -11,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author aml
@@ -58,7 +62,7 @@ public interface ExamService {
      * @param subject
      * @return
      */
-    ChapterErrNumberDTO getChapterErrNumber(String stuNumber,String openid,String subject);
+    JSONObject getChapterErrNumber(String stuNumber, String openid, String subject, String examCategory);
 
     /**
      * 十三、用户回显此时卷所有信息
@@ -75,5 +79,24 @@ public interface ExamService {
      * @param id
      * @return
      */
-    FindCollectDTO findCollectInfo(int id);
+    FindCollectDTO findCollectInfo(String stuNumber,String subject,int questionId);
+
+    /**
+     * 十五、获取此章下面的所有节的名称和对应的错题数量,根据章的名称
+     * @param stuNumber
+     * @param openid
+     * @param subject
+     * @param chapterName
+     * @return
+     */
+    SectionErrNumberDTO getSectionErrNumber(String stuNumber,String openid,String subject,String chapterName,String ifMastered);
+
+    // 十六、错题本：获取某类别所有未掌握题的所有情况
+    JSONObject getNotMasteredInfo(String studentNumber,String openid,String subject,String examCategory,String gradeLevel, int master);
+
+    // 十七、错题本中的 下面的分类详情
+    JSONObject getClassification(String studentNumber,String openid,String subject,String examCategory,String gradeLevel, int master);
+
+    // 十八、错题本：统计分类中 未掌握或已掌握的 各分类的数量
+    JSONObject getClassificationQuantity(String studentNumber, String openid, String subject, String gradeLevel, int master);
 }

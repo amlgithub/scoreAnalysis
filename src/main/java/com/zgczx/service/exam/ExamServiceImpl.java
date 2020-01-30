@@ -1,6 +1,8 @@
 package com.zgczx.service.exam;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.google.gson.Gson;
 import com.zgczx.enums.ResultEnum;
@@ -21,12 +23,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.zgczx.utils.FilterStringUtil.*;
 import static com.zgczx.utils.FilterStringUtil.filterspecial;
+
 import static com.zgczx.utils.RecursionTreeUtil.randomSort;
 import static com.zgczx.utils.WordRedUtil.readWord;
 
@@ -62,22 +66,35 @@ public class ExamServiceImpl implements ExamService {
     @Autowired
     private UserLoginDao userLoginDao;
 
+    @Autowired
+    private UserWrongQustionDao userWrongQustionDao;
+
     private String info;
 
     @Override
     public String parseWord(MultipartFile file, HttpSession session, HttpServletRequest request) {
         String text = null;
         try {
-            text = readWord(file);
-// 1. 将试卷读进去
-//            ExamContent examContent = new ExamContent();
-//            examContent.setContent(text);
-//            examContentDao.save(examContent);
+            JSONObject docJson = readWord(file);
+            text = String.valueOf(docJson.get("doctext"));
+            String title = filterChineseAndMath(String.valueOf(docJson.get("title")));
+            String imgList = String.valueOf(docJson.get("imgList"));
 
-            // 2. 将答案读进去
-            ExamContent examContent = examContentDao.findOne(2);
-            examContent.setAnswer(text);
-            examContentDao.save(examContent);
+
+// 1. 将试卷读进去
+            ExamContent examContent = new ExamContent();
+            examContent.setContent(text);
+            examContent.setExamName(title);
+            examContent.setSubject("生物");
+            ExamContent save = examContentDao.save(examContent);
+            String[] split = save.getContent().split("#");//
+            for (String string : split) {
+
+            }
+//            // 2. 将答案读进去
+//            ExamContent examContent = examContentDao.findOne(2);
+//            examContent.setAnswer(text);
+//            examContentDao.save(examContent);
             System.out.println("打印text： " + text);
 
         } catch (IOException e) {
@@ -113,6 +130,11 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     @Override
     public List<Question> splitExam(String examName, String subject) {
+        ExamContent content = examContentDao.findByExamNameAndSubject(examName, subject);
+        String[] split = content.getContent().split("#");
+        log.info("[split: ]{}", split);
+
+
         ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
@@ -120,6 +142,7 @@ public class ExamServiceImpl implements ExamService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
         String examContent = examPaper.getExamContent();
+
         List<String> stringList = new ArrayList<>();
         int i1 = examContent.indexOf("1．");
         int i2 = examContent.indexOf("2．");
@@ -238,11 +261,30 @@ public class ExamServiceImpl implements ExamService {
             String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
 
             log.info("【去除t,n等字符】： {}", questionOption);
-            int i1 = questionOption.indexOf("A．");
-            int i2 = questionOption.indexOf("B．");
-            int i3 = questionOption.indexOf("C．");
-            int i4 = questionOption.indexOf("D．");
-
+            int i1 = -1;
+            if (questionOption.indexOf("A．") != -1) {
+                i1 = questionOption.indexOf("A．");
+            } else {
+                i1 = questionOption.indexOf("A.");
+            }
+            int i2 = -1;
+            if (questionOption.indexOf("B．") != -1) {
+                i2 = questionOption.indexOf("B．");
+            } else {
+                i2 = questionOption.indexOf("B.");
+            }
+            int i3 = -1;
+            if (questionOption.indexOf("C．") != -1) {
+                i3 = questionOption.indexOf("C．");
+            } else {
+                i3 = questionOption.indexOf("C.");
+            }
+            int i4 = -1;
+            if (questionOption.indexOf("D．") != -1) {
+                i4 = questionOption.indexOf("D．");
+            } else {
+                i4 = questionOption.indexOf("D.");
+            }
             List<Integer> letterList = new ArrayList<>();
             letterList.add(i1);
             letterList.add(i2);
@@ -270,11 +312,16 @@ public class ExamServiceImpl implements ExamService {
             sortMap.put(2, str2);
             sortMap.put(3, str3);
             sortMap.put(4, str4);
-            optionList2.add(questionOption.substring(i1, i1 + 2));
+            //这个是截取原选项中的ABCD.;可能有的是中文点
+            /*optionList2.add(questionOption.substring(i1, i1 + 2));
             optionList2.add(questionOption.substring(i2, i2 + 2));
             optionList2.add(questionOption.substring(i3, i3 + 2));
-            optionList2.add(questionOption.substring(i4, i4 + 2));
-
+            optionList2.add(questionOption.substring(i4, i4 + 2));*/
+            //全部定死为 英文点
+            optionList2.add("A.");
+            optionList2.add("B.");
+            optionList2.add("C.");
+            optionList2.add("D.");
             int[] array = new int[]{1, 2, 3, 4};
 
             boolean contains = questionOption.contains("E．");//判断选项中是否包含 D选项
@@ -284,7 +331,8 @@ public class ExamServiceImpl implements ExamService {
                 String str5 = questionOption.substring(i5 + 2, questionOption.length());//E选项
                 optionList.add(str5);
                 sortMap.put(5, str5);
-                optionList2.add(questionOption.substring(i5, i5 + 2));
+//                optionList2.add(questionOption.substring(i5, i5 + 2));
+                optionList2.add("E.");
                 array = new int[]{1, 2, 3, 4, 5};
             }
 /*
@@ -354,13 +402,11 @@ public class ExamServiceImpl implements ExamService {
         String examSource = paper.getExamSource();// 获取试卷的类别，章节练习，模拟考试，历年真题等
         String paperExamName = paper.getExamName();
         String subjectName = questionDao.getSubjectName(id);
-
+        String userAnswer = optionLetter(commitString);//用户的答案
         List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
         if (repatQuestion == null || repatQuestion.size() == 0) {
-
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
-            String userAnswer = optionLetter(commitString);
             if (question.getCorrectText().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
@@ -381,7 +427,7 @@ public class ExamServiceImpl implements ExamService {
             int repatTime = times + 1;
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
-            String userAnswer = optionLetter(commitString);
+//            String userAnswer = optionLetter(commitString);
             if (question.getCorrectText().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
@@ -419,7 +465,7 @@ public class ExamServiceImpl implements ExamService {
         // List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, idList.get(0));
         int times = 1;
         if (repatQuestion.size() > 0) {
-            times = repatQuestion.get(0).getTimes();
+            times = repatQuestion.get(0).getTimes() + 1;
         }
         // 这一份试卷的 题的数量
         int questionCount = idList.size();
@@ -455,6 +501,31 @@ public class ExamServiceImpl implements ExamService {
         log.info("【作错题的数量：】{}", doError);
         log.info("【未做题的数量：】{}", notDo);
 
+        // 新增往错题表中插数据
+        List<UserQuestionRecord> repatQuestion2 = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
+        UserQuestionRecord questionRecord = repatQuestion2.get(0);// 获取刚插入的此题所有数据
+        if (questionRecord.getDoRight() == 2) {
+            // 此题错误，判断此题的 相同来源是否 插入过库中
+            UserWrongQustion userWrong = userWrongQustionDao.getByStudentNumberAndExamCategoryAndQuestionId(studentNumber, questionRecord.getExamCategory(), id, subject);
+            if (userWrong == null) {
+                //如果不存在，则插入
+                UserWrongQustion wrongQustion = new UserWrongQustion();
+                wrongQustion.setStudentNumber(studentNumber);
+                wrongQustion.setOpenid(openid);
+                wrongQustion.setSubject(subject);
+                wrongQustion.setDoRight(2);
+                wrongQustion.setQuestionId(id);
+                wrongQustion.setUserAnswer(userAnswer);
+                wrongQustion.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
+                wrongQustion.setExamPaperName(paperExamName);
+                wrongQustion.setExamCategory(examSource);
+
+                userWrongQustionDao.save(wrongQustion);
+            }
+
+
+        }
+
         //List<DoQuestionInfoDTO> dtoList = new ArrayList<>();
         DoQuestionInfoDTO dto = new DoQuestionInfoDTO();
         dto.setQuestionCount(questionCount);
@@ -478,7 +549,14 @@ public class ExamServiceImpl implements ExamService {
         }
         // 科目名称
         String subjectName = questionDao.getSubjectName(id);
-
+        UserCollect collect = userCollectDao.findByStudentNumberAndQuestionId(studentNumber, id);
+        if (collect != null && collect.getValid() == 2) {
+            collect.setValid(1);// 将此题重新设置为收藏状态
+            Timestamp date = new Timestamp(System.currentTimeMillis());
+            collect.setUpdatetime(date);
+            UserCollect save = userCollectDao.save(collect);
+            return save;
+        }
 //        String userAnswer = optionLetter(commitString);
         UserCollect userCollect = new UserCollect();
         userCollect.setStudentNumber(studentNumber);
@@ -596,79 +674,135 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public ChapterErrNumberDTO getChapterErrNumber(String stuNumber, String openid, String subject) {
+    public JSONObject getChapterErrNumber(String stuNumber, String openid, String subject, String examCategory) {
+
+
+        JSONObject json = new JSONObject();
+
         UserLogin userInfo = userLoginDao.findByDiyid(stuNumber);// 获取此用户的所有基本信息
         if (userInfo == null) {
             info = "暂时没有学号所对应的信息，请认真核对您的学号";
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
-        String gradeLevel = userInfo.getGradeLevel();//此用户的年级水平，例如高1
-//        //1. 先获取 所有节的名称
-//        List<String> paperName = userQuestionRecordDao.getAllExamPaperName(stuNumber, subject, "章节练习");
-//
-//        //3. 获取所有 错题信息
-//        List<UserQuestionRecord> errInList = userQuestionRecordDao.getByStudentNumberAndSubjectAndDoRightAndExamCategory(stuNumber, subject, 2, "章节练习");
-//        // 4. 筛选属于
+//        String gradeLevel = userInfo.getGradeLevel();//此用户的年级水平，例如高1
 
-//            for (int i =0; i < chapterNameList.size(); i++){
-//                if (paperName.getExamPaperName().equals(chapterNameList.get(i))){
-//
-//
-//
-//                }
-//
-//        }
-        Map<String, Integer> chapterErrNumMap = new HashMap<>();
-        List<String> chapterSectionList = new ArrayList<>();//章-节 list
-        Map<String, String> chapterSectionMap = new HashMap<>();//章-节 map
-        Map<String, Integer> sectionErrNumMap = new HashMap<>();// 节-错题数量 map
+        Map<String, Integer> getNotMasteredErrorNum = new LinkedHashMap<>();
+        Map<String, Integer> getMasteredErrorNum = new LinkedHashMap<>();
+        if (examCategory.equals("1")) {
 
-        //1. 先 获取此用户-》此科目-》章节练习中 所有错题  试卷名称（每节的名称）
-        List<String> paperName = userQuestionRecordDao.getAllErrInfo(stuNumber, subject, 2, "章节练习");
-        if (paperName.size() == 0) {
-            info = "您所做的章节练习中还没错题";
-            ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
-            chapterErrNumberDTO.setGradeLevel(gradeLevel);
-            chapterErrNumberDTO.setChapterNumber(null);
-            return chapterErrNumberDTO;
-        } else {
-            //2. 根据所有 节的名称 获取所有章的名称
-            List<String> chapterNameList = chapterDao.findBySectionIn(paperName);
-            for (String chapterName : chapterNameList){
-                //3. 获取所有节的名称，根据章名称和科目
-                List<String> sectionList = chapterDao.findByChapterAndSubject(chapterName, subject);
-                for (String section: sectionList){
-                    //4. 获取此节的 错题数量
-                    int errNumber = userQuestionRecordDao.getByErrNumber(stuNumber, subject, section);
-                    chapterSectionList.add(chapterName+","+section);
-                    chapterSectionMap.put(chapterName,section);
-                    sectionErrNumMap.put(section,errNumber);
+            String levelName = "高1";
+
+            // 得到该学科所有的章节
+            List<String> getChaptersBySubject = chapterDao.findChapterBySubject(subject, levelName);
+            if (getChaptersBySubject == null || getChaptersBySubject.size() == 0) {
+                info = "暂时没有该学科对应的章节信息";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                for (int i = 0; i < getChaptersBySubject.size(); i++) {
+                    String chapter = getChaptersBySubject.get(i);
+                    // 章练习未掌握错题数
+                    int getNotMasteredErrorNumByChapter = userWrongQustionDao.getErrorNumByChapter(stuNumber, subject, chapter, 2);
+                    if (getNotMasteredErrorNumByChapter != 0) {
+                        getNotMasteredErrorNum.put(chapter, getNotMasteredErrorNumByChapter);
+                    }
+                    // 章练习已掌握错题数
+                    int getMasteredErrorNumByChapter = userWrongQustionDao.getErrorNumByChapter(stuNumber, subject, chapter, 1);
+                    if (getMasteredErrorNumByChapter != 0) {
+                        getMasteredErrorNum.put(chapter, getMasteredErrorNumByChapter);
+                    }
                 }
             }
+        } else if (examCategory.equals("2")) {
+            // 得到该学科所有的章节
+            List<String> getExamName = examPaperDao.getExamName();
+            if (getExamName == null || getExamName.size() == 0) {
+                info = "暂时没有考试题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                for (int i = 0; i < getExamName.size(); i++) {
+                    String examName = getExamName.get(i);
+                    // 考试未掌握错题数
+                    int getNotMasteredErrorNumByExam = userWrongQustionDao.getErrorNumByExam(stuNumber, subject, examName, 2);
+                    if (getNotMasteredErrorNumByExam != 0) {
+                        getNotMasteredErrorNum.put(examName, getNotMasteredErrorNumByExam);
+                    }
 
-            log.info("【chapterSectionMap】{}",chapterSectionMap);
-            log.info("【sectionErrNumMap】{}",sectionErrNumMap);
-            log.info("【chapterSectionList】{}",chapterSectionList);
-        }
-        ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
-        for (String string : chapterSectionList){
-            int i = string.indexOf(",");
-            String chapterName = string.substring(0, i);
-            String sectionName = string.substring(i + 1, string.length());
-            Integer integer = sectionErrNumMap.get(sectionName);
-            if (chapterErrNumMap.containsKey(chapterName)){
-                Integer integer1 = chapterErrNumMap.get(chapterName);
-                integer += integer1;
-                chapterErrNumMap.put(chapterName,integer);
+                    // 考试已掌握错题数
+                    int getMasteredErrorNumByExam = userWrongQustionDao.getErrorNumByExam(stuNumber, subject, examName, 1);
+                    if (getMasteredErrorNumByExam != 0) {
+                        getMasteredErrorNum.put(examName, getMasteredErrorNumByExam);
+                    }
+                }
             }
-            chapterErrNumMap.put(chapterName,integer);
         }
-        chapterErrNumberDTO.setGradeLevel(gradeLevel);
-        chapterErrNumberDTO.setChapterNumber(chapterErrNumMap);
-        log.info("【chapterErrNumMap】{}",chapterErrNumMap);
+        json.put("notMastered", getNotMasteredErrorNum);
+        json.put("mastered", getMasteredErrorNum);
+        return json;
 
-        return chapterErrNumberDTO;
+//        Map<String, Integer> chapterErrNumMap = new HashMap<>();
+//        List<String> chapterSectionList = new ArrayList<>();//章-节 list
+//        Map<String, String> chapterSectionMap = new HashMap<>();//章-节 map
+//        Map<String, Integer> sectionErrNumMap = new HashMap<>();// 节-错题数量 map
+//        String examCategory1 = null;
+//        String examCategory2 = null;
+//        if (examCategory.equals("1")){
+//            examCategory1 = "章节练习";
+//            examCategory2 = "专项练习";
+//        }else {
+//            examCategory1 = "模拟考试";
+//            examCategory2 = "历年真题";
+//        }
+//
+//        //1. 先 获取此用户-》此科目-》章节练习中 所有错题  试卷名称（每节的名称）
+////        List<String> paperName = userQuestionRecordDao.getAllErrInfo(stuNumber, subject, 2, "章节练习");
+//        List<String> paperName = userWrongQustionDao.getAllErrInfo(stuNumber, subject, 2, examCategory1,examCategory2);
+//        if (paperName.size() == 0) {
+//            info = "您所做的章节练习中还没错题";
+//            ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
+//            chapterErrNumberDTO.setGradeLevel(gradeLevel);
+//            chapterErrNumberDTO.setChapterNumber(null);
+//            return chapterErrNumberDTO;
+//        } else {
+//            //2. 根据所有 节的名称 获取所有章的名称
+//            List<String> chapterNameList = chapterDao.findBySectionIn(paperName);
+//            for (String chapterName : chapterNameList){
+//                //3. 获取所有节的名称，根据章名称和科目
+//                List<String> sectionList = chapterDao.findByChapterAndSubject(chapterName, subject);
+//                for (String section: sectionList){
+//                    System.out.println(section);
+//                    //4. 获取此节的 错题数量
+//                    int errNumber = userWrongQustionDao.getByErrNumber(stuNumber, subject, section);
+//                    chapterSectionList.add(chapterName+","+section);
+//                    chapterSectionMap.put(chapterName,section);
+//                    sectionErrNumMap.put(section,errNumber);
+//                }
+//            }
+//
+//            log.info("【chapterSectionMap】{}",chapterSectionMap);
+//            log.info("【sectionErrNumMap】{}",sectionErrNumMap);
+//            log.info("【chapterSectionList】{}",chapterSectionList);
+//        }
+//        ChapterErrNumberDTO chapterErrNumberDTO = new ChapterErrNumberDTO();
+//        for (String string : chapterSectionList){
+//            int i = string.indexOf(",");
+//            String chapterName = string.substring(0, i);
+//            String sectionName = string.substring(i + 1, string.length());
+//            Integer integer = sectionErrNumMap.get(sectionName);
+//            if (chapterErrNumMap.containsKey(chapterName)){
+//                Integer integer1 = chapterErrNumMap.get(chapterName);
+//                integer += integer1;
+//                chapterErrNumMap.put(chapterName,integer);
+//            }
+//            chapterErrNumMap.put(chapterName,integer);
+//        }
+//        chapterErrNumberDTO.setGradeLevel(gradeLevel);
+//        chapterErrNumberDTO.setChapterNumber(chapterErrNumMap);
+//        log.info("【chapterErrNumMap】{}",chapterErrNumMap);
+//
+//        return chapterErrNumberDTO;
 
 
 
@@ -739,8 +873,8 @@ public class ExamServiceImpl implements ExamService {
 //                completeDTO.setEffective(1);//此试卷已经做完
 //            }
 
-            for(Map.Entry<String, String> entry : map.entrySet()){
-                if (entry.getValue().equals("")){
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                if (entry.getValue().equals("")) {
                     completeDTO.setEffective(2);//此时卷没做完
                     completeDTO.setFirstNoDoneNum(entry.getKey());
                     break;
@@ -758,22 +892,25 @@ public class ExamServiceImpl implements ExamService {
                 String o = String.valueOf(map.get(String.valueOf(i)));
                 if (o.equals("")) {
                     complete = 2;
+                    paperTotalDTO.setComplete(2);
                     paperTotalDTO.setUserOption("");
-                }else {
+                } else {
                     paperTotalDTO.setUserOption(String.valueOf(o));
+                    paperTotalDTO.setComplete(1);
                 }
                 EchoPaperDTO paperDTO = echoPaperDTOList.get(i);
                 paperTotalDTO.setQuestion(paperDTO);
                 //将 选项的字符文本，封装为linkedlist按顺序添加
-                List<String> list1 = stringTurnList(paperDTO.getRandomOption());
+                //List<String> list1 = stringTurnList(paperDTO.getRandomOption());
+                List<String> list1 = stringTurnList2(paperDTO.getRandomOption());
                 paperTotalDTO.setRandomOption(list1);
 
-                paperTotalDTO.setComplete(complete);
+//                paperTotalDTO.setComplete(complete);
                 // 此题是否已经收藏过,如果userCollect存在，则此题收藏了
                 UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(stuNumber, subject, examPaper.getId(), paperDTO.getId(), 1);
-                if (userCollect == null){
+                if (userCollect == null) {
                     paperTotalDTO.setCollect(2);
-                }else {
+                } else {
                     paperTotalDTO.setCollect(1);
                 }
 
@@ -786,27 +923,283 @@ public class ExamServiceImpl implements ExamService {
 
             }
             completeDTOList.add(completeDTO);
-           // log.info("【list: 】{}", list);
+            // log.info("【list: 】{}", list);
             return completeDTOList;
         }
+    }
+
+    @Override
+    public FindCollectDTO findCollectInfo(String stuNumber, String subject, int questionId) {
+        // int valid =1;//收藏的标志
+        int ifCollectByUserAndQuestionId = userCollectDao.getIfCollectByStuNumAndQuestionId(stuNumber, subject, questionId);
+
+        FindCollectDTO findCollectDTO = new FindCollectDTO();
+        if (ifCollectByUserAndQuestionId == 1) {
+            findCollectDTO.setCollect(1);
+            return findCollectDTO;
+        } else {
+            findCollectDTO.setCollect(2);
+            return findCollectDTO;
+        }
+//        FindCollectDTO findCollectDTO = new FindCollectDTO();
+//        if (userCollect == null){
+//            findCollectDTO.setCollect(2);
+//            return findCollectDTO;
+//        }else {
+//            findCollectDTO.setCollect(1);
+//            return findCollectDTO;
+//        }
 
     }
 
     @Override
-    public FindCollectDTO findCollectInfo(int id) {
-        int valid =1;//收藏的标志
-        UserCollect userCollect = userCollectDao.findByQuestionIdAndValid(id, 1);
-
-        FindCollectDTO findCollectDTO = new FindCollectDTO();
-        if (userCollect == null){
-            findCollectDTO.setCollect(2);
-            return findCollectDTO;
-        }else {
-            findCollectDTO.setCollect(1);
-            return findCollectDTO;
+    public SectionErrNumberDTO getSectionErrNumber(String stuNumber, String openid, String subject, String chapterName, String ifMastered) {
+        //1. 根据章的名称获取所有节的名称
+        List<String> sectionList = chapterDao.findByChapterAndSubject(chapterName, subject);
+        if (sectionList.size() == 0) {
+            info = "暂无您要查询的小节名称";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
-
+        Map<String, Integer> sectionErrNumMap = new LinkedHashMap<>();
+        SectionErrNumberDTO sectionErrNumberDTO = new SectionErrNumberDTO();
+        for (String section : sectionList) {
+            System.out.println(section);
+            if (ifMastered.equals("未掌握")) {
+                //4. 获取此节的 错题数量(未掌握)
+                int errNumber = userWrongQustionDao.getByErrNumber(stuNumber, subject, section, 2);
+                if (errNumber == 0) {
+                    continue;
+                }
+                sectionErrNumMap.put(section, errNumber);
+            } else if (ifMastered.equals("已掌握")) {
+                //4. 获取此节的 错题数量(已掌握)
+                int errNumber = userWrongQustionDao.getByErrNumber(stuNumber, subject, section, 1);
+                if (errNumber == 0) {
+                    continue;
+                }
+                sectionErrNumMap.put(section, errNumber);
+            }
+        }
+        sectionErrNumberDTO.setSectionNumber(sectionErrNumMap);
+        return sectionErrNumberDTO;
     }
+
+    @Override
+    public JSONObject getNotMasteredInfo(String studentNumber, String openid, String subject, String examCategory, String gradeLevel, int master) {
+        JSONObject json = new JSONObject();
+        JSONArray jsonArray = new JSONArray();// 提的所有详情
+        if (!examCategory.equals("全部")) {
+            List<UserWrongQustion> wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
+            if (wrongQustions.size() == 0) {
+                info = "暂无您要查询的未掌握题情况";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                for (UserWrongQustion wrongQustion : wrongQustions) {
+                    JSONObject jsonObject1 = new JSONObject();// 分装Json
+                    int questionId = wrongQustion.getQuestionId();// question表的id
+                    //此题的分类标签，可能有多个
+                    List<String> questionSource = userWrongQustionDao.getallQuestionSource(studentNumber, gradeLevel, subject, master, questionId);
+                    Question question = questionDao.getByIdAndValid(questionId, 1);// 获取此题的所有数据
+                    String questionContext = question.getQuestionContext();
+                    String titleContent = filterTitleNumber(questionContext);// 题目内容
+                    jsonObject1.put("titleContent", titleContent);
+                    List<String> labelList = new LinkedList<>();// 此题的标签属
+                    String questionAttribute = question.getQuestionAttribute();// 此题的知识点属性
+                    //labelList.add(wrongQustion.getExamCategory());// 分类标签： 章节还是 专项等
+                    for (String s : questionSource) {
+                        labelList.add(s);
+                    }
+                    if (questionAttribute.contains(",")) {
+                        String[] split = questionAttribute.split(",");
+                        for (int i = 0; i < split.length; i++) {
+                            String s = split[i];
+                            if (s.equals("")){
+                                continue;
+                            }
+                            labelList.add(s);
+                        }
+                    } else {
+                        labelList.add(questionAttribute);
+                    }
+                    jsonObject1.put("labelList", labelList);// 题的标签
+                    jsonObject1.put("question", question);// 此题的所有情况
+                    jsonArray.add(jsonObject1);
+                    json.put("questionInfo", jsonArray);
+                }
+            }
+        } else {
+            // 获取全部的题，不重复的形式
+            List<UserWrongQustion> wrongQustions = userWrongQustionDao.getAllByQuestion(studentNumber, gradeLevel, subject, master);//去重qustion_id
+            if (wrongQustions.size() == 0) {
+                info = "暂无您要查询的未掌握题情况";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                for (UserWrongQustion wrongQustion : wrongQustions) {
+                    JSONObject jsonObject1 = new JSONObject();// 分装Json
+                    int questionId = wrongQustion.getQuestionId();
+                    //此题的分类标签，可能有多个
+                    List<String> questionSource = userWrongQustionDao.getallQuestionSource(studentNumber, gradeLevel, subject, master, questionId);
+                    Question question = questionDao.getByIdAndValid(questionId, 1);// 获取此题的所有数据
+                    String questionContext = question.getQuestionContext();
+                    String titleContent = filterTitleNumber(questionContext);// 题目内容
+                    jsonObject1.put("titleContent", titleContent);
+                    List<String> labelList = new LinkedList<>();// 此题的标签属
+                    String questionAttribute = question.getQuestionAttribute();// 此题的知识点属性
+                    //labelList.add(wrongQustion.getExamCategory());// 分类标签： 章节还是 专项等
+                    for (String s : questionSource) {
+                        labelList.add(s);
+                    }
+                    if (questionAttribute.contains(",")) {
+                        String[] split = questionAttribute.split(",");
+                        for (int i = 0; i < split.length; i++) {
+//                            labelList.add(split[i]);
+                            String s = split[i];
+                            if (s.equals("")){
+                                continue;
+                            }
+                            labelList.add(s);
+                        }
+                    } else {
+                        if (!questionAttribute.equals("")){
+                            labelList.add(questionAttribute);
+                        }
+
+                    }
+                    jsonObject1.put("labelList", labelList);// 题的标签
+                    jsonObject1.put("question", question);// 此题的所有情况
+                    jsonArray.add(jsonObject1);
+                    json.put("questionInfo", jsonArray);
+                }
+            }
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject getClassification(String studentNumber, String openid, String subject, String examCategory, String gradeLevel, int master) {
+        JSONArray jsonArray1 = new JSONArray();// 分类详情
+        JSONObject jsonObject = new JSONObject();
+        //分类详情
+        if (examCategory.equals("章节练习")) {
+            //获取掌握或未掌握的 节的名称
+            List<String> sectionName = userWrongQustionDao.getSectionName(studentNumber, gradeLevel, subject, master, examCategory);
+            if (sectionName.size() == 0) {
+                info = "您章节练习模块中未有错题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            Map<String, Map<String, Integer>> map = new HashMap<>();
+            Map<String, Integer> sectionInfoMap = new HashMap<>();//k:节的名称、v:错题的数量
+            Map<String, Integer> chapterMap = new HashMap<>();//k:章的名称、v:错题的数量
+            for (String section : sectionName) {
+                // 根据节的获取章的名称
+                List<String> chapterName = chapterDao.findBySection(section);
+                String chapter = chapterName.get(0);
+                int chapterNum = userWrongQustionDao.getErrorNumByChapter(studentNumber, subject, chapter, master);
+                chapterMap.put(chapter, chapterNum);
+                int number = userWrongQustionDao.getByErrNumber(studentNumber, subject, section, master);
+                sectionInfoMap.put(section, number);
+
+                map.put(chapter, sectionInfoMap);
+                log.info("【map: 】{}", map);
+            }
+//            jsonArray1.add(map);
+            jsonObject.put("info", map);//分类详情
+            List<UserWrongQustion> wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, examCategory);
+            jsonObject.put("totalNum", wrongQustions.size());
+            return jsonObject;
+        } else if (examCategory.equals("专项练习")) {
+            //1. 列出所有错题的知识点属性
+            List<String> questionLabelList = userWrongQustionDao.getQuestionAttribute(studentNumber, gradeLevel, subject, master, examCategory);
+            if (questionLabelList.size() == 0) {
+                info = "您专项练习模块中未有错题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            List<String> labelList = new ArrayList<>();// 错题的所有属性
+            for (String questionAttribute : questionLabelList) {
+                if (questionAttribute.contains(",")) {
+                    String[] split = questionAttribute.split(",");
+                    for (int i = 0; i < split.length; i++) {
+                        if (labelList.contains(split[i])) {
+                            continue;
+                        }
+                        labelList.add(split[i]);
+                    }
+                } else {
+                   if (labelList.contains(questionAttribute)){
+                       continue;
+                   }
+                    labelList.add(questionAttribute);
+                }
+            }
+            log.info("【labelList：】{}",labelList);
+            Map<String, Integer> map = new HashMap<>();
+            for (String string : labelList){
+                int questionAttributeNum = userWrongQustionDao.getQuestionAttributeNum(studentNumber, gradeLevel, subject, master, examCategory, string);
+                map.put(string,questionAttributeNum);
+            }
+            jsonObject.put("info", map);//分类详情
+            List<UserWrongQustion> wrongQustions = userWrongQustionDao.getAllChapterInfo(studentNumber, gradeLevel, subject, master, examCategory);
+            jsonObject.put("totalNum", wrongQustions.size());
+            return jsonObject;
+        }else if (examCategory.equals("全部")){
+            List<UserWrongQustion> userWrongQustions = userWrongQustionDao.totalNum(studentNumber, subject, gradeLevel, master);
+            if (userWrongQustions.size() == 0) {
+                info = "您曾未有错题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            jsonObject.put("totalNum", userWrongQustions.size());
+            return jsonObject;
+        }else {
+            // 历年真题和 模拟考试
+            //1. 先获取所有错题或正确题的 去重后的名称,放到list中
+            List<String> examPaperNameList = userWrongQustionDao.getExamPaperName(studentNumber, gradeLevel, subject, master, examCategory);
+            if (examPaperNameList.size() == 0) {
+                info = "您专项考试模块中未有错题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            //2. 遍历list然后查询有多少道错题，放到map中
+            Map<String, Integer> map = new HashMap<>();
+            for (String examName : examPaperNameList){
+                int examNameNum = userWrongQustionDao.getgetExamPaperNameNum(studentNumber, gradeLevel, subject, master, examName);
+                map.put(examName,examNameNum);
+            }
+            jsonObject.put("info", map);//分类详情
+            int totalExamPaperNum = userWrongQustionDao.getTotalExamPaperNum(studentNumber, gradeLevel, subject, master, examCategory);
+            jsonObject.put("totalNum", totalExamPaperNum);
+
+        }
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject getClassificationQuantity(String studentNumber, String openid, String subject, String gradeLevel, int master) {
+        JSONObject jsonObject = new JSONObject();
+        // 获取 全部的 已掌握或未掌握的 数量
+        List<UserWrongQustion> userWrongQustions = userWrongQustionDao.totalNum(studentNumber, subject, gradeLevel, master);
+        jsonObject.put("totalNum", userWrongQustions.size());
+        // 章节练习 数量
+        List<UserWrongQustion> wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, "章节练习");
+        jsonObject.put("chapterNum", wrongQustions.size());
+        //专项练习 数量
+        List<UserWrongQustion> wrongQustions2 = userWrongQustionDao.getAllChapterInfo(studentNumber, gradeLevel, subject, master, "专项练习");
+        jsonObject.put("specialNum", wrongQustions2.size());
+        //模拟考试 数量
+        int totalExamPaperNum = userWrongQustionDao.getTotalExamPaperNum(studentNumber, gradeLevel, subject, master, "模拟考试");
+        jsonObject.put("mockNum", totalExamPaperNum);
+        // 历年真题 数量
+        int totalExamPaperNum2 = userWrongQustionDao.getTotalExamPaperNum(studentNumber, gradeLevel, subject, master, "历年真题");
+        jsonObject.put("truthNum", totalExamPaperNum2);
+
+        return jsonObject;
+    }
+
 
     /**
      * 公共函数 1.
@@ -903,10 +1296,10 @@ public class ExamServiceImpl implements ExamService {
 
     /**
      * 公共函数 3
-     *  A．较大的稳定性B．选择透性C．一定的流动性D．运输物质的功能
+     * A．较大的稳定性B．选择透性C．一定的流动性D．运输物质的功能
      * 将 上述字符串 切分然后放到list中
      */
-    public static List<String> stringTurnList(String string){
+    public static List<String> stringTurnList(String string) {
         List<String> list = new LinkedList<>();
         int i1 = string.indexOf("A．");
         int i2 = string.indexOf("B．");
@@ -917,6 +1310,50 @@ public class ExamServiceImpl implements ExamService {
         String str2 = string.substring(i2, i3);//B选项
         String str3 = string.substring(i3, i4);//C选项
         String str4 = string.substring(i4, string.length());//D选项
+        list.add(str1);
+        list.add(str2);
+        list.add(str3);
+        list.add(str4);
+
+        return list;
+    }
+
+    /**
+     * 公共函数 4 将中文的. 改为 英文的.
+     * A．较大的稳定性B．选择透性C．一定的流动性D．运输物质的功能
+     * 将 上述字符串 切分然后放到list中
+     */
+    public static List<String> stringTurnList2(String string) {
+        List<String> list = new LinkedList<>();
+        int i1 = -1;
+        if (string.indexOf("A．") != -1) {
+            i1 = string.indexOf("A．");
+        } else {
+            i1 = string.indexOf("A.");
+        }
+        int i2 = -1;
+        if (string.indexOf("B．") != -1) {
+            i2 = string.indexOf("B．");
+        } else {
+            i2 = string.indexOf("B.");
+        }
+        int i3 = -1;
+        if (string.indexOf("C．") != -1) {
+            i3 = string.indexOf("C．");
+        } else {
+            i3 = string.indexOf("C.");
+        }
+        int i4 = -1;
+        if (string.indexOf("D．") != -1) {
+            i4 = string.indexOf("D．");
+        } else {
+            i4 = string.indexOf("D.");
+        }
+
+        String str1 = "A." + string.substring(i1 + 2, i2);//A选项
+        String str2 = "B." + string.substring(i2 + 2, i3);//B选项
+        String str3 = "C." + string.substring(i3 + 2, i4);//C选项
+        String str4 = "D." + string.substring(i4 + 2, string.length());//D选项
         list.add(str1);
         list.add(str2);
         list.add(str3);

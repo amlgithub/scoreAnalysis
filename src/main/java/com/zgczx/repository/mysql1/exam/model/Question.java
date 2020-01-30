@@ -27,6 +27,7 @@ public class Question {
     private int examId;
     @Column(name = "question_source")
     private String questionSource;
+    private String subject;
     @Column(name = "exam_name")
     private String examName;
     @Column(name = "exam_type")

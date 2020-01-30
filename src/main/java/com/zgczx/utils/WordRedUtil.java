@@ -35,7 +35,8 @@ public class WordRedUtil {
     private final static String doc = "doc";
     private final static String docx = "docx";
 
-    public static String readWord(MultipartFile file) throws IOException {
+    public static JSONObject readWord(MultipartFile file) throws IOException {
+        JSONObject jsonObject = new JSONObject();
         //1. 检查文件
         checkFile(file);
         //2.创建输入流读取DOC文件
@@ -49,12 +50,13 @@ public class WordRedUtil {
         //WordExtractor extractor = new WordExtractor(inputStream);
         //4. 对doc文件进行提取
         String text = extractor.getText();
-        JSONObject jsonObject = new JSONObject();
+
         jsonObject.put("doctext", text);
         System.out.println(jsonObject);
         int i = 1;// 第一个图片
         //用XWPFDocument的getAllPictures来获取所有图片
         List<XWPFPictureData> pictureDataList = xdoc.getAllPictures();
+        List<String> imgList = new ArrayList<>();
         for (XWPFPictureData pic : pictureDataList) {
             byte[] fileBytes = pic.getData();
 
@@ -77,11 +79,13 @@ public class WordRedUtil {
                 String fileUrl = "http://zhongkeruitong.top/image/" + fileName;
 //                returnMsg = "http://zhongkeruitong.top/image/" + fileName;
                 log.info("===> 图片上传地址：" + fileUrl);
+                imgList.add(fileUrl);
             }
         }
-
-        return text;
-
+        jsonObject.put("title",filename);
+        jsonObject.put("imgList", imgList);
+//        return text;
+        return jsonObject;
     }
 
 

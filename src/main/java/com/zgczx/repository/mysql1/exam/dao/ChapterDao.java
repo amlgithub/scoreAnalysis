@@ -31,4 +31,12 @@ public interface ChapterDao extends JpaRepository<Chapter, Integer> {
     //4. 获取所有节名称，根据章名称 和 科目
     @Query(value = "SELECT section FROM e_chapter WHERE chapter=?1 AND SUBJECT=?2 ", nativeQuery = true)
     List<String> findByChapterAndSubject(String chapter,String subject);
+
+    // 5. 根据学科和年级 获取该学科的所有章节(已涉及学科和年级) lxj
+    @Query(value = "select distinct chapter from e_chapter where `subject`=?1 and level_name= ?2 ",nativeQuery = true)
+    List<String> findChapterBySubject(String subject,String levelName);
+
+    //6. 根据节的名称获取章的名称
+    @Query(value = "SELECT chapter FROM e_chapter WHERE section=?1 ", nativeQuery = true)
+    List<String> findBySection(String section);
 }

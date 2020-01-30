@@ -124,8 +124,39 @@ public class FilterStringUtil {
     }
 
     public static String optionLetter(String character) {
-        character = character.replaceAll("A．|B．|C．|D．|E．", "");
+        character = character.replaceAll("A．|B．|C．|D．|E．|A.|B.|C.|D.|E.", "");
         return character;
+    }
+
+    // 只留中文和数字 还有 逗号,
+    public static String filterChineseAndMath(String character) {
+        character = character.replaceAll("[^(0-9\\u4e00-\\u9fa5)|\\,]", "");
+        return character;
+    }
+
+
+    // 去除题的 题号和点，只留题的内容; 最大题号为 10000
+    public static String filterTitleNumber(String string){
+        //以数字开头并且包含.表示一个新的题目开始
+        String regex = "^\\d{1,10000}\\．";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher m = pattern.matcher(string);
+        if (m.find()){
+            String string1 = m.replaceAll("");
+            return string1;
+        }else {
+         /*   //以数字开头并且包含.表示一个新的题目开始
+            String regex1 = "^\\d{1,100}\\.";
+            Pattern pattern1 = Pattern.compile(regex1);
+            Matcher m1 = pattern.matcher(string);
+            if (m1.find()){
+                String string1 = m1.replaceAll("");
+                return string1;
+            }*/
+            string = string.replaceAll("^\\d{1,10000}\\.", "");
+            return string;
+        }
+
     }
 
     /**
@@ -205,8 +236,19 @@ public class FilterStringUtil {
 //        String s4 = filter2("],\"rightOption\":");
 //        System.out.println("444: "+s4);
 
-        String braces = braces("{\"0\":\"\",\"1\":\"\",\"2\":\"\",\"3\":\"\",\"4\":\"\",\"5\":\"\",\"6\":\"\",\"7\":\"\",\"8\":\"\",\"9\":\"\"}");
+     /*   String braces = braces("{\"0\":\"\",\"1\":\"\",\"2\":\"\",\"3\":\"\",\"4\":\"\",\"5\":\"\",\"6\":\"\",\"7\":\"\",\"8\":\"\",\"9\":\"\"}");
         System.out.println(braces);
+
+        String string = filterChineseAndMath("第3章细胞的基本结构,第1节细胞膜的结构和功能");
+        System.out.println(string);*/
+
+//        String string1 = filterTitleNumber("1．科学家研究发现，当温度升高到一定程度时，细胞膜的厚度变薄且面积增大。说明（　　）");
+//        System.out.println(string1);
+
+        String string2 = filterTitleNumber("2.以下关于细胞膜结构的叙述中，不正确的是（　　）");
+        System.out.println(string2);
+
+
     }
 
 

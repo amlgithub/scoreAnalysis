@@ -1,5 +1,7 @@
 package com.zgczx.controller.exam;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.zgczx.VO.ResultVO;
 import com.zgczx.repository.mysql1.exam.dto.*;
 import com.zgczx.repository.mysql1.exam.model.Question;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 在线题库第一个controller
@@ -88,6 +91,7 @@ public class ExamController {
 
         return ResultVOUtil.success(list);
     }
+
 
     @ApiOperation(value = "五、 根据科目和考试名称返回所有题的信息数据")
     @GetMapping("/findExamQuestionInfo")
@@ -229,7 +233,7 @@ public class ExamController {
         return ResultVOUtil.success(userPaperRecord);
     }
 
-    @ApiOperation(value = "十二、点击练习错题时，展现的章节名称和对应的错题数量  ")
+    @ApiOperation(value = "十二、点击练习错题(考试错题)时，展现已掌握和未掌握的章名称和对应错题数(已掌握和未掌握的考试错题数)  ")
     @GetMapping("/getChapterErrNumber")
     public ResultVO<?> getChapterErrNumber(
             @ApiParam(value = "用户学号", required = true)
@@ -237,10 +241,12 @@ public class ExamController {
             @ApiParam(value = "用户openid", required = true)
             @RequestParam("openid") String openid,
             @ApiParam(value = "科目名称", required = true)
-            @RequestParam("subject") String subject
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "试卷类型 1:练习；2：考试", required = true)
+            @RequestParam("examCategory") String examCategory
     ){
 
-        ChapterErrNumberDTO list = examService.getChapterErrNumber(studentNumber,openid,subject);
+        JSONObject list = examService.getChapterErrNumber(studentNumber,openid,subject, examCategory);
 
         return ResultVOUtil.success(list);
     }
@@ -263,14 +269,103 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "十四、查询此题是否收藏过  ")
+    @ApiOperation(value = "十四、查询某个用户是否收藏过某道题  ")
     @GetMapping("findCollectInfo")
     public ResultVO<?> findCollectInfo(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "学科", required = true)
+            @RequestParam("subject") String subject,
             @ApiParam(value = "哪道题：题库表的主键id", required = true)
-            @RequestParam("id") int id
+            @RequestParam("question_id") int questionId
     ){
-        FindCollectDTO list = examService.findCollectInfo(id);
+        FindCollectDTO list = examService.findCollectInfo(studentNumber,subject,questionId);
         return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "十五、获取此章下面的所有节的名称和对应的错题数量  ")
+    @GetMapping("/getSectionErrNumber")
+    public ResultVO<?> getSectionErrNumber(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "章的名称", required = true)
+            @RequestParam("chapterName") String chapterName,
+            @ApiParam(value = "是否已掌握",required = true)
+            @RequestParam("ifMastered") String ifMastered
+    ){
+
+        SectionErrNumberDTO list = examService.getSectionErrNumber(studentNumber,openid,subject,chapterName, ifMastered);
+
+        return ResultVOUtil.success(list);
+    }
+
+    @ApiOperation(value = "# 1.14 十六、错题本：获取某类别所有未掌握（已经掌握）题的所有情况  ")
+    @GetMapping("/getNotMasteredInfo")
+    public ResultVO<?> getNotMasteredInfo(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "分类：章节练习", required = true)
+            @RequestParam("examCategory") String examCategory,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "掌握还是未掌握：1为掌握；2为未掌握",required = true)
+            @RequestParam("master") int master
+    ){
+
+        JSONObject jsonArray = examService.getNotMasteredInfo(studentNumber,openid,subject,examCategory,gradeLevel,master);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
+    @ApiOperation(value = "# 1.15 十七、错题本中的 下面的分类详情  ")
+    @GetMapping("/getClassification")
+    public ResultVO<?> getClassification(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "分类：章节练习", required = true)
+            @RequestParam("examCategory") String examCategory,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "掌握还是未掌握：1为掌握；2为未掌握",required = true)
+            @RequestParam("master") int master
+    ){
+        JSONObject jsonArray = examService.getClassification(studentNumber,openid,subject,examCategory,gradeLevel,master);
+        return ResultVOUtil.success(jsonArray);
+    }
+
+
+    @ApiOperation(value = "# 1.14 十八、错题本：统计分类中 未掌握或已掌握的 各分类的数量  ")
+    @GetMapping("/getClassificationQuantity")
+    public ResultVO<?> getClassificationQuantity(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "掌握还是未掌握：1为掌握；2为未掌握",required = true)
+            @RequestParam("master") int master
+    ){
+
+        JSONObject jsonArray = examService.getClassificationQuantity(studentNumber,openid,subject,gradeLevel,master);
+
+        return ResultVOUtil.success(jsonArray);
     }
 
 }
