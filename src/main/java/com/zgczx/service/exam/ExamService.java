@@ -99,4 +99,6 @@ public interface ExamService {
 
     // 十八、错题本：统计分类中 未掌握或已掌握的 各分类的数量
     JSONObject getClassificationQuantity(String studentNumber, String openid, String subject, String gradeLevel, int master);
+    //十九、错题表：获取 此题的所有信息
+    JSONObject getQuestionInfo(int id,String stuNumber,String openid);
 }

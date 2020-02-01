@@ -118,6 +118,14 @@ public interface UserWrongQustionDao extends JpaRepository<UserWrongQustion, Int
             "WHERE student_number=?1 AND ep.`grade_level`=?2 AND uwq.`subject`=?3 AND uwq.`do_right`=?4 AND ep.`exam_source`=?5 ", nativeQuery = true)
     List<UserWrongQustion> getAllInfo(String stuNumber,String gradeLevel,String subject,int doRight,String examCategory);
 
+    //19.2 获取错题表中某用户-》某年级-》某科目 （专项练习） 未掌握（或已掌握）的所有题
+    @Query(value = "SELECT * FROM e_user_wrong_qustion AS uwq\n" +
+            "INNER JOIN e_question AS q \n" +
+            "ON uwq.`question_id`=q.`id` \n" +
+            "WHERE student_number=?1 AND q.`level_name`=?2 AND uwq.`subject`=?3 AND uwq.`do_right`=?4 AND uwq.exam_category=?5 ", nativeQuery = true)
+    List<UserWrongQustion> getAllInfo2(String stuNumber,String gradeLevel,String subject,int doRight,String examCategory);
+
+
     //20. 获取错题表中 用户-》某年级-》某科目 各分类的 未掌握（或已掌握）的所有题
     @Query(value = "SELECT DISTINCT uwq.question_id,uwq.id,uwq.student_number,uwq.openid,uwq.`subject`,uwq.do_right,uwq.user_answer,uwq.exam_paper_id,uwq.exam_paper_name,uwq.exam_category,uwq.do_time,uwq.inserttime,uwq.updatetime FROM e_user_wrong_qustion AS uwq FROM e_user_wrong_qustion AS uwq\n" +
             "INNER JOIN e_exam_paper AS ep\n" +

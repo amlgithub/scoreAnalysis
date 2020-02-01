@@ -990,7 +990,12 @@ public class ExamServiceImpl implements ExamService {
         JSONObject json = new JSONObject();
         JSONArray jsonArray = new JSONArray();// 提的所有详情
         if (!examCategory.equals("全部")) {
-            List<UserWrongQustion> wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
+            List<UserWrongQustion> wrongQustions = null;
+            if (examCategory.equals("专项练习")){
+                 wrongQustions = userWrongQustionDao.getAllInfo2(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
+            }else {
+                 wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
+            }
             if (wrongQustions.size() == 0) {
                 info = "暂无您要查询的未掌握题情况";
                 log.error("【错误信息】: {}", info);
@@ -1200,6 +1205,90 @@ public class ExamServiceImpl implements ExamService {
         return jsonObject;
     }
 
+
+    @Override
+    public JSONObject getQuestionInfo(int id, String stuNumber, String openid) {
+        JSONObject jsonObject = new JSONObject();
+        Question question = questionDao.getByIdAndValid(id, 1);
+        if (question == null){
+            info = "您专项考试模块中未有错题";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        jsonObject.put("question",question);
+        List<String> optionList = new LinkedList<>();// 此题选项的list
+        String oneQuestionOption = question.getQuestionOption();//获取所有选项的文本
+        String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+        log.info("【去除t,n等字符】： {}", questionOption);
+        int i1 = -1;
+        if (questionOption.indexOf("A．") != -1) {
+            i1 = questionOption.indexOf("A．");
+        } else {
+            i1 = questionOption.indexOf("A.");
+        }
+        int i2 = -1;
+        if (questionOption.indexOf("B．") != -1) {
+            i2 = questionOption.indexOf("B．");
+        } else {
+            i2 = questionOption.indexOf("B.");
+        }
+        int i3 = -1;
+        if (questionOption.indexOf("C．") != -1) {
+            i3 = questionOption.indexOf("C．");
+        } else {
+            i3 = questionOption.indexOf("C.");
+        }
+        int i4 = -1;
+        if (questionOption.indexOf("D．") != -1) {
+            i4 = questionOption.indexOf("D．");
+        } else {
+            i4 = questionOption.indexOf("D.");
+        }
+        List<Integer> letterList = new ArrayList<>();
+        letterList.add(i1);
+        letterList.add(i2);
+        letterList.add(i3);
+        letterList.add(i4);
+        String str1 = questionOption.substring(i1+2, i2);//A选项
+        String str2 = questionOption.substring(i2+2 , i3);//B选项
+        String str3 = questionOption.substring(i3+2 , i4);//C选项
+        String str4 = questionOption.substring(i4+2 , questionOption.length());//D选项
+        optionList.add("A."+str1);
+        optionList.add("B."+str2);
+        optionList.add("C."+str3);
+        optionList.add("D."+str4);
+        jsonObject.put("optionList",optionList);
+        List<String> imgList = new LinkedList<>();
+        String questionImgs = question.getQuestionImgs();
+        if (questionImgs == null){
+//            imgList.add();
+            jsonObject.put("imgList",imgList);
+        }
+        else if (questionImgs.contains(",")){
+            String[] split = questionImgs.split(",");
+            for (int i=0; i<split.length;i++){
+                imgList.add(split[i]);
+            }
+            jsonObject.put("imgList",imgList);
+        }else {
+            if (!questionImgs.equals("")){
+                imgList.add(questionImgs);
+            }
+            jsonObject.put("imgList",imgList);
+        }
+//        jsonObject.put("imgList",imgList);
+        int collect = 0;// 是否收藏， 1为这道题已经收藏，2为未收藏
+        UserCollect userCollect = userCollectDao.findByStudentNumberAndQuestionId(stuNumber, id);
+        if (userCollect == null){
+            collect = 2;// 未收藏
+        }else if (userCollect.getValid() == 1){
+            collect =1;// 已收藏
+        }else if (userCollect.getValid() == 2){
+            collect =2;//未收藏
+        }
+        jsonObject.put("collect",collect);
+        return jsonObject;
+    }
 
     /**
      * 公共函数 1.

@@ -1151,6 +1151,9 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             }
                             // 得到做题时间
                             String doTime = userQuestionsRecord.get(j).getDoTime();
+                            if (doTime.equals("")){
+                                continue;
+                            }
                             startTime = getTimeSum(startTime, doTime);
 
                         }

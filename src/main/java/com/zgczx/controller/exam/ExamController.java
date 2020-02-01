@@ -368,4 +368,24 @@ public class ExamController {
         return ResultVOUtil.success(jsonArray);
     }
 
+    @ApiOperation(value = "# 1. 31十九、错题本：根据题库id获取此题的所有信息  ")
+    @GetMapping("/getQuestionInfo")
+    public ResultVO<?> getQuestionInfo(
+            @ApiParam(value = "题库主键id", required = true)
+            @RequestParam("id") int id,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid
+//            @ApiParam(value = "科目名称", required = true)
+//            @RequestParam("subject") String subject,
+//            @ApiParam(value = "年级",required = true)
+//            @RequestParam("gradeLevel") String gradeLevel
+    ){
+
+        JSONObject jsonArray = examService.getQuestionInfo(id,studentNumber,openid);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
 }
