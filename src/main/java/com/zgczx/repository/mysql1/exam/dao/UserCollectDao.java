@@ -18,7 +18,8 @@ public interface UserCollectDao extends JpaRepository<UserCollect, Integer> {
     //1. 获取此用户 -> 此科目 -> 此试卷 -> 此题 是否收藏
     @Query(value = "SELECT * FROM e_user_collect WHERE student_number=?1 AND SUBJECT=?2 AND exam_paper_id=?3 AND question_id=?4 AND valid=?5", nativeQuery = true)
     UserCollect getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(String stuNumber,String subject,int paperId,int questionId,int valid);
-
+    //1.2 获取此用户、此科目、此题是否收藏
+    UserCollect getByStudentNumberAndSubjectAndQuestionId(String stuNumber,String subject,int questionId);
     //2. 查询此题是否收藏
     UserCollect findByQuestionIdAndValid(int id, int valid);
 

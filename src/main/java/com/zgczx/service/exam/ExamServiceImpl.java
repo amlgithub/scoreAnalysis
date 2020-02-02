@@ -617,6 +617,18 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public UserCollect cancelCollect(int id, String studentNumber, String openid, String examName, String subject, int cancel) {
+        if (examName.equals("")){
+            //错题本中的情况，无法传此题的试卷名称，可能此题是多个分类的情况下
+            UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndQuestionId(studentNumber, subject, id);
+            if (userCollect == null) {
+                info = "您此题还未收藏过，暂无法取消收藏";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            userCollect.setValid(cancel);
+            UserCollect save = userCollectDao.save(userCollect);
+            return save;
+        }
         ExamPaper examPaper = examPaperDao.getBy(examName, subject, 1);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";

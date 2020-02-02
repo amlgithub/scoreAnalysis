@@ -795,7 +795,20 @@ public class ExamTwoServiceImpl implements ExamTwoService {
         String examCategory1 = null;
         String examCategory2 = null;
         String examCategory = null;
-        if (questionSource.equals("1")) {
+        if (questionSource.equals("")){
+            //错题本 删除已掌握的题
+             userWrongQuestion = userWrongQustionDao.getIdBySubjectAndQuestionId(stuNumber, subject, questionId);
+            if (userWrongQuestion == null) {
+                info = "所删除的题在 已掌握错题 中暂时不存在";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                userWrongQustionDao.deleteById(Integer.parseInt(userWrongQuestion));
+                map.put("delete", 1);
+            }
+            return map;
+        }
+        else if (questionSource.equals("1")) {
             examCategory1 = "章节练习";
             examCategory2 = "专项练习";
             examCategory = "练习错题";

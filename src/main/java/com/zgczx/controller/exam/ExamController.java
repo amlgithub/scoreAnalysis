@@ -189,7 +189,7 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "十、取消收藏  ")
+    @ApiOperation(value = "#2.1 兼容错题本中没有试卷名称情况：十、取消收藏  ")
     @GetMapping("/cancelCollect")
     public ResultVO<?> cancelCollect(
             @ApiParam(value = "哪道题：题库表的主键id", required = true)
@@ -198,7 +198,7 @@ public class ExamController {
             @RequestParam("studentNumber") String studentNumber,
             @ApiParam(value = "用户openid", required = true)
             @RequestParam("openid") String openid,
-            @ApiParam(value = "试卷名称", required = true)
+            @ApiParam(value = "试卷名称", required = false)
             @RequestParam("paperName") String examName,
             @ApiParam(value = "科目名称", required = true)
             @RequestParam("subject") String subject,

@@ -103,6 +103,10 @@ public interface UserWrongQustionDao extends JpaRepository<UserWrongQustion, Int
     // 17. 根据学生学号、学科、题号、试题来源、已掌握查询已掌握错题的题号
     @Query(value = "select id from e_user_wrong_qustion where student_number=?1 and subject=?2 and do_right=1 and question_id=?3 and (exam_category=?4 or exam_category=?5) ",nativeQuery = true)
     String getIdBySubjectAndQuestionIdAndExamCategory(String stuNumber,String subject,int questionId,String examCategory1,String examCategory2);
+    // 17.2 根据学生学号、学科、题号、已掌握查询已掌握错题的题号
+    @Query(value = "select id from e_user_wrong_qustion where student_number=?1 and subject=?2 and do_right=1 and question_id=?3  ",nativeQuery = true)
+    String getIdBySubjectAndQuestionId(String stuNumber,String subject,int questionId);
+
 
     // 18. 错题表中查询同一用户、同一来源、同一道题做题记录  lxj
     @Query(value = "select * from e_user_wrong_qustion where student_number=?1 and `subject`=?2 and question_id=?3 and exam_paper_id=?4 \n" +

@@ -173,7 +173,7 @@ public class ExamTwoController {
             @RequestParam("subject") String subject,
             @ApiParam(value = "删除题号id",required = true)
             @RequestParam("questionId") int questionId,
-            @ApiParam(value = "删除题来源（1.练习错题，2.考试错题）",required = true)
+            @ApiParam(value = "删除题来源（1.练习错题，2.考试错题）",required = false)
             @RequestParam("questionSource") String questionSource
     ){
         Map<String ,Integer> deleteMasterQuesiotns=examTwoService.deleteMasteredQuestions(studentNumber, openid,subject, questionId, questionSource);
