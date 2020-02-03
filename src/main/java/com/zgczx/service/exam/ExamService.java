@@ -101,4 +101,8 @@ public interface ExamService {
     JSONObject getClassificationQuantity(String studentNumber, String openid, String subject, String gradeLevel, int master);
     //十九、错题表：获取 此题的所有信息
     JSONObject getQuestionInfo(int id,String stuNumber,String openid);
+    //二十、专项练习： 获取此年级、科目所有的知识点
+    JSONObject getAllKnowledge(String studentNumber,String openid,String subject,String gradeLevel);
+    //二十一、专项练习： 专项练习：根据知识点获取所有相关的题
+    JSONArray getAllQuestionByPoint(String studentNumber,String openid,String subject,String gradeLevel,String knowledgePoint);
 }

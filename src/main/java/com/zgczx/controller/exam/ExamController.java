@@ -392,4 +392,42 @@ public class ExamController {
         return ResultVOUtil.success(jsonArray);
     }
 
+    @ApiOperation(value = "# 2.3 二十、专项练习：获取此年级、科目的所有知识点  ")
+    @GetMapping("/getAllKnowledge")
+    public ResultVO<?> getAllKnowledge(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
+    ){
+
+        JSONObject jsonArray = examService.getAllKnowledge(studentNumber,openid,subject,gradeLevel);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
+    @ApiOperation(value = "# 2.3 二十一、专项练习：根据知识点获取所有相关的题  ")
+    @GetMapping("/getAllQuestionByPoint")
+    public ResultVO<?> getAllQuestionByPoint(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "知识点", required = true)
+            @RequestParam("knowledgePoint") String knowledgePoint
+    ){
+
+        JSONArray jsonArray = examService.getAllQuestionByPoint(studentNumber,openid,subject,gradeLevel,knowledgePoint);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
 }

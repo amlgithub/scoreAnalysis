@@ -63,7 +63,7 @@ public interface QuestionDao extends JpaRepository<Question, Integer> {
     int getQuestionsNumsByAttribute(String attribute);
 
     // 11. 根据年级和学科查询对应的知识点
-    @Query(value = "select distinct question_attribute from e_question where `subject`=?1 and level_name=?2 ",nativeQuery = true)
+    @Query(value = "select distinct question_attribute from e_question where `subject`=?1 and level_name=?2 and valid=1",nativeQuery = true)
     List<String> getQUestionAttribute(String subject,String levelName);
 
 
@@ -77,5 +77,10 @@ public interface QuestionDao extends JpaRepository<Question, Integer> {
 
     // 获取此题 有效的所有数据
     Question getByIdAndValid(int id, int valid);
+
+    //14. 专项练习： 根据知识点、年级、科目 获取相关的所有题
+    @Query(value = "SELECT * FROM e_question WHERE SUBJECT=?1 AND level_name=?2 AND FIND_IN_SET(?3,question_attribute) and valid=1    ", nativeQuery = true)
+    List<Question> getAllSubjectAndLevelNameByQuestionAndAttribute(String subject,String levelName,String point);
+
 
 }

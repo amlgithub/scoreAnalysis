@@ -1303,6 +1303,7 @@ public class ExamServiceImpl implements ExamService {
         return jsonObject;
     }
 
+
     /**
      * 公共函数 1.
      * 将六、八、接口公共的抽出来： 动态实时呈现用户做题详情 并记录用户所有的做题情况 接口中
@@ -1464,5 +1465,60 @@ public class ExamServiceImpl implements ExamService {
         return list;
     }
 
+
+    @Override
+    public JSONObject getAllKnowledge(String studentNumber, String openid, String subject, String gradeLevel) {
+        JSONObject jsonObject = new JSONObject();
+        // 查询所有知识点
+        List<String> questionAttributes = questionDao.getQUestionAttribute(subject, gradeLevel);
+        if (questionAttributes.size() == 0) {
+            info = "该年级、该科目中暂时没有知识点";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        } else {
+            List<String> attributesList = new ArrayList<>();
+            for (int j = 0; j < questionAttributes.size(); j++) {
+                // 得到知识点
+                String questionAttribute = questionAttributes.get(j);
+                if (questionAttribute.contains(",")) {
+                    String[] attributeArr = questionAttribute.split(",");
+                    for (int k = 0; k < attributeArr.length; k++) {
+                        String attribute = attributeArr[k];
+                        if (!(attributesList.contains(attribute))) {
+                            attributesList.add(attribute);
+                        }
+                    }
+                } else {
+                    if (!(attributesList.contains(questionAttribute))) {
+                        attributesList.add(questionAttribute);
+                    }
+                }
+            }
+            jsonObject.put("attributesList", attributesList);
+            return jsonObject;
+        }
+    }
+
+    @Override
+    public JSONArray getAllQuestionByPoint(String studentNumber, String openid, String subject, String gradeLevel, String knowledgePoint) {
+//        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        List<Question> questions = questionDao.getAllSubjectAndLevelNameByQuestionAndAttribute(subject, gradeLevel, knowledgePoint);
+        if (questions.size() == 0 ){
+            info = "该年级、该科目中暂时没有该知识点的题";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }else {
+            for (Question question : questions){
+                JSONObject jsonObject1 = new JSONObject();
+                String questionContext = question.getQuestionContext();
+                String titleContent = filterTitleNumber(questionContext);// 题目内容
+                jsonObject1.put("question", question);
+                jsonObject1.put("titleContent", titleContent);
+                jsonArray.add(jsonObject1);
+            }
+        }
+        return jsonArray;
+    }
 }
 
