@@ -32,7 +32,7 @@ public interface ExamService {
 
     List<QuestionDTO> findExamQuestionInfo(String examName, String subject,String studentNumber,String openid);
 
-    DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String paperName, String subject, int sourcePaperId);
+    DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String paperName, String subject, int sourcePaperId,String gradeLevel,String doTime);
 
 //    UserCollect insertCollect(int id, String studentNumber, String openid, String classification,String commitString);
     UserCollect insertCollect(int id, String studentNumber, String openid, String classification);

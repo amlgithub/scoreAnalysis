@@ -126,9 +126,13 @@ public class ExamController {
             @ApiParam(value = "科目名称", required = true)
             @RequestParam("subject") String subject,
             @ApiParam(value = "试卷id", required = true)
-            @RequestParam("sourcePaperId") int sourcePaperId
+            @RequestParam("sourcePaperId") int sourcePaperId,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "做题时间",required = true)
+            @RequestParam("doTime") String doTime
     ){
-        DoQuestionInfoDTO list = examService.judgeQuestionRight(id,studentNumber,openid,commitString,examName,subject,sourcePaperId);
+        DoQuestionInfoDTO list = examService.judgeQuestionRight(id,studentNumber,openid,commitString,examName,subject,sourcePaperId,gradeLevel,doTime);
 
         return ResultVOUtil.success(list);
     }

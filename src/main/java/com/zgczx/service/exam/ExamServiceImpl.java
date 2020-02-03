@@ -390,7 +390,7 @@ public class ExamServiceImpl implements ExamService {
 
     @Transactional
     @Override
-    public DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String examName, String subject, int sourcePaperId) {
+    public DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String examName, String subject, int sourcePaperId,String gradeLevel,String doTime) {
         Question question = questionDao.findOne(id);
         if (question == null) {
             info = "您所查询的此题不存在，请核对后再查";
@@ -421,6 +421,7 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setTimes(1);
             userQuestionRecord.setExamPaperName(paperExamName);
             userQuestionRecord.setExamCategory(examSource);
+            userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
             UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
         } else {
             int times = repatQuestion.get(0).getTimes();
@@ -442,7 +443,7 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setTimes(repatTime);
             userQuestionRecord.setExamPaperName(paperExamName);
             userQuestionRecord.setExamCategory(examSource);
-
+            userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
             UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
         }
 
@@ -519,7 +520,7 @@ public class ExamServiceImpl implements ExamService {
                 wrongQustion.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
                 wrongQustion.setExamPaperName(paperExamName);
                 wrongQustion.setExamCategory(examSource);
-
+                wrongQustion.setDoTime(doTime);//2.2 新增做题时间
                 userWrongQustionDao.save(wrongQustion);
             }
 
