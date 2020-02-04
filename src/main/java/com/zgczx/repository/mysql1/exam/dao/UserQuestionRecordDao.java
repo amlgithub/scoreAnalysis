@@ -134,5 +134,8 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
             "and euqr.question_id=eq.id and eq.level_name=?3 ",nativeQuery = true)
     int getDoQuestionDays(String stuNumber, String subject, String levelName);
 
+    //19. 二十二、专项练习： 获取 专项练习 模块中，此用户是否做过,按做过次数的降序排列
+    @Query(value = "SELECT * FROM e_user_question_record WHERE student_number=?1 AND exam_category=?2 AND question_id=?3 AND SUBJECT=?4 ORDER BY times DESC", nativeQuery = true)
+    List<UserQuestionRecord> getSpecialRecord(String stuNumber,String examCategory,int questionid,String subject);
 
 }

@@ -81,6 +81,7 @@ public interface QuestionDao extends JpaRepository<Question, Integer> {
     //14. 专项练习： 根据知识点、年级、科目 获取相关的所有题
     @Query(value = "SELECT * FROM e_question WHERE SUBJECT=?1 AND level_name=?2 AND FIND_IN_SET(?3,question_attribute) and valid=1    ", nativeQuery = true)
     List<Question> getAllSubjectAndLevelNameByQuestionAndAttribute(String subject,String levelName,String point);
-
-
+    //14.2 专项练习：根据 全部、年级、科目 获取所有题目
+    @Query(value = "SELECT * FROM e_question WHERE SUBJECT=?1 AND level_name=?2 AND valid=1", nativeQuery = true)
+    List<Question> getAllSubjectAndLevelName(String subject,String levelName);
 }

@@ -105,4 +105,8 @@ public interface ExamService {
     JSONObject getAllKnowledge(String studentNumber,String openid,String subject,String gradeLevel);
     //二十一、专项练习： 专项练习：根据知识点获取所有相关的题
     JSONArray getAllQuestionByPoint(String studentNumber,String openid,String subject,String gradeLevel,String knowledgePoint);
+
+    //二十二、 专项练习： 记录用户做某道题 到用户记录中
+    JSONObject specialRecordId(int id, String studentNumber, String openid, String commitString, String examCategory,String subject,String gradeLevel,String doTime);
+
 }

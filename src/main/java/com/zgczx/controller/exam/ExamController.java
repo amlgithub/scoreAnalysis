@@ -430,4 +430,32 @@ public class ExamController {
         return ResultVOUtil.success(jsonArray);
     }
 
+    @ApiOperation(value = "# 2.4 二十二、专项练习：记录用户此题到 用户记录表中 ")
+    @PostMapping("/specialRecordId")
+    public ResultVO<?> specialRecordId(
+            @ApiParam(value = "哪道题：题库表的主键id", required = true)
+            @RequestParam("id") int id,
+            @ApiParam(value = "studentNumber用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "commitString一道题提交的内容", required = true)
+            @RequestParam("commitString") String commitString,
+            @ApiParam(value = "专项练习", required = true)
+            @RequestParam("examCategory") String examCategory,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+//            @ApiParam(value = "试卷id", required = true)
+//            @RequestParam("sourcePaperId") int sourcePaperId,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "做题时间",required = true)
+            @RequestParam("doTime") String doTime
+    ){
+        JSONObject list = examService.specialRecordId(id,studentNumber,openid,commitString,examCategory,subject,gradeLevel,doTime);
+
+        return ResultVOUtil.success(list);
+    }
+
+
 }

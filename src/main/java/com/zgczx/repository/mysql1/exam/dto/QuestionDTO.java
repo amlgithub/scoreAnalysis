@@ -3,6 +3,7 @@ package com.zgczx.repository.mysql1.exam.dto;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import lombok.Data;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,4 +29,5 @@ public class QuestionDTO {
 
     private int collect;// 是否收藏， 1为这道题已经收藏，2为未收藏
 
+    private List<String> imgList; //= new LinkedList<>();//2.4 新修改
 }

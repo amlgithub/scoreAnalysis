@@ -245,10 +245,36 @@ public class ExamServiceImpl implements ExamService {
             //System.out.println(idList);
         }
         List<QuestionDTO> list = new ArrayList<>();
+
         for (Integer integer : idList) {
             QuestionDTO questionDTO = new QuestionDTO();
             Question one = questionDao.findOne(integer);
+            if (one == null){
+                continue;
+            }
             questionDTO.setQuestion(one);
+            //2.4  修改 图片为list
+            List<String> imgList = new LinkedList<>();//2.4 新修改
+            String questionImgs = one.getQuestionImgs();
+            if (questionImgs == null){
+//            imgList.add();
+//                jsonObject.put("imgList",imgList);
+                questionDTO.setImgList(imgList);
+            }
+            else if (questionImgs.contains(",")){
+                String[] split = questionImgs.split(",");
+                for (int i=0; i<split.length;i++){
+                    imgList.add(split[i]);
+                }
+//                jsonObject.put("imgList",imgList);
+                questionDTO.setImgList(imgList);
+            }else {
+                if (!questionImgs.equals("")){
+                    imgList.add(questionImgs);
+                }
+//                jsonObject.put("imgList",imgList);
+                questionDTO.setImgList(imgList);
+            }
 
             List<String> optionList = new LinkedList<>();
             List<String> optionList1 = new LinkedList<>();
@@ -391,7 +417,7 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     @Override
     public DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String examName, String subject, int sourcePaperId,String gradeLevel,String doTime) {
-        Question question = questionDao.findOne(id);
+        Question question = questionDao.getByIdAndValid(id,1);
         if (question == null) {
             info = "您所查询的此题不存在，请核对后再查";
             log.error("【错误信息】: {}", info);
@@ -1039,7 +1065,10 @@ public class ExamServiceImpl implements ExamService {
                             labelList.add(s);
                         }
                     } else {
-                        labelList.add(questionAttribute);
+//                        labelList.add(questionAttribute);
+                        if (!questionAttribute.equals("")){
+                            labelList.add(questionAttribute);
+                        }
                     }
                     jsonObject1.put("labelList", labelList);// 题的标签
                     jsonObject1.put("question", question);// 此题的所有情况
@@ -1477,6 +1506,7 @@ public class ExamServiceImpl implements ExamService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         } else {
             List<String> attributesList = new ArrayList<>();
+            attributesList.add("全部");
             for (int j = 0; j < questionAttributes.size(); j++) {
                 // 得到知识点
                 String questionAttribute = questionAttributes.get(j);
@@ -1503,22 +1533,167 @@ public class ExamServiceImpl implements ExamService {
     public JSONArray getAllQuestionByPoint(String studentNumber, String openid, String subject, String gradeLevel, String knowledgePoint) {
 //        JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        List<Question> questions = questionDao.getAllSubjectAndLevelNameByQuestionAndAttribute(subject, gradeLevel, knowledgePoint);
-        if (questions.size() == 0 ){
-            info = "该年级、该科目中暂时没有该知识点的题";
-            log.error("【错误信息】: {}", info);
-            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        if (!knowledgePoint.equals("全部")) {
+            List<Question> questions = questionDao.getAllSubjectAndLevelNameByQuestionAndAttribute(subject, gradeLevel, knowledgePoint);
+            if (questions.size() == 0) {
+                info = "该年级、该科目中暂时没有该知识点的题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                List<String> questionTitleList = new ArrayList<>();// 用户去除 题目相同的题
+                for (Question question : questions) {
+                    JSONObject jsonObject1 = new JSONObject();
+                    String questionContext = question.getQuestionContext();
+                    String titleContent = filterTitleNumber(questionContext);// 题目内容
+                    if (questionTitleList.contains(titleContent)){
+                        continue;
+                    }
+                    questionTitleList.add(titleContent);// 加入list中
+                    jsonObject1.put("question", question);
+                    jsonObject1.put("titleContent", titleContent);
+                    List<String> labelList = new LinkedList<>();// 此题的标签属
+                    String questionAttribute = question.getQuestionAttribute();// 此题的知识点属性
+                    if (questionAttribute.contains(",")) {
+                        String[] split = questionAttribute.split(",");
+                        for (int i = 0; i < split.length; i++) {
+                            String s = split[i];
+                            if (s.equals("")) {
+                                continue;
+                            }
+                            labelList.add(s);
+                        }
+                    } else {
+//                        labelList.add(questionAttribute);
+                        if (!questionAttribute.equals("")){
+                            labelList.add(questionAttribute);
+                        }
+                    }
+                    jsonObject1.put("labelList", labelList);// 题的标签
+                    jsonArray.add(jsonObject1);
+                }
+                return jsonArray;
+            }
         }else {
+            // 默认 显示 全部的情况
+            List<Question> questions = questionDao.getAllSubjectAndLevelName(subject, gradeLevel);
+            if (questions.size() == 0){
+                info = "该年级、该科目中暂时没有题";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            List<String> questionTitleList = new ArrayList<>();// 用户去除 题目相同的题
             for (Question question : questions){
                 JSONObject jsonObject1 = new JSONObject();
                 String questionContext = question.getQuestionContext();
                 String titleContent = filterTitleNumber(questionContext);// 题目内容
+                if (questionTitleList.contains(titleContent)){
+                    continue;
+                }
+                questionTitleList.add(titleContent);// 加入list中
                 jsonObject1.put("question", question);
                 jsonObject1.put("titleContent", titleContent);
+                List<String> labelList = new LinkedList<>();// 此题的标签属
+                String questionAttribute = question.getQuestionAttribute();// 此题的知识点属性
+                if (questionAttribute.contains(",")) {
+                    String[] split = questionAttribute.split(",");
+                    for (int i = 0; i < split.length; i++) {
+                        String s = split[i];
+                        if (s.equals("")){
+                            continue;
+                        }
+                        labelList.add(s);
+                    }
+                } else {
+//                    labelList.add(questionAttribute);
+                    if (!questionAttribute.equals("")){
+                        labelList.add(questionAttribute);
+                    }
+                }
+                jsonObject1.put("labelList", labelList);// 题的标签
                 jsonArray.add(jsonObject1);
             }
+            return jsonArray;
         }
-        return jsonArray;
     }
+
+    @Transactional
+    @Override
+    public JSONObject specialRecordId(int id, String studentNumber, String openid, String commitString, String examCategory,String subject, String gradeLevel, String doTime) {
+        JSONObject jsonObject = new JSONObject();
+        Question question = questionDao.getByIdAndValid(id, 1);
+        if (question == null) {
+            info = "您所查询的此题不存在，请核对后再查";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        String userAnswer = optionLetter(commitString);//用户的答案
+        List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getSpecialRecord(studentNumber, examCategory, id, subject);
+        UserQuestionRecord save = null;
+        if (repatQuestion == null || repatQuestion.size() == 0) {
+            UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
+            if (question.getCorrectText().equals(userAnswer)) {
+                userQuestionRecord.setDoRight(1);
+            } else {
+                userQuestionRecord.setDoRight(2);
+            }
+            userQuestionRecord.setUserAnswer(userAnswer);
+            userQuestionRecord.setSubject(subject);
+            userQuestionRecord.setStudentNumber(studentNumber);
+            userQuestionRecord.setOpenid(openid);
+            userQuestionRecord.setQuestionId(id);
+//            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
+            userQuestionRecord.setTimes(1);
+//            userQuestionRecord.setExamPaperName(paperExamName);
+            userQuestionRecord.setExamCategory(examCategory);
+            userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
+             save = userQuestionRecordDao.save(userQuestionRecord);
+        } else {
+            int times = repatQuestion.get(0).getTimes();
+            int repatTime = times + 1;
+            UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
+
+            if (question.getCorrectText().equals(userAnswer)) {
+                userQuestionRecord.setDoRight(1);
+            } else {
+                userQuestionRecord.setDoRight(2);
+            }
+            userQuestionRecord.setUserAnswer(userAnswer);
+            userQuestionRecord.setSubject(subject);
+            userQuestionRecord.setStudentNumber(studentNumber);
+            userQuestionRecord.setOpenid(openid);
+            userQuestionRecord.setQuestionId(id);
+//            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
+            userQuestionRecord.setTimes(repatTime);
+//            userQuestionRecord.setExamPaperName(paperExamName);
+            userQuestionRecord.setExamCategory(examCategory);
+            userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
+             save = userQuestionRecordDao.save(userQuestionRecord);
+        }
+        // 新增往错题表中插数据
+        List<UserQuestionRecord> repatQuestion2 = userQuestionRecordDao.getSpecialRecord(studentNumber, examCategory, id, subject);
+        UserQuestionRecord questionRecord = repatQuestion2.get(0);// 获取刚插入的此题所有数据
+        if (questionRecord.getDoRight() == 2) {
+            // 此题错误，判断此题的 相同来源是否 插入过库中
+            UserWrongQustion userWrong = userWrongQustionDao.getByStudentNumberAndExamCategoryAndQuestionId(studentNumber, questionRecord.getExamCategory(), id, subject);
+            if (userWrong == null) {
+                //如果不存在，则插入
+                UserWrongQustion wrongQustion = new UserWrongQustion();
+                wrongQustion.setStudentNumber(studentNumber);
+                wrongQustion.setOpenid(openid);
+                wrongQustion.setSubject(subject);
+                wrongQustion.setDoRight(2);
+                wrongQustion.setQuestionId(id);
+                wrongQustion.setUserAnswer(userAnswer);
+//                wrongQustion.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
+//                wrongQustion.setExamPaperName(paperExamName);
+                wrongQustion.setExamCategory(examCategory);
+                wrongQustion.setDoTime(doTime);//2.2 新增做题时间
+                userWrongQustionDao.save(wrongQustion);
+            }
+        }
+        jsonObject.put("save", save);
+        return jsonObject;
+    }
+
 }
 
