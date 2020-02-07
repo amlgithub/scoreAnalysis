@@ -960,6 +960,26 @@ public class ExamServiceImpl implements ExamService {
                 list.add(paperTotalDTO);
                 completeDTO.setList(list);
 
+                //2.4  修改 图片为list
+                List<String> imgList = new LinkedList<>();//2.4 新修改
+                String questionImgs = paperDTO.getQuestionImgs();
+                if (questionImgs == null){
+                    paperTotalDTO.setImgList(imgList);
+                }
+                else if (questionImgs.contains(",")){
+                    String[] split = questionImgs.split(",");
+                    for (int j=0; j<split.length;j++){
+                        imgList.add(split[j]);
+                    }
+
+                    paperTotalDTO.setImgList(imgList);
+                }else {
+                    if (!questionImgs.equals("")){
+                        imgList.add(questionImgs);
+                    }
+                    paperTotalDTO.setImgList(imgList);
+                }
+
             }
             completeDTOList.add(completeDTO);
             // log.info("【list: 】{}", list);

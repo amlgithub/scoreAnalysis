@@ -25,4 +25,5 @@ public class EchoPaperTotalDTO {
 
     private String sourcePaperId;// 来源试卷id
 
+    private List<String> imgList; //= new LinkedList<>();//2.4 新修改
 }
