@@ -228,8 +228,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public List<QuestionDTO> findExamQuestionInfo(String examName, String subject, String studentNumber, String openid) {
-        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
+    public List<QuestionDTO> findExamQuestionInfo(String examName, String subject, String studentNumber, String openid,String gradeLevel) {
+        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
@@ -424,7 +424,7 @@ public class ExamServiceImpl implements ExamService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
         // 获取此试卷的所有信息
-        ExamPaper paper = examPaperDao.findByExamNameAndSubjectAndValid(examName, subject, 1);
+        ExamPaper paper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
         String examSource = paper.getExamSource();// 获取试卷的类别，章节练习，模拟考试，历年真题等
         String paperExamName = paper.getExamName();
         String subjectName = questionDao.getSubjectName(id);
@@ -1715,5 +1715,67 @@ public class ExamServiceImpl implements ExamService {
         return jsonObject;
     }
 
+    @Override
+    public JSONObject getAllExamName(String studentNumber, String openid, String subject, String gradeLevel) {
+        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray1 = new JSONArray();
+        JSONArray jsonArray2 = new JSONArray();
+        JSONArray jsonArray3 = new JSONArray();
+        //1. 获取模拟题的 所有数据
+        List<ExamPaper> mockExam = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource(subject, gradeLevel, "模拟考试", "%期中%", "%期末%");
+        if (mockExam.size() > 0){
+            for (ExamPaper examPaper : mockExam){
+                JSONObject jsonObject1 = new JSONObject();
+                jsonObject1.put("name",examPaper.getExamName());
+                // 去除[] 和 空格，或者从插库时处理，直接就存1,2,3... ；而不是存成[1, 2, 3...]
+                String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+                List<Integer> idList = new ArrayList<>();
+                for (int i = 0; i < questionList.length; i++) {
+                    int integer = Integer.parseInt(questionList[i]);
+                    idList.add(integer);
+                }
+                jsonObject1.put("count",idList.size());
+                jsonArray1.add(jsonObject1);
+            }
+        }
+        //2. 获取所有 期中考试的 数据
+        List<ExamPaper> midtermList = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource2(subject, gradeLevel, "模拟考试", "%期中%");
+        if (midtermList.size() > 0){
+            for (ExamPaper examPaper : midtermList){
+                JSONObject jsonObject1 = new JSONObject();
+                jsonObject1.put("name",examPaper.getExamName());
+                // 去除[] 和 空格，或者从插库时处理，直接就存1,2,3... ；而不是存成[1, 2, 3...]
+                String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+                List<Integer> idList = new ArrayList<>();
+                for (int i = 0; i < questionList.length; i++) {
+                    int integer = Integer.parseInt(questionList[i]);
+                    idList.add(integer);
+                }
+                jsonObject1.put("count",idList.size());
+                jsonArray2.add(jsonObject1);
+            }
+        }
+//2. 获取所有 期中考试的 数据
+        List<ExamPaper> finalExam = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource2(subject, gradeLevel, "模拟考试", "%期末%");
+        if (finalExam.size() > 0){
+            for (ExamPaper examPaper : finalExam){
+                JSONObject jsonObject1 = new JSONObject();
+                jsonObject1.put("name",examPaper.getExamName());
+                // 去除[] 和 空格，或者从插库时处理，直接就存1,2,3... ；而不是存成[1, 2, 3...]
+                String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+                List<Integer> idList = new ArrayList<>();
+                for (int i = 0; i < questionList.length; i++) {
+                    int integer = Integer.parseInt(questionList[i]);
+                    idList.add(integer);
+                }
+                jsonObject1.put("count",idList.size());
+                jsonArray3.add(jsonObject1);
+            }
+        }
+        jsonObject.put("mockExam",jsonArray1);//模拟题
+        jsonObject.put("midterm",jsonArray2);//期中模拟题
+        jsonObject.put("finalExam",jsonArray3);//期末模拟题
+        return jsonObject;
+    }
 }
 

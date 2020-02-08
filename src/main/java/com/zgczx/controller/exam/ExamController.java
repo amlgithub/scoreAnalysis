@@ -93,7 +93,7 @@ public class ExamController {
     }
 
 
-    @ApiOperation(value = "五、 根据科目和考试名称返回所有题的信息数据")
+    @ApiOperation(value = "# 2.8 模拟考试、章节练习 + 年级，五、 根据科目和考试名称返回所有题的信息数据")
     @GetMapping("/findExamQuestionInfo")
     public ResultVO<?> findExamQuestionInfo(
             @ApiParam(value = "试卷全称", required = true)
@@ -103,9 +103,11 @@ public class ExamController {
             @ApiParam(value = "用户学号", required = true)
             @RequestParam("studentNumber") String studentNumber,
             @ApiParam(value = "用户openid", required = true)
-            @RequestParam("openid") String openid
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
     ){
-        List<QuestionDTO> list = examService.findExamQuestionInfo(examName,subject,studentNumber,openid);
+        List<QuestionDTO> list = examService.findExamQuestionInfo(examName,subject,studentNumber,openid,gradeLevel);
 
         return ResultVOUtil.success(list);
     }
@@ -456,6 +458,25 @@ public class ExamController {
 
         return ResultVOUtil.success(list);
     }
+
+    @ApiOperation(value = "# 2.7 二十三、模拟考试：获取此年级、科目的分類的各个考试名称和题数  ")
+    @GetMapping("/getAllExamName")
+    public ResultVO<?> getAllExamName(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
+    ){
+
+        JSONObject jsonArray = examService.getAllExamName(studentNumber,openid,subject,gradeLevel);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
 
 
 }

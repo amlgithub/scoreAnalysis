@@ -18,7 +18,7 @@ public interface ExamPaperDao extends JpaRepository<ExamPaper, Integer> {
 
     //1. 获取此试卷的所有信息，根据 试卷名称和科目
     ExamPaper findByExamNameAndSubjectAndValid(String examName, String subject,int deleted);
-
+    ExamPaper findByExamNameAndSubjectAndValidAndGradeLevel(String examName, String subject,int deleted,String gradeLevel);
     @Query(value = "select * from e_exam_paper where exam_name=?1 and subject=?2 and valid=?3", nativeQuery = true)
     ExamPaper getBy(String examName, String subject,int deleted);
 
@@ -32,4 +32,12 @@ public interface ExamPaperDao extends JpaRepository<ExamPaper, Integer> {
     // 5. 根据学科和年级查询考试名称和题目总数
     @Query(value = "select * from e_exam_paper where subject=?1 and grade_level=?2 ",nativeQuery = true)
     List<ExamPaper> getExamPaper(String subject,String levelName);
+
+    //6.模拟考试： 获取模拟考试的名称，不包括期中、期末；根据科目、年级、模拟考试、valid=1
+    @Query(value = "SELECT * FROM e_exam_paper WHERE SUBJECT=?1 AND grade_level=?2 AND exam_name NOT LIKE ?4 AND exam_name NOT LIKE ?5 AND exam_source=?3 AND valid=1 ", nativeQuery = true)
+    List<ExamPaper> getAllBySubjectAndGradeLevelAndExamSource(String subject,String gradeLevel,String examSource,String condition1,String condition2);
+    //7.模拟考试： 获取 期中 的模拟考试的名称；根据科目、年级、模拟考试、valid=1
+    @Query(value = "SELECT * FROM e_exam_paper WHERE SUBJECT=?1 AND grade_level=?2 AND exam_name LIKE ?4 AND exam_source=?3 AND valid=1 ", nativeQuery = true)
+    List<ExamPaper> getAllBySubjectAndGradeLevelAndExamSource2(String subject,String gradeLevel,String examSource,String condition1);
+
 }
