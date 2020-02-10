@@ -306,7 +306,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                 options.add("C." + str3);
                 options.add("D." + str4);
                 jo.put("question_option", options);
-                String question_score = sectionCollectProblems.get(i).getQuestionScore();
+                String question_score = String.valueOf(sectionCollectProblems.get(i).getQuestionScore());
                 jo.put("question_score", question_score);
                 String question_attribute = sectionCollectProblems.get(i).getQuestionAttribute();
                 jo.put("question_attribute", question_attribute);
@@ -430,7 +430,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                 options.add("C." + str3);
                 options.add("D." + str4);
                 jo.put("question_option", options);
-                String question_score = examCollectProblems.get(i).getQuestionScore();
+                String question_score = String.valueOf(examCollectProblems.get(i).getQuestionScore());
                 jo.put("question_score", question_score);
                 String question_attribute = examCollectProblems.get(i).getQuestionAttribute();
                 jo.put("question_attribute", question_attribute);
@@ -575,7 +575,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                     options.add("C." + str3);
                     options.add("D." + str4);
                     jo.put("question_option", options);
-                    String question_score = examQuestions.get(0).getQuestionScore();
+                    String question_score = String.valueOf(examQuestions.get(0).getQuestionScore());
                     jo.put("question_score", question_score);
                     String question_attribute = examQuestions.get(0).getQuestionAttribute();
                     jo.put("question_attribute", question_attribute);
@@ -732,7 +732,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                     options.add("C." + str3);
                     options.add("D." + str4);
                     jo.put("question_option", options);
-                    String question_score = examQuestions.get(0).getQuestionScore();
+                    String question_score = String.valueOf(examQuestions.get(0).getQuestionScore());
                     jo.put("question_score", question_score);
                     String question_attribute = examQuestions.get(0).getQuestionAttribute();
                     jo.put("question_attribute", question_attribute);
@@ -1065,7 +1065,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                 // Collections.shuffle(list);//集合打乱顺序
 
                 jo.put("question_option", optionList1);
-                String question_score = questions.get(i).getQuestionScore();
+                String question_score = String.valueOf(questions.get(i).getQuestionScore());
                 jo.put("question_score", question_score);
                 String question_attribute = questions.get(i).getQuestionAttribute();
                 jo.put("question_attribute", question_attribute);

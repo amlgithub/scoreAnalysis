@@ -1716,13 +1716,13 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public JSONObject getAllExamName(String studentNumber, String openid, String subject, String gradeLevel) {
+    public JSONObject getAllExamName(String studentNumber, String openid, String subject, String gradeLevel,String examCategory) {
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray1 = new JSONArray();
         JSONArray jsonArray2 = new JSONArray();
         JSONArray jsonArray3 = new JSONArray();
         //1. 获取模拟题的 所有数据
-        List<ExamPaper> mockExam = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource(subject, gradeLevel, "模拟考试", "%期中%", "%期末%");
+        List<ExamPaper> mockExam = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource(subject, gradeLevel, examCategory, "%期中%", "%期末%");
         if (mockExam.size() > 0){
             for (ExamPaper examPaper : mockExam){
                 JSONObject jsonObject1 = new JSONObject();
@@ -1735,11 +1735,13 @@ public class ExamServiceImpl implements ExamService {
                     idList.add(integer);
                 }
                 jsonObject1.put("count",idList.size());
+                jsonObject1.put("difficult",examPaper.getDifficult());
+                jsonObject1.put("totalScore",examPaper.getExamScore());
                 jsonArray1.add(jsonObject1);
             }
         }
         //2. 获取所有 期中考试的 数据
-        List<ExamPaper> midtermList = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource2(subject, gradeLevel, "模拟考试", "%期中%");
+        List<ExamPaper> midtermList = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource2(subject, gradeLevel, examCategory, "%期中%");
         if (midtermList.size() > 0){
             for (ExamPaper examPaper : midtermList){
                 JSONObject jsonObject1 = new JSONObject();
@@ -1752,11 +1754,13 @@ public class ExamServiceImpl implements ExamService {
                     idList.add(integer);
                 }
                 jsonObject1.put("count",idList.size());
+                jsonObject1.put("difficult",examPaper.getDifficult());
+                jsonObject1.put("totalScore",examPaper.getExamScore());
                 jsonArray2.add(jsonObject1);
             }
         }
 //2. 获取所有 期中考试的 数据
-        List<ExamPaper> finalExam = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource2(subject, gradeLevel, "模拟考试", "%期末%");
+        List<ExamPaper> finalExam = examPaperDao.getAllBySubjectAndGradeLevelAndExamSource2(subject, gradeLevel, examCategory, "%期末%");
         if (finalExam.size() > 0){
             for (ExamPaper examPaper : finalExam){
                 JSONObject jsonObject1 = new JSONObject();
@@ -1769,6 +1773,8 @@ public class ExamServiceImpl implements ExamService {
                     idList.add(integer);
                 }
                 jsonObject1.put("count",idList.size());
+                jsonObject1.put("difficult",examPaper.getDifficult());
+                jsonObject1.put("totalScore",examPaper.getExamScore());
                 jsonArray3.add(jsonObject1);
             }
         }
@@ -1777,5 +1783,6 @@ public class ExamServiceImpl implements ExamService {
         jsonObject.put("finalExam",jsonArray3);//期末模拟题
         return jsonObject;
     }
+
 }
 

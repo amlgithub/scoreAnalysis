@@ -45,7 +45,7 @@ public class Question {
     @Column(name = "question_option")
     private String questionOption;
     @Column(name = "question_score")
-    private String questionScore;
+    private int questionScore;
     @Column(name = "question_attribute")
     private String questionAttribute;
     @Column(name = "correct_option")

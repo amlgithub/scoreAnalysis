@@ -109,7 +109,7 @@ public interface ExamService {
     //二十二、 专项练习： 记录用户做某道题 到用户记录中
     JSONObject specialRecordId(int id, String studentNumber, String openid, String commitString, String examCategory,String subject,String gradeLevel,String doTime);
 
-    //二十三、模拟考试：获取此年级、科目的分類的各个考试名称和题数
-    JSONObject getAllExamName(String studentNumber,String openid,String subject,String gradeLevel);
+    //二十三、历年真题、模拟考试：获取此年级、科目的分類的各个考试名称和题数
+    JSONObject getAllExamName(String studentNumber,String openid,String subject,String gradeLevel,String examCategory);
 
 }

@@ -112,7 +112,7 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "六、【属于做一道题后，做题记录跟着变化】动态实时呈现用户做题详情 并记录用户所有的做题情况")
+    @ApiOperation(value = "#2.8 章节、模拟：六、【属于做一道题后，做题记录跟着变化】动态实时呈现用户做题详情 并记录用户所有的做题情况")
     @GetMapping("/doQuestionInfo")
     public ResultVO<?> doQuestionInfo(
             @ApiParam(value = "哪道题：题库表的主键id", required = true)
@@ -459,7 +459,7 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "# 2.7 二十三、模拟考试：获取此年级、科目的分類的各个考试名称和题数  ")
+    @ApiOperation(value = "# 2.7 二十三、历年真题、模拟考试：获取此年级、科目的分類的各个考试名称和题数  ")
     @GetMapping("/getAllExamName")
     public ResultVO<?> getAllExamName(
             @ApiParam(value = "用户学号", required = true)
@@ -469,10 +469,12 @@ public class ExamController {
             @ApiParam(value = "科目名称", required = true)
             @RequestParam("subject") String subject,
             @ApiParam(value = "年级",required = true)
-            @RequestParam("gradeLevel") String gradeLevel
+            @RequestParam("gradeLevel") String gradeLevel,
+            @ApiParam(value = "模拟考试、历年真题", required = true)
+            @RequestParam("examCategory") String examCategory
     ){
 
-        JSONObject jsonArray = examService.getAllExamName(studentNumber,openid,subject,gradeLevel);
+        JSONObject jsonArray = examService.getAllExamName(studentNumber,openid,subject,gradeLevel,examCategory);
 
         return ResultVOUtil.success(jsonArray);
     }
