@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.microsoft.schemas.vml.CTShape;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.*;
 import org.apache.xmlbeans.XmlCursor;
@@ -43,47 +44,56 @@ public class WordRedUtil {
         String filename = file.getOriginalFilename();
         System.out.println("文件名称： " + filename);
         InputStream inputStream = file.getInputStream();
-        //3. 创建wordExtractor
-        XWPFDocument xdoc = new XWPFDocument(inputStream);
-        XWPFWordExtractor extractor = new XWPFWordExtractor(xdoc);
+        String text = "";
+        if (filename.endsWith("doc")){
+            //FileInputStream fis = new FileInputStream((File) file);
+            HWPFDocument doc = new HWPFDocument(inputStream);
+            text = doc.getDocumentText();
 
-        //WordExtractor extractor = new WordExtractor(inputStream);
-        //4. 对doc文件进行提取
-        String text = extractor.getText();
+        }else {
+//3. 创建wordExtractor
+            XWPFDocument xdoc = new XWPFDocument(inputStream);
+            XWPFWordExtractor extractor = new XWPFWordExtractor(xdoc);
 
+            //WordExtractor extractor = new WordExtractor(inputStream);
+            //4. 对doc文件进行提取
+            text = extractor.getText();
+            int i = 1;// 第一个图片
+            //用XWPFDocument的getAllPictures来获取所有图片
+            List<XWPFPictureData> pictureDataList = xdoc.getAllPictures();
+            List<String> imgList = new ArrayList<>();
+            for (XWPFPictureData pic : pictureDataList) {
+                byte[] fileBytes = pic.getData();
+
+                String fileName = filename + "_" + i + "_" + pic.getFileName();
+                i++;
+
+                if (fileBytes.length > 500) {//文件大于 500 字节，筛选出一些莫名其妙的小图片
+                    // 文件上传路径
+//                String uploadPath = "/home/bigdata/application/canteen-system-image/";
+                    String uploadPath = "J:\\A";
+                    // 上传文件
+                    File upload = new File(uploadPath, fileName);
+                    OutputStream out = new FileOutputStream(upload);
+                    out.write(fileBytes);
+                    out.flush();
+                    System.out.println("download success");
+                    out.close();
+
+                    // 上传到服务器上的url，可直接拿到浏览器直接打开的url
+                    String fileUrl = "http://zhongkeruitong.top/image/" + fileName;
+//                returnMsg = "http://zhongkeruitong.top/image/" + fileName;
+                    log.info("===> 图片上传地址：" + fileUrl);
+                    imgList.add(fileUrl);
+                }
+            }
+            jsonObject.put("imgList", imgList);
+        }
         jsonObject.put("doctext", text);
         System.out.println(jsonObject);
-        int i = 1;// 第一个图片
-        //用XWPFDocument的getAllPictures来获取所有图片
-        List<XWPFPictureData> pictureDataList = xdoc.getAllPictures();
-        List<String> imgList = new ArrayList<>();
-        for (XWPFPictureData pic : pictureDataList) {
-            byte[] fileBytes = pic.getData();
 
-            String fileName = filename + "_" + i + "_" + pic.getFileName();
-            i++;
-
-            if (fileBytes.length > 500) {//文件大于 500 字节，筛选出一些莫名其妙的小图片
-                // 文件上传路径
-//                String uploadPath = "/home/bigdata/application/canteen-system-image/";
-                String uploadPath = "J:\\A";
-                // 上传文件
-                File upload = new File(uploadPath, fileName);
-                OutputStream out = new FileOutputStream(upload);
-                out.write(fileBytes);
-                out.flush();
-                System.out.println("download success");
-                out.close();
-
-                // 上传到服务器上的url，可直接拿到浏览器直接打开的url
-                String fileUrl = "http://zhongkeruitong.top/image/" + fileName;
-//                returnMsg = "http://zhongkeruitong.top/image/" + fileName;
-                log.info("===> 图片上传地址：" + fileUrl);
-                imgList.add(fileUrl);
-            }
-        }
         jsonObject.put("title",filename);
-        jsonObject.put("imgList", imgList);
+
 //        return text;
         return jsonObject;
     }

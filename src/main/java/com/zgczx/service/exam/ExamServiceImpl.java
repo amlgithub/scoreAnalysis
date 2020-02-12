@@ -584,19 +584,23 @@ public class ExamServiceImpl implements ExamService {
             UserCollect save = userCollectDao.save(collect);
             return save;
         }
+        if (collect == null) {
 //        String userAnswer = optionLetter(commitString);
-        UserCollect userCollect = new UserCollect();
-        userCollect.setStudentNumber(studentNumber);
-        userCollect.setOpenid(openid);
-        userCollect.setSubject(subjectName);
-        userCollect.setExamPaperId(question.getExamId());// 收藏时，是针对题，如果这道题已经收藏过了，就不允许再次收藏
-        userCollect.setQuestionId(id);
-        userCollect.setValid(1);
+            UserCollect userCollect = new UserCollect();
+            userCollect.setStudentNumber(studentNumber);
+            userCollect.setOpenid(openid);
+            userCollect.setSubject(subjectName);
+            userCollect.setExamPaperId(question.getExamId());// 收藏时，是针对题，如果这道题已经收藏过了，就不允许再次收藏
+            userCollect.setQuestionId(id);
+            userCollect.setValid(1);
 //        userCollect.setUserAnswer(userAnswer);
-        userCollect.setClassification(classification);
+            userCollect.setClassification(classification);
 
-        UserCollect save = userCollectDao.save(userCollect);
-        return save;
+            UserCollect save = userCollectDao.save(userCollect);
+            return save;
+        }else {
+            return collect;
+        }
     }
 
     @Override
@@ -661,6 +665,18 @@ public class ExamServiceImpl implements ExamService {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 模拟考试和历年真题 其他模块下已经存入此题了，因此不需要传入 试卷名称
+        if (examPaper.getExamSource().equals("模拟考试") || examPaper.getExamSource().equals("历年真题")){
+            UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndQuestionId(studentNumber, subject, id);
+            if (userCollect == null) {
+                info = "您此题还未收藏过，暂无法取消收藏";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            }
+            userCollect.setValid(cancel);
+            UserCollect save = userCollectDao.save(userCollect);
+            return save;
         }
         UserCollect userCollect = userCollectDao.getByStudentNumberAndSubjectAndExamPaperIdAndQuestionId(studentNumber, subject, examPaper.getId(), id, 1);
         if (userCollect == null) {
