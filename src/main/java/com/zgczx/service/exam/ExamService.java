@@ -112,4 +112,7 @@ public interface ExamService {
     //二十三、历年真题、模拟考试：获取此年级、科目的分類的各个考试名称和题数
     JSONObject getAllExamName(String studentNumber,String openid,String subject,String gradeLevel,String examCategory);
 
+    //二十四、首页面中继续学习-仅章节练习
+    JSONObject continueLearn(String studentNumber, String openid,String subject);
+
 }

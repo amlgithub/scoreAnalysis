@@ -25,6 +25,9 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
     // 3. 获取 此用户回显的 做题记录
     @Query(value = "SELECT * FROM e_user_question_record  WHERE student_number=?1 AND SUBJECT=?2 AND exam_paper_id=?3 ORDER BY times DESC\n", nativeQuery = true)
     List<UserQuestionRecord> getByStudentNumberAndSubjectAndExamPaperId(String studentNumber,String subject,int sourcePaperId);
+    // 3.2 获取 此用户回显的 做题记录. 首页面继续学习接口
+    @Query(value = "SELECT * FROM e_user_question_record  WHERE student_number=?1 AND SUBJECT=?2 AND exam_category='章节练习' ORDER BY times DESC\n", nativeQuery = true)
+    List<UserQuestionRecord> getByStudentNumberAndSubjectAndExamPaperId2(String studentNumber,String subject);
 
     //4. 获取此学生-》此科目-》所有错题的试卷id： exam_paper_id
     @Query(value = "SELECT DISTINCT exam_paper_id FROM e_user_question_record WHERE student_number=?1 AND SUBJECT=?2 ", nativeQuery = true)

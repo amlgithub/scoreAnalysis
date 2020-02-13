@@ -1800,5 +1800,40 @@ public class ExamServiceImpl implements ExamService {
         return jsonObject;
     }
 
+    @Override
+    public JSONObject continueLearn(String studentNumber, String openid, String subject) {
+        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        List<UserQuestionRecord> echolist = userQuestionRecordDao.getByStudentNumberAndSubjectAndExamPaperId2(studentNumber, subject);
+        if (echolist == null || echolist.size() == 0) {
+            info = "您还未做过此试卷，暂无记录";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        // 调用公共函数 2，获取questionList
+        ExamPaper one = examPaperDao.findOne(echolist.get(0).getExamPaperId());
+        List<Integer> questionList = questionList(one.getQuestionList());
+        List<String> chapter = chapterDao.findBySection(echolist.get(0).getExamPaperName());//章的名称
+        int times = echolist.get(0).getTimes();
+        for (UserQuestionRecord questionRecord : echolist) {
+            if (questionRecord.getTimes() == times) {
+                JSONObject jsonObject1 = new JSONObject();
+                // 题号
+                int questionNo = questionList.indexOf(questionRecord.getQuestionId()) + 1;
+                jsonObject1.put("questionNo", questionNo);
+                // 题填写的文本
+
+                jsonObject1.put("questionNoText",questionRecord.getUserAnswer());
+                jsonArray.add(jsonObject1);
+
+            }
+
+        }
+        jsonObject.put("examPaperName",chapter.get(0));
+        jsonObject.put("sectionName",echolist.get(0).getExamPaperName());
+        jsonObject.put("info",jsonArray);
+        return jsonObject;
+    }
+
 }
 

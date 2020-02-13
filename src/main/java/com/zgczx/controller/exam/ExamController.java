@@ -479,6 +479,20 @@ public class ExamController {
         return ResultVOUtil.success(jsonArray);
     }
 
+    @ApiOperation(value = "二十四、首页面中继续学习-仅章节练习  ")
+    @GetMapping("/continueLearn")
+    public ResultVO<?> continueLearn(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject
+    ){
 
+        JSONObject list = examService.continueLearn(studentNumber,openid,subject);
+
+        return ResultVOUtil.success(list);
+    }
 
 }
