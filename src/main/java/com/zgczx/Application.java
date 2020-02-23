@@ -1,12 +1,12 @@
 package com.zgczx;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
+import tk.mybatis.spring.annotation.MapperScan;
 
 
-@MapperScan(value = "com.zgczx.mapper")
+@MapperScan(basePackages = "com.zgczx.mapper")
 @SpringBootApplication
 //@EnableCaching
 public class Application extends SpringBootServletInitializer {

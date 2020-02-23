@@ -214,4 +214,11 @@ public class ScoreController {
     }
 
 
+    @RequestMapping({"MP_verify_Sb3I1Dr7zM3OCTYc.txt"})
+    @ResponseBody
+    private String returnConfigFile() {
+        //把MP_verify_xxxxxx.txt中的内容返回
+        return "Sb3I1Dr7zM3OCTYc";
+    }
+
 }

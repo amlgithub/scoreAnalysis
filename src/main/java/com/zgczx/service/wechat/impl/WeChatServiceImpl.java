@@ -70,7 +70,7 @@ public class WeChatServiceImpl implements WeChatService {
         session.setAttribute("accessToken",accessToken);
         log.info("【打印access_token: 】{}",accessToken);
         //访问微信获取js通行证的链接，获取返回code
-        ResponseEntity<JSONObject> forEntity = restTemplate().getForEntity(projectUrlConfig.getticket, JSONObject.class, params);
+        ResponseEntity<JSONObject> forEntity = restTemplate().getForEntity(projectUrlConfig.getticket, JSONObject.class, accessToken);
         String ticket = forEntity.getBody().getString("ticket");
         log.info("【打印ticket： 】{}",ticket);
 
