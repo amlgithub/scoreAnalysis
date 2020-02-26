@@ -1835,5 +1835,77 @@ public class ExamServiceImpl implements ExamService {
         return jsonObject;
     }
 
+    @Override
+    public JSONObject findCoiliInfo(String examName, String subject, String studentNumber, String openid, String gradeLevel) {
+        JSONObject jsonObject1 = new JSONObject();
+        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
+        if (examPaper == null) {
+            info = "暂时没有此科目的此试卷";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+
+        // 去除[] 和 空格，或者从插库时处理，直接就存1,2,3... ；而不是存成[1, 2, 3...]
+        String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+        List<Integer> idList = new ArrayList<>();
+        for (int i = 0; i < questionList.length; i++) {
+            int integer = Integer.parseInt(questionList[i]);
+            idList.add(integer);
+        }
+
+        JSONArray jsonArray = new JSONArray();
+        for (Integer integer : idList) {
+
+            JSONObject jsonObject = new JSONObject();
+            Question one = questionDao.findOne(integer);
+            if (one == null){
+                continue;
+            }
+
+            jsonObject.put("question", one);
+
+            //2.4  修改 图片为list
+            List<String> imgList = new LinkedList<>();//2.4 新修改
+            String questionImgs = one.getQuestionImgs();
+            if (questionImgs == null){
+//            imgList.add();
+                jsonObject.put("imgList",imgList);
+
+            }
+            else if (questionImgs.contains(",")){
+                String[] split = questionImgs.split(",");
+                for (int i=0; i<split.length;i++){
+                    imgList.add(split[i]);
+                }
+                jsonObject.put("imgList",imgList);
+
+            }else {
+                if (!questionImgs.equals("")){
+                    imgList.add(questionImgs);
+                }
+                jsonObject.put("imgList",imgList);
+            }
+            String questionContext = one.getQuestionContext();
+            //以数字开头并且包含.表示一个新的题目开始
+            String regex = "^\\d{1,100}\\．";
+            String regex2 = "^\\d{1,100}\\.";
+            Pattern pattern = Pattern.compile(regex);
+            Pattern pattern2 = Pattern.compile(regex2);
+            Matcher m = null;
+            Matcher matcher = pattern.matcher(questionContext);
+            Matcher matcher1 = pattern2.matcher(questionContext);
+            boolean b = matcher.find();
+            boolean b1 = matcher1.find();
+            if (b || b1){
+                System.out.println("ddd");
+            }
+
+
+            jsonArray.add(jsonObject);
+
+        }
+        jsonObject1.put("info", jsonArray);
+        return jsonObject1;
+    }
 }
 

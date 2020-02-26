@@ -69,7 +69,7 @@ public class WordRedUtil {
                 i++;
 
                 if (fileBytes.length > 500) {//文件大于 500 字节，筛选出一些莫名其妙的小图片
-                    // 文件上传路径
+                    // 文件上传路径，这个路径是13服务器上的地址，而工程是在14服务器上，所以暂时都是手动存图片。
 //                String uploadPath = "/home/bigdata/application/canteen-system-image/";
                     String uploadPath = "J:\\A";
                     // 上传文件

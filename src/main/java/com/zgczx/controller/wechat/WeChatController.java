@@ -49,7 +49,47 @@ public class WeChatController {
     @Autowired
     private ProjectUrlConfig projectUrlConfig;
 
-    @ApiOperation(value = "授权")
+    /**
+     * 描述请求微信API接口，获取code等参数
+     *
+     * <p>请求微信服务器获取用户个人信息时需要用到code等参数
+     *
+     * @param returnUrl
+     * @param path 此参数为前端要求添加的，此参数返回给前端后，由前端再获取此参数，拼接组成下一步请求的url
+     *             可以不传此参数，接口中去掉path即可
+     * @return
+     */
+    @CrossOrigin(origins = "*", maxAge = 3600)
+    @GetMapping("/authorize")
+    public String authorize(@RequestParam("returnUrl") String returnUrl,
+                            @RequestParam("path") String path) {
+
+        return "redirect:" + weChatService.getAuthorizeFromWechat(returnUrl,path);
+    }
+
+
+    /**
+     * 经过授权接口（authorize）后拿到code等参数，把code作为参数，请求此接口获取用户openid，姓名，头像等参数
+     *
+     * <p> 流程: code -> access token -> 微信用户信息（wechatOpenid，名称，头像等）
+     *
+     * @param code
+     * @param returnUrl
+     * @param path 前端传给后台的字段，由前端自己定义，基于Vue开发的话，一般设置 path 为 "menu",前端获取path值，然后拼接请求地址，访问首页
+     *             可以不传此参数，接口中去掉path即可
+     * @return
+     */
+    @CrossOrigin(origins = "*", maxAge = 3600)
+    @GetMapping("/userInfo")
+    public String userInfo(@RequestParam("code") String code,
+                           @RequestParam("state") String returnUrl,
+                           @RequestParam("path") String path) {
+
+        return "redirect:"+weChatService.getUserInfoFromWechat(code,returnUrl,path);
+    }
+
+
+    /*@ApiOperation(value = "授权")
     @GetMapping("/authorize")
     public String authorize(@RequestParam("returnUrl") String returnUrl) {//returnUrl：本项目的首页面访问路径
         //1. 配置
@@ -66,7 +106,7 @@ public class WeChatController {
         return "redirect:" + redirectUrl; //跳转的下面userInfo接口，请求这个接口获取信息数据
     }
 
-    /**
+    *//**
      * 按照开发文档获取用户token，
      * 1 第一步：用户同意授权，获取code
      * 2 第二步：通过code换取网页授权access_token
@@ -78,7 +118,7 @@ public class WeChatController {
      * @param code      请求一个微信的url获取所需要的code
      * @param returnUrl state=STAT，可随意写
      * @return 获取用户的token，从token获取用户openid
-     */
+     *//*
     @GetMapping("/userInfo")
     public String userInfo(@RequestParam("code") String code,
                            @RequestParam("state") String returnUrl) {
@@ -101,7 +141,7 @@ public class WeChatController {
         log.info("【头像】 {}", headImgUrl);
         return "redirect:" + returnUrl + "?openid=" + openId;
     }
-
+*/
     /**
      * 获取 appid, timestamp，nonceStr，signature，
      * 目的 获取微信的js通行证，来调用微信的一些方法，例如微信上传图片等

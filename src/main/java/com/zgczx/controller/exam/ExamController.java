@@ -495,4 +495,22 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
+    @ApiOperation(value = "# 2.23 英语四六级套卷（真题、模拟）二十五、 根据科目和考试名称+年级返回所有题（套卷）的信息数据")
+    @GetMapping("/findCoiliInfo")
+    public ResultVO<?> findCoiliInfo(
+            @ApiParam(value = "试卷全称", required = true)
+            @RequestParam("paperName") String examName,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
+    ){
+        JSONObject list = examService.findCoiliInfo(examName,subject,studentNumber,openid,gradeLevel);
+
+        return ResultVOUtil.success(list);
+    }
 }

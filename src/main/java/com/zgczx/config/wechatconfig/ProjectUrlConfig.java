@@ -37,4 +37,10 @@ public class ProjectUrlConfig {
      * 获取jsApi-ticket
      */
     public String getticket;
+
+    /**
+     * 用户已备案的url
+     */
+    public String userWebURL;
+
 }

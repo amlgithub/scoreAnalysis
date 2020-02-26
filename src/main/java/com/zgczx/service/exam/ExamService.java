@@ -115,4 +115,6 @@ public interface ExamService {
     //二十四、首页面中继续学习-仅章节练习
     JSONObject continueLearn(String studentNumber, String openid,String subject);
 
+    JSONObject findCoiliInfo(String examName, String subject,String studentNumber,String openid,String gradeLevel);
+
 }
