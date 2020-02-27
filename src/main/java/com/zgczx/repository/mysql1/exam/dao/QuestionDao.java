@@ -26,6 +26,9 @@ public interface QuestionDao extends JpaRepository<Question, Integer> {
     // 3. 获取此道题的 科目名称 ： 根据 question中的主键id
     @Query(value = "SELECT SUBJECT FROM e_exam_paper WHERE id=(SELECT exam_id FROM e_question WHERE id =?1 )", nativeQuery = true)
     String getSubjectName(int id);
+    //3.1 获取此题的 科目名称：兼容直接录入专项的题，exam_paper没有此录入专项的数据
+    @Query(value = "select subject from e_question where id =?1 ", nativeQuery = true)
+    String getSubject(int id);
 
     // 4. 根据章节名称查询收藏的题的详细信息 lxj
     @Query(value = "select * from e_question where id in (select distinct question_id from e_user_collect as euc,e_exam_paper as eep,e_chapter as ec \n" +

@@ -575,7 +575,7 @@ public class ExamServiceImpl implements ExamService {
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
         // 科目名称
-        String subjectName = questionDao.getSubjectName(id);
+        String subjectName = questionDao.getSubject(id);
         UserCollect collect = userCollectDao.findByStudentNumberAndQuestionId(studentNumber, id);
         if (collect != null && collect.getValid() == 2) {
             collect.setValid(1);// 将此题重新设置为收藏状态
@@ -1296,7 +1296,13 @@ public class ExamServiceImpl implements ExamService {
         jsonObject.put("question",question);
         List<String> optionList = new LinkedList<>();// 此题选项的list
         String oneQuestionOption = question.getQuestionOption();//获取所有选项的文本
-        String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+        String questionOption = null;//过滤下\t,\n等字符
+        if (question.getSubject().equals("英语")){
+            questionOption = filterspecial2(oneQuestionOption);//过滤下\t,\n等字符, 不过滤n
+        }else {
+            questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+        }
+
         log.info("【去除t,n等字符】： {}", questionOption);
         int i1 = -1;
         if (questionOption.indexOf("A．") != -1) {

@@ -96,7 +96,22 @@ public class FilterStringUtil {
        // alph = alph.replaceAll("\\s*|\\t|\\r|\\n", "");
         return s;
     }
+    public static String filterspecial2(String alph) {
+//        Pattern p = Pattern.compile("\\s*|\\t|\\r|\\n");
+        Pattern p = Pattern.compile("\\\\s*|\\t|\\r|\\n");
+        Matcher m = p.matcher(alph);
+        boolean b = m.find();
+        String s = null;
+        if (b == true){
+            s = m.replaceAll("");
+        }else {
+            s = alph;
+        }
 
+
+        // alph = alph.replaceAll("\\s*|\\t|\\r|\\n", "");
+        return s;
+    }
     /**
      * @param chin
      * @return
