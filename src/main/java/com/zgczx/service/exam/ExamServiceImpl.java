@@ -1683,6 +1683,8 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setStudentNumber(studentNumber);
             userQuestionRecord.setOpenid(openid);
             userQuestionRecord.setQuestionId(id);
+            //2.27 新增情况：录题时只录入专项练习，也就是按照知识点录题，
+            userQuestionRecord.setExamPaperId(question.getExamId());
 //            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(1);
 //            userQuestionRecord.setExamPaperName(paperExamName);
@@ -1704,6 +1706,8 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setStudentNumber(studentNumber);
             userQuestionRecord.setOpenid(openid);
             userQuestionRecord.setQuestionId(id);
+            //2.27 新增情况：录题时只录入专项练习，也就是按照知识点录题，
+            userQuestionRecord.setExamPaperId(question.getExamId());
 //            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(repatTime);
 //            userQuestionRecord.setExamPaperName(paperExamName);
@@ -1726,6 +1730,8 @@ public class ExamServiceImpl implements ExamService {
                 wrongQustion.setDoRight(2);
                 wrongQustion.setQuestionId(id);
                 wrongQustion.setUserAnswer(userAnswer);
+                //2.27 新增情况：录题时只录入专项练习，也就是按照知识点录题，
+                wrongQustion.setExamPaperId(question.getExamId());
 //                wrongQustion.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
 //                wrongQustion.setExamPaperName(paperExamName);
                 wrongQustion.setExamCategory(examCategory);
