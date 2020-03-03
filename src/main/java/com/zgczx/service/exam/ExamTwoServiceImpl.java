@@ -1213,7 +1213,9 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             }
                         }
                     } else {
-                        attributesList.add(questionAttribute);
+                        if(!questionAttribute.equals("")){
+                            attributesList.add(questionAttribute);
+                        }
                     }
                 }
                 for (int l = 0; l < attributesList.size(); l++) {
@@ -1228,8 +1230,10 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                     List<UserQuestionRecord> getQuestionRecordByAttribute = null;
                     if (starTime.equals("") || endTime.equals("")){
                          getQuestionRecordByAttribute = userQuestionRecordDao.getQuestionsRecordByAttribute(stuNumber, attributes, category);
+//                        getQuestionRecordByAttribute = userQuestionRecordDao.getUserQuestionRecordByKnowledgePoints2(stuNumber,subject,category,levelName);//3.2
                     }else {
                         getQuestionRecordByAttribute = userQuestionRecordDao.getQuestionsRecordByAttribute2(stuNumber, attributes, category,starTime,endTime);
+//                        getQuestionRecordByAttribute = userQuestionRecordDao.getUserQuestionRecordByKnowledgePoints3(stuNumber,subject,category,levelName,starTime,endTime);//3.2
                     }
 
                     if ((getQuestionRecordByAttribute != null) && (getQuestionRecordByAttribute.size() != 0)) {
@@ -1318,7 +1322,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
         if((source.equals("章节练习")) || (source.equals("模拟考试")) || (source.equals("历年真题"))){
             userQuestionsRecord=userQuestionRecordDao.getUserQuestionRecord(stuNumber,examName,source);
         }else if(source.equals("专项练习")){
-            userQuestionsRecord=userQuestionRecordDao.getUserQuestionRecordByKnowledgePoints(stuNumber,examName,source);
+            userQuestionsRecord=userQuestionRecordDao.getUserQuestionRecordByKnowledgePoints2(stuNumber,subject,source,levelName);
         }
 
         if (userQuestionsRecord == null || userQuestionsRecord.size() == 0) {

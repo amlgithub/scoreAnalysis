@@ -66,6 +66,15 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
             "times=(select max(times) from e_user_question_record where student_number=?1 and exam_category=?3 \n" +
             "and knowledge_points=?2) ",nativeQuery = true)
     List<UserQuestionRecord> getUserQuestionRecordByKnowledgePoints(String stuNumber,String knowledgePoints,String source);
+    // 3.2号 9(1).2. 查询用户、科目、年级、专项练习最新一次做题记录 lxj
+    @Query(value = "SELECT * FROM e_user_question_record AS euqr\n" +
+            "INNER JOIN e_question AS eq\n" +
+            "ON euqr.question_id=eq.id\n" +
+            "WHERE euqr.student_number=?1 AND euqr.subject=?2 AND euqr.exam_category=?3 AND eq.level_name=?4 AND  \n" +
+            "euqr.times=(SELECT MAX(times) FROM e_user_question_record WHERE student_number=?1 AND exam_category=?3 \n" +
+            "AND SUBJECT=?2) ",nativeQuery = true)
+    List<UserQuestionRecord> getUserQuestionRecordByKnowledgePoints2(String stuNumber,String subject,String source,String levelName);
+
 
     // 10. 查询用户某份试卷最新一次做题时间 lxj
     @Query(value = "select max(updatetime) from e_user_question_record where student_number=?1 and exam_paper_name=?2 \n" +
@@ -105,6 +114,14 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
     @Query(value = "select * from e_user_question_record where student_number=?1 and knowledge_points=?2 and exam_category=?3 and \n" +
             "times=(select max(times) from e_user_question_record where student_number=?1 and knowledge_points=?2 and exam_category=?3) AND inserttime >=?4 AND inserttime <=?5 ",nativeQuery = true)
     List<UserQuestionRecord> getQuestionsRecordByAttribute2(String stuNumber, String attribute, String questionCategory,String starTime,String endTime);
+    // 3.2号 9(1).2. 查询用户、科目、年级、专项练习最新一次做题记录 lxj
+    @Query(value = "SELECT * FROM e_user_question_record AS euqr\n" +
+            "INNER JOIN e_question AS eq\n" +
+            "ON euqr.question_id=eq.id\n" +
+            "WHERE euqr.student_number=?1 AND euqr.subject=?2 AND euqr.exam_category=?3 AND eq.level_name=?4 AND  \n" +
+            "euqr.times=(SELECT MAX(times) FROM e_user_question_record WHERE student_number=?1 AND exam_category=?3 \n" +
+            "AND SUBJECT=?2) AND euqr.inserttime >=?5 AND euqr.inserttime <=?6 ",nativeQuery = true)
+    List<UserQuestionRecord> getUserQuestionRecordByKnowledgePoints3(String stuNumber,String subject,String source,String levelName,String starTime,String endTime);
 
     // 17. 查询用户某个知识点最新一次做题时间
     @Query(value = "select max(updatetime) from e_user_question_record where student_number=?1 and knowledge_points=?2 \n" +

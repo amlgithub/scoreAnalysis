@@ -284,7 +284,13 @@ public class ExamServiceImpl implements ExamService {
             Map<String, String> map = new HashMap<>();
 
             String oneQuestionOption = one.getQuestionOption();//获取所有选项的文本
-            String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+//            String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+            String questionOption = null;//过滤下\t,\n等字符
+            if (subject.equals("英语")){
+                questionOption = filterspecial2(oneQuestionOption);//过滤下\t,\n等字符, 不过滤n
+            }else {
+                questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
+            }
 
             log.info("【去除t,n等字符】： {}", questionOption);
             int i1 = -1;
