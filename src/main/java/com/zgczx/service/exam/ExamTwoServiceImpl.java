@@ -1386,7 +1386,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                 String doDate = getDoQuestionsDate.get(i);
 
                 // 根据做题时间和用户学号查询用户当天做题数
-                int doCount = userQuestionRecordDao.getDoQUestionsNumsByDate(stuNumber, doDate);
+                int doCount = userQuestionRecordDao.getDoQUestionsNumsByDate(stuNumber, doDate,subject,levelName);
 
                 jo.put("stuNumber", stuNumber);// 用户学号
                 jo.put("doDate", doDate);// 做题时间
@@ -1456,11 +1456,11 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                 String doDate = getDoQuestionsDate.get(i);
 
                 // 根据做题时间和用户学号查询用户当天做题数
-                int doCount = userQuestionRecordDao.getDoQUestionsNumsByDate(stuNumber, doDate);
+                int doCount = userQuestionRecordDao.getDoQUestionsNumsByDate(stuNumber, doDate,subject,levelName);
 
                 // 根据做题时间和用户学号查询用户当天做对题数
                 int doRight = 1;
-                int doRightCount = userQuestionRecordDao.getDoQuestionsRightNumsByDate(stuNumber, doDate, doRight);
+                int doRightCount = userQuestionRecordDao.getDoQuestionsRightNumsByDate(stuNumber, doDate, subject,levelName,doRight);
 
                 // 计算正确率
                 float rightRate = (float) doRightCount / doCount;

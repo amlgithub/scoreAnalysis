@@ -324,7 +324,7 @@ public class ExamTwoController {
         return ResultVOUtil.success(map);
     }
 
-    @ApiOperation(value="十八、 学习记录：按天统计做题正确率和做题时长")
+    @ApiOperation(value="#3.3 十八、 学习记录：按天统计做题正确率和做题时长")
     @GetMapping("/getRightRateAndClassHours")
     public ResultVO<?> getRightRateAndClassHours(
             @ApiParam(value = "用户学号",required = true)

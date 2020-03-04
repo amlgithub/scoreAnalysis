@@ -40,4 +40,7 @@ public interface ExamPaperDao extends JpaRepository<ExamPaper, Integer> {
     @Query(value = "SELECT * FROM e_exam_paper WHERE SUBJECT=?1 AND grade_level=?2 AND exam_name LIKE ?4 AND exam_source=?3 AND valid=1 ", nativeQuery = true)
     List<ExamPaper> getAllBySubjectAndGradeLevelAndExamSource2(String subject,String gradeLevel,String examSource,String condition1);
 
+    //8. 获取此年级、此科目的所有 试卷信息
+    List<ExamPaper> getBySubjectAndGradeLevelAndValid(String subject,String gradeLevel,int valid);
+
 }

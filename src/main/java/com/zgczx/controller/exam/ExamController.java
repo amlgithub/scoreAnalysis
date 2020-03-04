@@ -513,4 +513,42 @@ public class ExamController {
 
         return ResultVOUtil.success(list);
     }
+
+    @ApiOperation(value = "# 3.3 二十六、“我的收藏”：统计分类中 各分类的数量  ")
+    @GetMapping("/getcollectClassifyQuantity")
+    public ResultVO<?> getcollectClassifyQuantity(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
+    ){
+
+        JSONObject jsonArray = examService.getcollectClassifyQuantity(studentNumber,openid,subject,gradeLevel);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
+    @ApiOperation(value = "# 3.3 二十七、“我的收藏”：获取某类别所有题的所有情况  ")
+    @GetMapping("/getcollectMasteredInfo")
+    public ResultVO<?> getcollectMasteredInfo(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "分类：章节练习", required = true)
+            @RequestParam("examCategory") String examCategory,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
+    ){
+
+        JSONObject jsonArray = examService.getcollectMasteredInfo(studentNumber,openid,subject,examCategory,gradeLevel);
+
+        return ResultVOUtil.success(jsonArray);
+    }
 }

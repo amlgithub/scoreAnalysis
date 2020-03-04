@@ -117,4 +117,10 @@ public interface ExamService {
 
     JSONObject findCoiliInfo(String examName, String subject,String studentNumber,String openid,String gradeLevel);
 
+    // 二十六、“我的收藏”：统计分类中 各分类的数量
+    JSONObject getcollectClassifyQuantity(String studentNumber, String openid, String subject, String gradeLevel);
+    // 十六、错题本：获取某类别所有未掌握题的所有情况
+    JSONObject getcollectMasteredInfo(String studentNumber,String openid,String subject,String examCategory,String gradeLevel);
+
+
 }

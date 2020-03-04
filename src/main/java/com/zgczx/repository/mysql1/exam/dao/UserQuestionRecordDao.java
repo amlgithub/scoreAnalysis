@@ -92,13 +92,25 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
             "and eep.grade_level=?3 ",nativeQuery = true)
     List<String> getDoQuestionsDate(String stuNumber,String subject,String levelName);
 
-    // 12. 根据用户时间统计用户当天做题数  lxj
+   /* // 12. 根据用户时间统计用户当天做题数  lxj
     @Query(value = "select count(id) from e_user_question_record where student_number=?1 and DATE_FORMAT(inserttime,'%Y-%m-%d')=?2 ",nativeQuery = true)
-    int getDoQUestionsNumsByDate(String stuNumber,String date);
+    int getDoQUestionsNumsByDate(String stuNumber,String date);*/
+    //3.3 修改 12.根据用户时间统计用户当天做题数  lxj
+    @Query(value = "SELECT COUNT(euqr.id) FROM e_user_question_record AS euqr\n" +
+            "INNER JOIN e_question AS eq\n" +
+            "ON euqr.question_id=eq.id\n" +
+            "WHERE euqr.student_number=?1 AND DATE_FORMAT(euqr.inserttime,'%Y-%m-%d')=?2 AND euqr.subject=?3 AND eq.level_name=?4 ",nativeQuery = true)
+    int getDoQUestionsNumsByDate(String stuNumber,String date,String subject,String levelName);
 
-    // 13. 根据做题时间和用户学号查询用户当天做对题数  lxj
+/*    // 13. 根据做题时间和用户学号查询用户当天做对题数  lxj
     @Query(value = "select count(id) from e_user_question_record where student_number=?1 and DATE_FORMAT(inserttime,'%Y-%m-%d')=?2 and do_right=?3 ",nativeQuery = true)
-    int getDoQuestionsRightNumsByDate(String stuNumber,String date, int doRight);
+    int getDoQuestionsRightNumsByDate(String stuNumber,String date, int doRight);*/
+//    3.3 修改 13. 根据做题时间和用户学号查询用户当天做对题数  lxj
+    @Query(value = "SELECT COUNT(euqr.id) FROM e_user_question_record AS euqr\n" +
+            "INNER JOIN e_question AS eq\n" +
+            "ON euqr.question_id=eq.id\n" +
+            "WHERE euqr.student_number=?1 AND DATE_FORMAT(euqr.inserttime,'%Y-%m-%d')=?2 AND euqr.subject=?3 AND eq.level_name=?4 AND euqr.do_right=?5 \n ",nativeQuery = true)
+    int getDoQuestionsRightNumsByDate(String stuNumber,String date, String subject,String levelName,int doRight);
 
     // 14. 根据做题时间查询用户当天做题情况(用户获取用户做每道题的时间)  lxj
     @Query(value = "select do_time from e_user_question_record where student_number=?1 and DATE_FORMAT(inserttime,'%Y-%m-%d')=?2 ",nativeQuery = true)

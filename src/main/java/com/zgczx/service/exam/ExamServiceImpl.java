@@ -1925,5 +1925,165 @@ public class ExamServiceImpl implements ExamService {
         jsonObject1.put("info", jsonArray);
         return jsonObject1;
     }
+
+    @Override
+    public JSONObject getcollectClassifyQuantity(String studentNumber, String openid, String subject, String gradeLevel) {
+        JSONObject jsonObject = new JSONObject();
+        // 获取 全部的 已掌握或未掌握的 数量
+        List<UserCollect> userWrongQustions = userCollectDao.totalNum(studentNumber, subject, gradeLevel);
+        jsonObject.put("totalNum", userWrongQustions.size());
+        // 章节练习 数量
+        List<UserCollect> wrongQustions = userCollectDao.getAllInfo(studentNumber, gradeLevel, subject, "章节练习");
+        jsonObject.put("chapterNum", wrongQustions.size());
+        //专项练习 数量
+        List<UserCollect> wrongQustions2 = userCollectDao.getAllInfo(studentNumber, gradeLevel, subject, "专项练习");
+        jsonObject.put("specialNum", wrongQustions2.size());
+        //模拟考试 数量
+        List<UserCollect> totalExamPaperNum = userCollectDao.getAllInfo(studentNumber, gradeLevel, subject,  "模拟考试");
+        jsonObject.put("mockNum", totalExamPaperNum.size());
+        // 历年真题 数量
+        List<UserCollect> totalExamPaperNum2 =userCollectDao.getAllInfo(studentNumber, gradeLevel, subject, "历年真题");
+        jsonObject.put("truthNum", totalExamPaperNum2.size());
+
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject getcollectMasteredInfo(String studentNumber, String openid, String subject, String examCategory, String gradeLevel) {
+        JSONObject json = new JSONObject();
+        JSONArray jsonArray = new JSONArray();// 提的所有详情
+        if (!examCategory.equals("全部")) {
+            List<UserCollect> wrongQustions = null;
+
+                wrongQustions = userCollectDao.getAllInfo(studentNumber, gradeLevel, subject, examCategory);//去重qustion_id
+
+            if (wrongQustions.size() == 0) {
+                info = "暂无您要查询的未掌握题情况";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                for (UserCollect wrongQustion : wrongQustions) {
+                    JSONObject jsonObject1 = new JSONObject();// 分装Json
+                    int questionId = wrongQustion.getQuestionId();// question表的id
+                    //此题的分类标签，可能有多个
+                   // List<String> questionSource = userWrongQustionDao.getallQuestionSource(studentNumber, gradeLevel, subject, master, questionId);
+                    List<ExamPaper> examAllInfo = examPaperDao.getBySubjectAndGradeLevelAndValid(subject, gradeLevel, 1);
+                    List<String> labelList = new LinkedList<>();// 此题的标签属
+                    for (ExamPaper examPaper : examAllInfo){
+                        String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+                        List<Integer> idList = new ArrayList<>();
+                        for (int i = 0; i < questionList.length; i++) {
+                            int integer = Integer.parseInt(questionList[i]);
+                            idList.add(integer);
+                        }
+                        boolean existence = existence(questionId, idList);
+                        String examSource = examPaper.getExamSource();
+                        if (existence && !labelList.contains(examSource) && !examSource.equals("专项练习")){
+                            labelList.add(examSource);
+                        }
+                    }
+                    Question question = questionDao.getByIdAndValid(questionId, 1);// 获取此题的所有数据
+                    String questionContext = question.getQuestionContext();
+                    String titleContent = filterTitleNumber(questionContext);// 题目内容
+                    jsonObject1.put("titleContent", titleContent);
+
+                    String questionAttribute = question.getQuestionAttribute();// 此题的知识点属性
+                    if (questionAttribute.contains(",")) {
+                        String[] split = questionAttribute.split(",");
+                        for (int i = 0; i < split.length; i++) {
+                            String s = split[i];
+                            if (s.equals("")){
+                                continue;
+                            }
+                            labelList.add(s);
+                        }
+                    } else {
+//                        labelList.add(questionAttribute);
+                        if (!questionAttribute.equals("")){
+                            labelList.add(questionAttribute);
+                        }
+                    }
+                    jsonObject1.put("labelList", labelList);// 题的标签
+                    jsonObject1.put("question", question);// 此题的所有情况
+                    jsonArray.add(jsonObject1);
+                    json.put("questionInfo", jsonArray);
+                }
+            }
+        } else {
+            // 获取全部的题，不重复的形式
+            List<UserCollect> wrongQustions = userCollectDao.getAllByFull(studentNumber, gradeLevel, subject);//去重qustion_id
+            if (wrongQustions.size() == 0) {
+                info = "暂无您要查询的未掌握题情况";
+                log.error("【错误信息】: {}", info);
+                throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+            } else {
+                for (UserCollect wrongQustion : wrongQustions) {
+                    JSONObject jsonObject1 = new JSONObject();// 分装Json
+                    int questionId = wrongQustion.getQuestionId();
+                    //此题的分类标签，可能有多个
+//                    List<String> questionSource = userWrongQustionDao.getallQuestionSource(studentNumber, gradeLevel, subject, master, questionId);
+                    List<ExamPaper> examAllInfo = examPaperDao.getBySubjectAndGradeLevelAndValid(subject, gradeLevel, 1);
+                    List<String> labelList = new LinkedList<>();// 此题的标签属
+                    for (ExamPaper examPaper : examAllInfo){
+                        String[] questionList = filterMiddleBrackets(examPaper.getQuestionList()).split(",");
+                        List<Integer> idList = new ArrayList<>();
+                        for (int i = 0; i < questionList.length; i++) {
+                            int integer = Integer.parseInt(questionList[i]);
+                            idList.add(integer);
+                        }
+                        boolean existence = existence(questionId, idList);
+                        String examSource = examPaper.getExamSource();
+                        if (existence && !labelList.contains(examSource) && !examSource.equals("专项练习")){
+                            labelList.add(examSource);
+                        }
+                    }
+                    Question question = questionDao.getByIdAndValid(questionId, 1);// 获取此题的所有数据
+                    String questionContext = question.getQuestionContext();
+                    String titleContent = filterTitleNumber(questionContext);// 题目内容
+                    jsonObject1.put("titleContent", titleContent);
+
+                    String questionAttribute = question.getQuestionAttribute();// 此题的知识点属性
+                    //labelList.add(wrongQustion.getExamCategory());// 分类标签： 章节还是 专项等
+
+                    if (questionAttribute.contains(",")) {
+                        String[] split = questionAttribute.split(",");
+                        for (int i = 0; i < split.length; i++) {
+//                            labelList.add(split[i]);
+                            String s = split[i];
+                            if (s.equals("")){
+                                continue;
+                            }
+                            labelList.add(s);
+                        }
+                    } else {
+                        if (!questionAttribute.equals("")){
+                            labelList.add(questionAttribute);
+                        }
+
+                    }
+                    jsonObject1.put("labelList", labelList);// 题的标签
+                    jsonObject1.put("question", question);// 此题的所有情况
+                    jsonArray.add(jsonObject1);
+                    json.put("questionInfo", jsonArray);
+                }
+            }
+        }
+        return json;
+    }
+
+
+    /**
+     * 公共函数五、 判断此题是否在某套试卷中
+     * @param questionid 题
+     * @param qiestionList 某个试卷的 所有题列表
+     * @return
+     */
+    public static boolean existence(int questionid,List<Integer> qiestionList) {
+        if (qiestionList.indexOf(questionid) != -1){
+            return true;
+        }else {
+            return false;
+        }
+    }
 }
 
