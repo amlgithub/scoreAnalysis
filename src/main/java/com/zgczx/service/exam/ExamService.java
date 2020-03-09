@@ -122,5 +122,6 @@ public interface ExamService {
     // 十六、错题本：获取某类别所有未掌握题的所有情况
     JSONObject getcollectMasteredInfo(String studentNumber,String openid,String subject,String examCategory,String gradeLevel);
 
-
+    //二十八、“生物学号校验”：校验能做中关村生物的学生
+    JSONObject checkStudentNumber(String studentNumber,String openid,String subject,String gradeLevel);
 }

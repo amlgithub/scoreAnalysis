@@ -69,6 +69,9 @@ public class ExamServiceImpl implements ExamService {
     @Autowired
     private UserWrongQustionDao userWrongQustionDao;
 
+    @Autowired
+    private UserCheckDao userCheckDao;
+
     private String info;
 
     @Override
@@ -229,7 +232,7 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public List<QuestionDTO> findExamQuestionInfo(String examName, String subject, String studentNumber, String openid,String gradeLevel) {
-        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
+         ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
@@ -395,10 +398,26 @@ public class ExamServiceImpl implements ExamService {
             }
 //            System.out.println(optionList1);
             for (int i = 0; i < optionList1.size(); i++) {
-
-                String answer = optionLetter(optionList1.get(i));
+                int ponit = 0;
+                String trim = optionList1.get(i).trim();
+                if (trim.indexOf(".") != -1){
+                   ponit = trim.indexOf(".");
+                }else {
+                    ponit = trim.indexOf("．");
+                }
+                String answer =trim.substring(ponit+1,trim.length()).trim();
+//                String answer = filterspecial2(optionLetter(optionList1.get(i)));
+//                String answer = optionLetter(optionList1.get(i)).trim();
+                if (!answer.equals("") && (answer.substring(0,1).equals(" ")||answer.substring(0,1).equals(" "))){
+                    answer = answer.substring(1,answer.length());
+                }
+                int len = answer.length();
+                if (answer.substring(len-1,len).equals(" ")||answer.substring(len-1,len).equals(" ")){
+                    answer = answer.substring(0,len-1);
+                }
+                //optionLetter(optionList1.get(i))
                 if (one.getCorrectText().equals(answer)) {
-                    String answerOption = optionList1.get(i).substring(0, 1);
+                    String answerOption = optionList1.get(i).substring(0, 1).trim();
                     questionDTO.setRightOption(answerOption);
                 }
             }
@@ -1676,6 +1695,7 @@ public class ExamServiceImpl implements ExamService {
         }
         String userAnswer = optionLetter(commitString);//用户的答案
         List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getSpecialRecord(studentNumber, examCategory, id, subject);
+        ExamPaper paper = examPaperDao.findByIdAndValid(question.getExamId(), 1);
         UserQuestionRecord save = null;
         if (repatQuestion == null || repatQuestion.size() == 0) {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
@@ -1691,9 +1711,11 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setQuestionId(id);
             //2.27 新增情况：录题时只录入专项练习，也就是按照知识点录题，
             userQuestionRecord.setExamPaperId(question.getExamId());
+            if (paper.getExamSource().equals("专项练习")){
+                userQuestionRecord.setExamPaperName(paper.getExamName());
+            }
 //            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(1);
-//            userQuestionRecord.setExamPaperName(paperExamName);
             userQuestionRecord.setExamCategory(examCategory);
             userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
              save = userQuestionRecordDao.save(userQuestionRecord);
@@ -1716,7 +1738,9 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setExamPaperId(question.getExamId());
 //            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(repatTime);
-//            userQuestionRecord.setExamPaperName(paperExamName);
+            if (paper.getExamSource().equals("专项练习")){
+                userQuestionRecord.setExamPaperName(paper.getExamName());
+            }
             userQuestionRecord.setExamCategory(examCategory);
             userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
              save = userQuestionRecordDao.save(userQuestionRecord);
@@ -1739,7 +1763,9 @@ public class ExamServiceImpl implements ExamService {
                 //2.27 新增情况：录题时只录入专项练习，也就是按照知识点录题，
                 wrongQustion.setExamPaperId(question.getExamId());
 //                wrongQustion.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
-//                wrongQustion.setExamPaperName(paperExamName);
+                if (paper.getExamSource().equals("专项练习")){
+                    wrongQustion.setExamPaperName(paper.getExamName());
+                }
                 wrongQustion.setExamCategory(examCategory);
                 wrongQustion.setDoTime(doTime);//2.2 新增做题时间
                 userWrongQustionDao.save(wrongQustion);
@@ -2084,6 +2110,19 @@ public class ExamServiceImpl implements ExamService {
         }else {
             return false;
         }
+    }
+
+    @Override
+    public JSONObject checkStudentNumber(String studentNumber, String openid, String subject, String gradeLevel) {
+        JSONObject jsonObject = new JSONObject();
+        UserCheck userCheck = userCheckDao.findByStudent_number(studentNumber);
+        if (userCheck == null){
+            info = "您暂无做此生物题的权限，请联系管理员进行审核添加";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        jsonObject.put("userCheck", userCheck);
+        return jsonObject;
     }
 }
 

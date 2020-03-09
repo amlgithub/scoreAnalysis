@@ -257,7 +257,7 @@ public class ExamController {
         return ResultVOUtil.success(list);
     }
 
-    @ApiOperation(value = "十三、将用户最近做的此试卷信息回显给用户  ")
+    @ApiOperation(value = "十三、将用户最近做的此试卷信息回显给用户 ")
     @GetMapping("/echoPaperInfo")
     public ResultVO<?> echoPaperInfo(
             @ApiParam(value = "用户学号", required = true)
@@ -548,6 +548,24 @@ public class ExamController {
     ){
 
         JSONObject jsonArray = examService.getcollectMasteredInfo(studentNumber,openid,subject,examCategory,gradeLevel);
+
+        return ResultVOUtil.success(jsonArray);
+    }
+
+    @ApiOperation(value = "# 3.9 二十八、“生物学号校验”：校验能做中关村生物的学生  ")
+    @GetMapping("/checkStudentNumber")
+    public ResultVO<?> checkStudentNumber(
+            @ApiParam(value = "用户学号", required = true)
+            @RequestParam("studentNumber") String studentNumber,
+            @ApiParam(value = "用户openid", required = true)
+            @RequestParam("openid") String openid,
+            @ApiParam(value = "科目名称", required = true)
+            @RequestParam("subject") String subject,
+            @ApiParam(value = "年级",required = true)
+            @RequestParam("gradeLevel") String gradeLevel
+    ){
+
+        JSONObject jsonArray = examService.checkStudentNumber(studentNumber,openid,subject,gradeLevel);
 
         return ResultVOUtil.success(jsonArray);
     }

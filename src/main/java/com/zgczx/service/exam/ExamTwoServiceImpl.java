@@ -1170,6 +1170,10 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             startTime = getTimeSum(startTime, doTime);
 
                         }
+                        // 用户做题的正确率
+                        double rightRate = (double) doQuestionsRightNums / (double) doQuestionsNums;
+                        DecimalFormat format = new DecimalFormat("0.00");
+                        String theRightRate = format.format(rightRate);
 
                         // 查询用户此试卷最新做题时间
                         String doTime = null;
@@ -1183,6 +1187,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             log.error("【错误信息】: {}", info);
                             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
                         }
+                        jo.put("doRightRate", theRightRate);  // 用户做题正确率
                         jo.put("doTime", doTime);// 做题时间
                         jo.put("examPaperName", examPaperName);// 试卷名称
                         jo.put("questionCount", questionCount);// 试卷总题数
@@ -1259,6 +1264,10 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             String doTime = getQuestionRecordByAttribute.get(m).getDoTime();
                             startTime = getTimeSum(startTime, doTime);
                         }
+                        // 用户做题的正确率
+                        double rightRate = (double) doQuestionsRightNums / (double) doQuestionCount;
+                        DecimalFormat format = new DecimalFormat("0.00");
+                        String theRightRate = format.format(rightRate);
 
                         // 查询用户此试卷最新做题时间
                         String doTimeByAttribute = null;
@@ -1273,6 +1282,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             log.error("【错误信息】: {}", info);
                             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
                         }
+                        jo1.put("doRightRate", theRightRate); // 用户做题正确率
                         jo1.put("doTime", doTimeByAttribute);// 做题时间
                         jo1.put("examPaperName", attributes);// 试卷名称
                         jo1.put("questionCount", questionCount);// 试卷总题数

@@ -8,21 +8,24 @@ import com.zgczx.repository.mysql1.exam.model.ExamContent;
 import com.zgczx.repository.mysql1.exam.model.ExamPaper;
 import com.zgczx.repository.mysql1.exam.model.Question;
 import com.zgczx.repository.mysql3.unifiedlogin.dao.UserLoginDao;
+import com.zgczx.service.exam.PaperSplitService;
+import com.zgczx.utils.Excel2BeanList;
 import com.zgczx.utils.ResultVOUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.zgczx.utils.FilterStringUtil.filterChineseAndMath;
 import static com.zgczx.utils.FilterStringUtil.filterspecial;
@@ -61,6 +64,9 @@ public class PaperSplitController {
 
     @Autowired
     private UserLoginDao userLoginDao;
+
+    @Autowired
+    private PaperSplitService paperSplitService;
 
     private String info;
 
@@ -258,5 +264,32 @@ public class PaperSplitController {
 
 
         return ResultVOUtil.success(idList);
+    }
+
+    @ApiOperation(value = "用户信息批量录入", notes = "根据excel文件进行用户信息批量录入")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "file_url", value = " 文件服务器地址 ", required = true, dataType =  "__file", paramType = "form")//不是 file，而是双下划线“__file”:原因是版本不一样：dataType =  "__file"
+    })
+    @RequestMapping(value = "/batchAddUser", method = RequestMethod.POST)
+    public JSONObject batchAddUser(HttpServletResponse response, HttpServletRequest request) throws Exception {
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request; // 将普通请求转换为文件请求
+        Map<String, MultipartFile> fileMap = multipartRequest.getFileMap(); // 获取所有上传的文献集合，数量不限
+        List<Map<String, Object>> content = new ArrayList<>();
+        for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) { // 遍历单个文件
+            MultipartFile mf = entity.getValue();
+            try {
+                content = Excel2BeanList.readExcel(mf, 33); // 33指excel中的最大列数，可以根据需要调整
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                JSONObject json_store = new JSONObject();
+                json_store.put("errno", "001");
+                json_store.put("errmsg", "批量插入用户信息失败!");
+                return json_store;
+            }
+        }
+        JSONObject jsonRespond = paperSplitService.batchAddUser(content);
+
+        return jsonRespond;
     }
 }

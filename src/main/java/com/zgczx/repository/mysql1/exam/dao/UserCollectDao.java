@@ -62,30 +62,30 @@ public interface UserCollectDao extends JpaRepository<UserCollect, Integer> {
     @Query(value = "select count(*) from e_user_collect where student_number=?1 and `subject`=?2 and valid=1 and question_id=?3 ",nativeQuery = true)
     int getIfCollectByStuNumAndQuestionId(String stuNumber,String subject,int questionId);
 
-    //11. 传来“全部”时，获取所有 用户的、科目、年级、所有数量
+    //11. 我的收藏：传来“全部”时，获取所有 用户的、科目、年级、所有数量
     @Query(value = "SELECT * FROM e_user_collect AS euc \n" +
             "INNER JOIN e_question AS q ON euc.`question_id`=q.id \n" +
             "INNER JOIN e_exam_paper AS ep \n" +
             "ON euc.`exam_paper_id`=ep.`id`\n" +
-            "WHERE euc.student_number=?1 AND euc.`subject`=?2 AND q.level_name=?3  ", nativeQuery = true)
+            "WHERE euc.student_number=?1 AND euc.`subject`=?2 AND q.level_name=?3 AND euc.valid=1 ", nativeQuery = true)
     List<UserCollect> totalNum(String stuNumber, String subject, String gradeLevel);
 
-    //12. 获取收藏表中某用户-》某年级-》某科目 某类（章节练习） 的所有数量
+    //12. 我的收藏：获取收藏表中某用户-》某年级-》某科目 某类（章节练习） 的所有数量
     @Query(value = "SELECT * FROM e_user_collect AS euc \n" +
             "INNER JOIN e_question AS q \n" +
             "ON euc.`question_id`=q.`id`\n" +
             "INNER JOIN e_exam_paper AS ep \n" +
             "ON euc.`exam_paper_id`=ep.`id` \n" +
-            "WHERE euc.student_number=?1 AND ep.`grade_level`=?2  AND euc.`subject`=?3 AND ep.`exam_source`=?4 ", nativeQuery = true)
+            "WHERE euc.student_number=?1 AND ep.`grade_level`=?2  AND euc.`subject`=?3 AND ep.`exam_source`=?4 AND euc.valid=1 ", nativeQuery = true)
     List<UserCollect> getAllInfo(String stuNumber,String gradeLevel,String subject,String examCategory);
 
-    //13. 获取收藏表中某用户-》某年级-》某科目 所有类别（章节练习、专项、模拟、真题） 的所有数量
+    //13. 我的收藏：获取收藏表中某用户-》某年级-》某科目 所有类别（章节练习、专项、模拟、真题） 的所有数量
     @Query(value = "SELECT  * FROM e_user_collect AS euc \n" +
             "INNER JOIN e_question AS q\n" +
             "ON euc.`question_id`=q.`id`\n" +
             "INNER JOIN e_exam_paper AS ep\n" +
             "ON euc.`exam_paper_id`=ep.`id`\n" +
-            "WHERE euc.student_number=?1 AND ep.`grade_level`=?2 AND euc.`subject`=?3 \n" +
+            "WHERE euc.student_number=?1 AND ep.`grade_level`=?2 AND euc.`subject`=?3 AND euc.valid=1 \n" +
             "GROUP BY euc.`question_id` \n" +
             "ORDER BY  euc.inserttime ASC", nativeQuery = true)
     List<UserCollect> getAllByFull(String stuNumber,String gradeLevel,String subject);
