@@ -44,4 +44,9 @@ public interface UserLoginDao extends JpaRepository<UserLogin, Integer> {
 
     // 根据学号查询是否 学校提供有此 用户的基本信息
     UserLogin findByDiyid(String diyid);
+
+    //根据姓名查询
+    @Query(value = "SELECT * FROM user_login WHERE real_name=?1 " ,nativeQuery = true)
+    List<UserLogin> findByRealName(String name);
+
 }

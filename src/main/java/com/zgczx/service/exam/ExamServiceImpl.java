@@ -289,11 +289,12 @@ public class ExamServiceImpl implements ExamService {
             String oneQuestionOption = one.getQuestionOption();//获取所有选项的文本
 //            String questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
             String questionOption = null;//过滤下\t,\n等字符
-            if (subject.equals("英语")){
+            questionOption = filterspecial2(oneQuestionOption);//过滤下\t,\n等字符, 不过滤n
+           /* if (subject.equals("英语")){
                 questionOption = filterspecial2(oneQuestionOption);//过滤下\t,\n等字符, 不过滤n
             }else {
                 questionOption = filterspecial(oneQuestionOption);//过滤下\t,\n等字符
-            }
+            }*/
 
             log.info("【去除t,n等字符】： {}", questionOption);
             int i1 = -1;
@@ -311,13 +312,21 @@ public class ExamServiceImpl implements ExamService {
             int i3 = -1;
             if (questionOption.indexOf("C．") != -1) {
                 i3 = questionOption.indexOf("C．");
+            } else if (questionOption.indexOf("Ｃ.") != -1){
+                i3 = questionOption.indexOf("Ｃ.");
+            }else if (questionOption.indexOf("Ｃ．") != -1){
+                i3 = questionOption.indexOf("Ｃ．");
             } else {
                 i3 = questionOption.indexOf("C.");
             }
             int i4 = -1;
             if (questionOption.indexOf("D．") != -1) {
                 i4 = questionOption.indexOf("D．");
-            } else {
+            } else if (questionOption.indexOf("Ｄ.") != -1){
+                i3 = questionOption.indexOf("Ｄ.");
+            }else if (questionOption.indexOf("Ｄ．") != -1){
+                i3 = questionOption.indexOf("Ｄ．");
+            }else {
                 i4 = questionOption.indexOf("D.");
             }
             List<Integer> letterList = new ArrayList<>();
@@ -398,7 +407,7 @@ public class ExamServiceImpl implements ExamService {
             }
 //            System.out.println(optionList1);
             for (int i = 0; i < optionList1.size(); i++) {
-                int ponit = 0;
+           /*     int ponit = 0;
                 String trim = optionList1.get(i).trim();
                 if (trim.indexOf(".") != -1){
                    ponit = trim.indexOf(".");
@@ -414,11 +423,17 @@ public class ExamServiceImpl implements ExamService {
                 int len = answer.length();
                 if (answer.substring(len-1,len).equals(" ")||answer.substring(len-1,len).equals(" ")){
                     answer = answer.substring(0,len-1);
-                }
+                }*/
+//                String userAnswer = optionLetter2(optionList1.get(i));
+                String userAnswer = optionList1.get(i);
+                userAnswer = userAnswer.replace(' ',' ');
+                userAnswer = userAnswer.substring(2,userAnswer.length()).trim();
+
                 //optionLetter(optionList1.get(i))
-                if (one.getCorrectText().equals(answer)) {
+                if (one.getCorrectText().replace(' ',' ').trim().equals(userAnswer)) {
                     String answerOption = optionList1.get(i).substring(0, 1).trim();
-                    questionDTO.setRightOption(answerOption);
+//                    questionDTO.setRightOption(answerOption);
+                    questionDTO.setRightOption(String.valueOf(i));//将返回的正确答案选项改为，索引方式
                 }
             }
 //Collections.shuffle(list);//集合打乱顺序
@@ -454,11 +469,14 @@ public class ExamServiceImpl implements ExamService {
         String paperExamName = paper.getExamName();
         String subjectName = questionDao.getSubjectName(id);
         String userAnswer = optionLetter(commitString);//用户的答案
+        userAnswer = userAnswer.replace(' ',' ');
+        userAnswer = userAnswer.trim();
         List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
         if (repatQuestion == null || repatQuestion.size() == 0) {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
-            if (question.getCorrectText().equals(userAnswer)) {
+
+            if (question.getCorrectText().trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
                 userQuestionRecord.setDoRight(2);
@@ -480,7 +498,7 @@ public class ExamServiceImpl implements ExamService {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
 //            String userAnswer = optionLetter(commitString);
-            if (question.getCorrectText().equals(userAnswer)) {
+            if (question.getCorrectText().trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
                 userQuestionRecord.setDoRight(2);
@@ -721,6 +739,11 @@ public class ExamServiceImpl implements ExamService {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
+        }
+        if (examPaperContent.equals("[]")||examPaperAnwer.equals("{}")){
+            info = "本次试卷记录为空，不存本次";
+            log.error("【错误信息】: {}", info);
+            throw new ScoreException(ResultEnum.DATA_IS_WRONG, info);
         }
         List<UserPaperRecord> paperRecordlist = userPaperRecordDao.getByStudentNumberAndSubjectAndExamPaperId(studentNumber, subject, examPaper.getId());
         int times = 1;

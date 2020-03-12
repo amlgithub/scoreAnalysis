@@ -292,4 +292,15 @@ public class PaperSplitController {
 
         return jsonRespond;
     }
+
+    @ApiOperation(value = "#3.9 批量更新，根据学校提供的数据 更新统一登录中的相同姓名 学号")
+    @GetMapping("/updateAll")
+    public ResultVO<?> updateAll(){
+
+        JSONObject list = paperSplitService.updateAll();
+
+        return ResultVOUtil.success(0);
+    }
+
+
 }

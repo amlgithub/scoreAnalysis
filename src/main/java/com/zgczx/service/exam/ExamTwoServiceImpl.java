@@ -1171,8 +1171,8 @@ public class ExamTwoServiceImpl implements ExamTwoService {
 
                         }
                         // 用户做题的正确率
-                        double rightRate = (double) doQuestionsRightNums / (double) doQuestionsNums;
-                        DecimalFormat format = new DecimalFormat("0.00");
+                        double rightRate = ((double) doQuestionsRightNums / (double) doQuestionsNums) * 100;
+                        DecimalFormat format = new DecimalFormat("0.0");
                         String theRightRate = format.format(rightRate);
 
                         // 查询用户此试卷最新做题时间
@@ -1265,8 +1265,8 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                             startTime = getTimeSum(startTime, doTime);
                         }
                         // 用户做题的正确率
-                        double rightRate = (double) doQuestionsRightNums / (double) doQuestionCount;
-                        DecimalFormat format = new DecimalFormat("0.00");
+                        double rightRate = ((double) doQuestionsRightNums / (double) doQuestionCount) * 100;
+                        DecimalFormat format = new DecimalFormat("0.0");
                         String theRightRate = format.format(rightRate);
 
                         // 查询用户此试卷最新做题时间

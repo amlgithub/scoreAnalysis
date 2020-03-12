@@ -37,7 +37,7 @@ import java.util.Arrays;
 public class RequestLogAspect {
     private static final Logger logger = LoggerFactory.getLogger(RequestLogAspect.class);
 
-    @Pointcut("execution(public * com.zgczx.controller..*.*(..))")
+    @Pointcut("execution(public * com.zgczx.controller..*.*(..)) && !execution(public * com.zgczx.controller.exam.ExamController.findExamQuestionInfo(..) ) ")
     public void webLog(){
 
     }

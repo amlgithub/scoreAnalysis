@@ -184,6 +184,12 @@ public class FilterStringUtil {
         }
         return result;
     }
+
+
+    public static String optionLetter2(String character) {
+        character = character.replaceAll("A.|B.|C.|D.|E.", "");
+        return character;
+    }
     /**
      * @param args
      * @Title : main

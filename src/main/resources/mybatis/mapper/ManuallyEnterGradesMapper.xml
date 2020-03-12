@@ -13,7 +13,7 @@
     <!--ManuallyEnterGrades getManuallyEnterGradesById(int id);  ：这个是mapper接口写的接口方法，必须和XML对应的-->
     <!--id: 就是方法名， resultType： 返回值类型,用全类名-->
     <select id="getManuallyEnterGradesById" resultType="com.zgczx.repository.mysql1.score.model.ManuallyEnterGrades">
-#         这里面就直接写SQL语句，就是原生的SQL语句即可
+-- #         这里面就直接写SQL语句，就是原生的SQL语句即可
     select * from manually_enter_grades where id = #{id}
     </select>
 
