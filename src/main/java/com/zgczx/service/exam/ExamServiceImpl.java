@@ -12,6 +12,7 @@ import com.zgczx.repository.mysql1.exam.dto.*;
 import com.zgczx.repository.mysql1.exam.model.*;
 import com.zgczx.repository.mysql3.unifiedlogin.dao.UserLoginDao;
 import com.zgczx.repository.mysql3.unifiedlogin.model.UserLogin;
+import com.zgczx.utils.SpecialCharactersUtil;
 import com.zgczx.utils.StringToMapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import static com.zgczx.utils.FilterStringUtil.*;
 import static com.zgczx.utils.FilterStringUtil.filterspecial;
 
 import static com.zgczx.utils.RecursionTreeUtil.randomSort;
+import static com.zgczx.utils.SpecialCharactersUtil.replaceThe8194;
 import static com.zgczx.utils.WordRedUtil.readWord;
 
 /**
@@ -232,7 +234,7 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public List<QuestionDTO> findExamQuestionInfo(String examName, String subject, String studentNumber, String openid,String gradeLevel) {
-         ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
+        ExamPaper examPaper = examPaperDao.findByExamNameAndSubjectAndValidAndGradeLevel(examName, subject, 1,gradeLevel);
         if (examPaper == null) {
             info = "暂时没有此科目的此试卷";
             log.error("【错误信息】: {}", info);
@@ -468,15 +470,17 @@ public class ExamServiceImpl implements ExamService {
         String examSource = paper.getExamSource();// 获取试卷的类别，章节练习，模拟考试，历年真题等
         String paperExamName = paper.getExamName();
         String subjectName = questionDao.getSubjectName(id);
-        String userAnswer = optionLetter(commitString);//用户的答案
+//        String userAnswer = optionLetter2(commitString);//用户的答案，不过滤AT
+        commitString = filterspecial2(commitString);//过滤下\t,\n等字符, 不过滤n
+        String userAnswer =commitString;
         userAnswer = userAnswer.replace(' ',' ');
-        userAnswer = userAnswer.trim();
+        userAnswer = userAnswer.substring(2,userAnswer.length()).trim();
         List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
         if (repatQuestion == null || repatQuestion.size() == 0) {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
 
-            if (question.getCorrectText().trim().equals(userAnswer)) {
+            if (question.getCorrectText().replace(' ',' ').trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
                 userQuestionRecord.setDoRight(2);
@@ -498,7 +502,7 @@ public class ExamServiceImpl implements ExamService {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
 //            String userAnswer = optionLetter(commitString);
-            if (question.getCorrectText().trim().equals(userAnswer)) {
+            if (question.getCorrectText().replace(' ',' ').trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
                 userQuestionRecord.setDoRight(2);
@@ -1115,9 +1119,9 @@ public class ExamServiceImpl implements ExamService {
         if (!examCategory.equals("全部")) {
             List<UserWrongQustion> wrongQustions = null;
             if (examCategory.equals("专项练习")){
-                 wrongQustions = userWrongQustionDao.getAllInfo2(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
+                wrongQustions = userWrongQustionDao.getAllInfo2(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
             }else {
-                 wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
+                wrongQustions = userWrongQustionDao.getAllInfo(studentNumber, gradeLevel, subject, master, examCategory);//去重qustion_id
             }
             if (wrongQustions.size() == 0) {
                 info = "暂无您要查询的未掌握题情况";
@@ -1261,9 +1265,9 @@ public class ExamServiceImpl implements ExamService {
                         labelList.add(split[i]);
                     }
                 } else {
-                   if (labelList.contains(questionAttribute)){
-                       continue;
-                   }
+                    if (labelList.contains(questionAttribute)){
+                        continue;
+                    }
                     labelList.add(questionAttribute);
                 }
             }
@@ -1716,13 +1720,14 @@ public class ExamServiceImpl implements ExamService {
             log.error("【错误信息】: {}", info);
             throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
         }
-        String userAnswer = optionLetter(commitString);//用户的答案
+        commitString  = replaceThe8194(commitString).trim();
+        String userAnswer = commitString.substring(2,commitString.length());//用户的答案
         List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getSpecialRecord(studentNumber, examCategory, id, subject);
         ExamPaper paper = examPaperDao.findByIdAndValid(question.getExamId(), 1);
         UserQuestionRecord save = null;
         if (repatQuestion == null || repatQuestion.size() == 0) {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
-            if (question.getCorrectText().equals(userAnswer)) {
+            if (replaceThe8194(question.getCorrectText()).trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
                 userQuestionRecord.setDoRight(2);
@@ -1741,13 +1746,13 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setTimes(1);
             userQuestionRecord.setExamCategory(examCategory);
             userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
-             save = userQuestionRecordDao.save(userQuestionRecord);
+            save = userQuestionRecordDao.save(userQuestionRecord);
         } else {
             int times = repatQuestion.get(0).getTimes();
             int repatTime = times + 1;
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
-            if (question.getCorrectText().equals(userAnswer)) {
+            if (replaceThe8194(question.getCorrectText()).trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
             } else {
                 userQuestionRecord.setDoRight(2);
@@ -1766,7 +1771,7 @@ public class ExamServiceImpl implements ExamService {
             }
             userQuestionRecord.setExamCategory(examCategory);
             userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
-             save = userQuestionRecordDao.save(userQuestionRecord);
+            save = userQuestionRecordDao.save(userQuestionRecord);
         }
         // 新增往错题表中插数据
         List<UserQuestionRecord> repatQuestion2 = userQuestionRecordDao.getSpecialRecord(studentNumber, examCategory, id, subject);
@@ -2004,7 +2009,7 @@ public class ExamServiceImpl implements ExamService {
         if (!examCategory.equals("全部")) {
             List<UserCollect> wrongQustions = null;
 
-                wrongQustions = userCollectDao.getAllInfo(studentNumber, gradeLevel, subject, examCategory);//去重qustion_id
+            wrongQustions = userCollectDao.getAllInfo(studentNumber, gradeLevel, subject, examCategory);//去重qustion_id
 
             if (wrongQustions.size() == 0) {
                 info = "暂无您要查询的未掌握题情况";
@@ -2015,7 +2020,7 @@ public class ExamServiceImpl implements ExamService {
                     JSONObject jsonObject1 = new JSONObject();// 分装Json
                     int questionId = wrongQustion.getQuestionId();// question表的id
                     //此题的分类标签，可能有多个
-                   // List<String> questionSource = userWrongQustionDao.getallQuestionSource(studentNumber, gradeLevel, subject, master, questionId);
+                    // List<String> questionSource = userWrongQustionDao.getallQuestionSource(studentNumber, gradeLevel, subject, master, questionId);
                     List<ExamPaper> examAllInfo = examPaperDao.getBySubjectAndGradeLevelAndValid(subject, gradeLevel, 1);
                     List<String> labelList = new LinkedList<>();// 此题的标签属
                     for (ExamPaper examPaper : examAllInfo){
