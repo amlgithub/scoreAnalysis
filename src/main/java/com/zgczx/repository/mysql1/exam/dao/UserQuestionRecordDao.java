@@ -21,6 +21,9 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
     //2. 获取这份试卷中这道题，此用户是否做过,按做过次数的降序排列
     @Query(value = "SELECT * FROM e_user_question_record WHERE student_number=?1 AND exam_paper_id=?2 AND question_id=?3 ORDER BY times DESC", nativeQuery = true)
     List<UserQuestionRecord> getByStudentNumberAndExamPaperIdAndQuestionId(String stuNumber,int sourcePaperId,int questionid);
+    //2.2 获取这份试卷中这道题，此用户是否做过,按做过次数的降序排列,3.23 + 章节练习这个标签
+    @Query(value = "SELECT * FROM e_user_question_record WHERE student_number=?1 AND exam_paper_id=?2 AND question_id=?3 AND exam_category='章节练习' ORDER BY times DESC", nativeQuery = true)
+    List<UserQuestionRecord> getByStudentNumberAndExamPaperIdAndQuestionId2(String stuNumber,int sourcePaperId,int questionid);
 
     // 3. 获取 此用户回显的 做题记录
     @Query(value = "SELECT * FROM e_user_question_record  WHERE student_number=?1 AND SUBJECT=?2 AND exam_paper_id=?3 ORDER BY times DESC\n", nativeQuery = true)
@@ -111,10 +114,10 @@ public interface UserQuestionRecordDao extends JpaRepository<UserQuestionRecord,
             "ON euqr.question_id=eq.id\n" +
             "WHERE euqr.student_number=?1 AND DATE_FORMAT(euqr.inserttime,'%Y-%m-%d')=?2 AND euqr.subject=?3 AND eq.level_name=?4 AND euqr.do_right=?5 \n ",nativeQuery = true)
     int getDoQuestionsRightNumsByDate(String stuNumber,String date, String subject,String levelName,int doRight);
-
+    ////3.22修改，获取具体学科的做题时间
     // 14. 根据做题时间查询用户当天做题情况(用户获取用户做每道题的时间)  lxj
-    @Query(value = "select do_time from e_user_question_record where student_number=?1 and DATE_FORMAT(inserttime,'%Y-%m-%d')=?2 ",nativeQuery = true)
-    List<String> getDoQuestionsTimeList(String stuNumber,String date);
+    @Query(value = "select do_time from e_user_question_record where student_number=?1 and DATE_FORMAT(inserttime,'%Y-%m-%d')=?2 and subject=?3 ",nativeQuery = true)
+    List<String> getDoQuestionsTimeList(String stuNumber,String date,String subject);
 
     // 15. 每个知识点最新一次做题时间
 

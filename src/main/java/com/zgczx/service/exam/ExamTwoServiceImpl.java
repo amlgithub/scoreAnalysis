@@ -17,6 +17,8 @@ import com.zgczx.repository.mysql3.unifiedlogin.model.UserLogin;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -780,6 +782,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
     }
 
     // 9.  九、 删除已掌握错题中的某道题  lxj
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public Map<String, Integer> deleteMasteredQuestions(String stuNumber, String openid, String subject, int questionId, String questionSource) {
 
@@ -797,13 +800,14 @@ public class ExamTwoServiceImpl implements ExamTwoService {
         String examCategory = null;
         if (questionSource.equals("")){
             //错题本 删除已掌握的题
-             userWrongQuestion = userWrongQustionDao.getIdBySubjectAndQuestionId(stuNumber, subject, questionId);
-            if (userWrongQuestion == null) {
+           List<UserWrongQustion> userWrongQuestion1 = userWrongQustionDao.getIdBySubjectAndQuestionId2(stuNumber, subject, questionId);
+            if (userWrongQuestion1 == null||userWrongQuestion1.size() == 0) {
                 info = "所删除的题在 已掌握错题 中暂时不存在";
                 log.error("【错误信息】: {}", info);
                 throw new ScoreException(ResultEnum.RESULE_DATA_NONE, info);
             } else {
-                userWrongQustionDao.deleteById(Integer.parseInt(userWrongQuestion));
+                //userWrongQustionDao.deleteById(Integer.parseInt(userWrongQuestion));
+                userWrongQustionDao.deleteInBatch(userWrongQuestion1);
                 map.put("delete", 1);
             }
             return map;
@@ -831,6 +835,7 @@ public class ExamTwoServiceImpl implements ExamTwoService {
     }
 
     // 10. 十、 做错题中未掌握的题，正确进入已掌握  lxj
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public Map<String, Integer> doNotMasteredQuestions(String stuNumber, String openid, String subject, int questionId, String questionSource, String userAnswer, int examId, String examName) {
         UserLogin userInfo = userLoginDao.findByDiyid(stuNumber);// 获取此用户的所有基本信息
@@ -1486,8 +1491,8 @@ public class ExamTwoServiceImpl implements ExamTwoService {
                 int hour = Integer.parseInt(startLength[0]);
                 int mins = Integer.parseInt(startLength[1]);
                 int sec = Integer.parseInt(startLength[2]);
-
-                List<String> doTimeList = userQuestionRecordDao.getDoQuestionsTimeList(stuNumber, doDate);
+                //3.22修改，获取具体学科的做题时间
+                List<String> doTimeList = userQuestionRecordDao.getDoQuestionsTimeList(stuNumber, doDate,subject);
                 if (doTimeList == null || doTimeList.size() == 0) {
                     info = "该学生暂时没有做题记录";
                     log.error("【错误信息】: {}", info);

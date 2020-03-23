@@ -7,6 +7,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.google.gson.Gson;
 import com.zgczx.enums.ResultEnum;
 import com.zgczx.exception.ScoreException;
+import com.zgczx.mapper.EUserQuestionRecordMapper;
 import com.zgczx.repository.mysql1.exam.dao.*;
 import com.zgczx.repository.mysql1.exam.dto.*;
 import com.zgczx.repository.mysql1.exam.model.*;
@@ -17,6 +18,7 @@ import com.zgczx.utils.StringToMapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -73,6 +75,9 @@ public class ExamServiceImpl implements ExamService {
 
     @Autowired
     private UserCheckDao userCheckDao;
+
+    @Autowired
+    private EUserQuestionRecordMapper eUserQuestionRecordMapper;
 
     private String info;
 
@@ -132,7 +137,7 @@ public class ExamServiceImpl implements ExamService {
         return name;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public List<Question> splitExam(String examName, String subject) {
         ExamContent content = examContentDao.findByExamNameAndSubject(examName, subject);
@@ -456,9 +461,9 @@ public class ExamServiceImpl implements ExamService {
         return list;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String examName, String subject, int sourcePaperId,String gradeLevel,String doTime) {
+    public synchronized DoQuestionInfoDTO judgeQuestionRight(int id, String studentNumber, String openid, String commitString, String examName, String subject, int sourcePaperId,String gradeLevel,String doTime) {
         Question question = questionDao.getByIdAndValid(id,1);
         if (question == null) {
             info = "您所查询的此题不存在，请核对后再查";
@@ -475,10 +480,9 @@ public class ExamServiceImpl implements ExamService {
         String userAnswer =commitString;
         userAnswer = userAnswer.replace(' ',' ');
         userAnswer = userAnswer.substring(2,userAnswer.length()).trim();
-        List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
+        List<UserQuestionRecord> repatQuestion = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId2(studentNumber, sourcePaperId, id);
         if (repatQuestion == null || repatQuestion.size() == 0) {
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
-
 
             if (question.getCorrectText().replace(' ',' ').trim().equals(userAnswer)) {
                 userQuestionRecord.setDoRight(1);
@@ -497,27 +501,36 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
             UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
         } else {
-            int times = repatQuestion.get(0).getTimes();
-            int repatTime = times + 1;
-            UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
+           int times = repatQuestion.get(0).getTimes();
+           int count = eUserQuestionRecordMapper.queryRecordInfo(studentNumber, paper.getId(), paper.getExamSource(), subject, times).size();
+           int repatTime = 0;
+           if (count >= paper.getQuestionCount()) {
+               repatTime = times + 1;
+           } else {
+               repatTime = times;
+           }
+
+           if (eUserQuestionRecordMapper.queryRecordAlready(studentNumber, paper.getId(), paper.getExamSource(), subject, repatTime, id) == null) {
+               UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
 //            String userAnswer = optionLetter(commitString);
-            if (question.getCorrectText().replace(' ',' ').trim().equals(userAnswer)) {
-                userQuestionRecord.setDoRight(1);
-            } else {
-                userQuestionRecord.setDoRight(2);
-            }
-            userQuestionRecord.setUserAnswer(userAnswer);
-            userQuestionRecord.setSubject(subjectName);
-            userQuestionRecord.setStudentNumber(studentNumber);
-            userQuestionRecord.setOpenid(openid);
-            userQuestionRecord.setQuestionId(id);
-            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
-            userQuestionRecord.setTimes(repatTime);
-            userQuestionRecord.setExamPaperName(paperExamName);
-            userQuestionRecord.setExamCategory(examSource);
-            userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
-            UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
+               if (question.getCorrectText().replace(' ', ' ').trim().equals(userAnswer)) {
+                   userQuestionRecord.setDoRight(1);
+               } else {
+                   userQuestionRecord.setDoRight(2);
+               }
+               userQuestionRecord.setUserAnswer(userAnswer);
+               userQuestionRecord.setSubject(subjectName);
+               userQuestionRecord.setStudentNumber(studentNumber);
+               userQuestionRecord.setOpenid(openid);
+               userQuestionRecord.setQuestionId(id);
+               userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
+               userQuestionRecord.setTimes(repatTime);
+               userQuestionRecord.setExamPaperName(paperExamName);
+               userQuestionRecord.setExamCategory(examSource);
+               userQuestionRecord.setDoTime(doTime);//2.2 新增做题时间
+               UserQuestionRecord save = userQuestionRecordDao.save(userQuestionRecord);
+           }
         }
 
 //        DoQuestionInfoDTO dto = getDto(studentNumber, examName, subject,sourcePaperId);
@@ -576,12 +589,17 @@ public class ExamServiceImpl implements ExamService {
         log.info("【未做题的数量：】{}", notDo);
 
         // 新增往错题表中插数据
-        List<UserQuestionRecord> repatQuestion2 = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId(studentNumber, sourcePaperId, id);
+        List<UserQuestionRecord> repatQuestion2 = userQuestionRecordDao.getByStudentNumberAndExamPaperIdAndQuestionId2(studentNumber, sourcePaperId, id);
         UserQuestionRecord questionRecord = repatQuestion2.get(0);// 获取刚插入的此题所有数据
         if (questionRecord.getDoRight() == 2) {
             // 此题错误，判断此题的 相同来源是否 插入过库中
             UserWrongQustion userWrong = userWrongQustionDao.getByStudentNumberAndExamCategoryAndQuestionId(studentNumber, questionRecord.getExamCategory(), id, subject);
-            if (userWrong == null) {
+            if (userWrong != null){
+                System.out.println("错题表已经有此数据，不在存储！");
+            }
+
+//            if (userWrong == null) {
+            else {
                 //如果不存在，则插入
                 UserWrongQustion wrongQustion = new UserWrongQustion();
                 wrongQustion.setStudentNumber(studentNumber);
@@ -649,7 +667,7 @@ public class ExamServiceImpl implements ExamService {
             return collect;
         }
     }
-
+    // 3.29 此接口暂时无用
     @Override
     public DoQuestionInfoDTO getDoQuestionInfo(String studentNumber, String examName, String subject, int sourcePaperId) {
         DoQuestionInfoDTO dto = getDto(studentNumber, examName, subject, sourcePaperId);
@@ -1428,6 +1446,7 @@ public class ExamServiceImpl implements ExamService {
 
 
     /**
+     * 3.29 此公共函数 没用
      * 公共函数 1.
      * 将六、八、接口公共的抽出来： 动态实时呈现用户做题详情 并记录用户所有的做题情况 接口中
      * 获取 做题情况抽出来，作为一个 公共的函数
@@ -1710,9 +1729,9 @@ public class ExamServiceImpl implements ExamService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public JSONObject specialRecordId(int id, String studentNumber, String openid, String commitString, String examCategory,String subject, String gradeLevel, String doTime) {
+    public synchronized JSONObject specialRecordId(int id, String studentNumber, String openid, String commitString, String examCategory,String subject, String gradeLevel, String doTime) {
         JSONObject jsonObject = new JSONObject();
         Question question = questionDao.getByIdAndValid(id, 1);
         if (question == null) {
@@ -1750,6 +1769,7 @@ public class ExamServiceImpl implements ExamService {
         } else {
             int times = repatQuestion.get(0).getTimes();
             int repatTime = times + 1;
+
             UserQuestionRecord userQuestionRecord = new UserQuestionRecord();
 
             if (replaceThe8194(question.getCorrectText()).trim().equals(userAnswer)) {
@@ -1766,7 +1786,7 @@ public class ExamServiceImpl implements ExamService {
             userQuestionRecord.setExamPaperId(question.getExamId());
 //            userQuestionRecord.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
             userQuestionRecord.setTimes(repatTime);
-            if (paper.getExamSource().equals("专项练习")){
+            if (paper.getExamSource().equals("专项练习")) {
                 userQuestionRecord.setExamPaperName(paper.getExamName());
             }
             userQuestionRecord.setExamCategory(examCategory);
@@ -1779,7 +1799,11 @@ public class ExamServiceImpl implements ExamService {
         if (questionRecord.getDoRight() == 2) {
             // 此题错误，判断此题的 相同来源是否 插入过库中
             UserWrongQustion userWrong = userWrongQustionDao.getByStudentNumberAndExamCategoryAndQuestionId(studentNumber, questionRecord.getExamCategory(), id, subject);
-            if (userWrong == null) {
+            if (userWrong != null){
+                System.out.println("错题表已经有此数据，不在存储！");
+            }
+//            if (userWrong == null) {
+            else {
                 //如果不存在，则插入
                 UserWrongQustion wrongQustion = new UserWrongQustion();
                 wrongQustion.setStudentNumber(studentNumber);
@@ -1791,7 +1815,7 @@ public class ExamServiceImpl implements ExamService {
                 //2.27 新增情况：录题时只录入专项练习，也就是按照知识点录题，
                 wrongQustion.setExamPaperId(question.getExamId());
 //                wrongQustion.setExamPaperId(sourcePaperId);// 试卷id：（不是这道题是从哪个试卷中录入进去的）保存这道题被组卷在哪套试题中
-                if (paper.getExamSource().equals("专项练习")){
+                if (paper.getExamSource().equals("专项练习")) {
                     wrongQustion.setExamPaperName(paper.getExamName());
                 }
                 wrongQustion.setExamCategory(examCategory);

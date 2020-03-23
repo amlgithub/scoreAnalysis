@@ -161,7 +161,7 @@ public class ExamController {
         UserCollect list = examService.insertCollect(id,studentNumber,openid,classification);
         return ResultVOUtil.success(list);
     }
-
+    //3.29 此接口暂时无用
     @ApiOperation(value = "八、【不做题时查看】用户做题详情；需求：点击类似做题页面的键盘，出现的正确、错误、未做数量  ")
     @GetMapping("/getDoQuestionInfo")
     public ResultVO<?> getDoQuestionInfo(
