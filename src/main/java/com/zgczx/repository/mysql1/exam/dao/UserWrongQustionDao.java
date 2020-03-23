@@ -114,13 +114,13 @@ public interface UserWrongQustionDao extends JpaRepository<UserWrongQustion, Int
             "and exam_paper_name=?5 and (exam_category=?6 or exam_category=?7) ",nativeQuery = true)
     UserWrongQustion getUserWrongQustionByUserAndSubjectAndExamCategory(String stuNumber,String subject,int questionId,int examPaperId,String examPaperName,String examCategory1,String examCategory2);
 
-    //19. 获取错题表中某用户-》某年级-》某科目 某类（章节练习） 未掌握（或已掌握）的所有题
+    //19. 获取错题表中某用户-》某年级-》某科目 某类（章节练习） 未掌握（或已掌握）的所有题，3.29修改：添加AND uwq.`exam_category`='章节练习'
     @Query(value = "SELECT * FROM e_user_wrong_qustion AS uwq\n" +
             "INNER JOIN e_question AS q \n" +
             "ON uwq.`question_id`=q.`id` \n" +
             "INNER JOIN e_exam_paper AS ep \n" +
             "ON uwq.`exam_paper_id`=ep.`id` \n" +
-            "WHERE student_number=?1 AND ep.`grade_level`=?2 AND uwq.`subject`=?3 AND uwq.`do_right`=?4 AND ep.`exam_source`=?5 ", nativeQuery = true)
+            "WHERE student_number=?1 AND ep.`grade_level`=?2 AND uwq.`subject`=?3 AND uwq.`do_right`=?4 AND ep.`exam_source`=?5 AND uwq.`exam_category`='章节练习' ", nativeQuery = true)
     List<UserWrongQustion> getAllInfo(String stuNumber,String gradeLevel,String subject,int doRight,String examCategory);
 
     //19.2 获取错题表中某用户-》某年级-》某科目 （专项练习） 未掌握（或已掌握）的所有题
